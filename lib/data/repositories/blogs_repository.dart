@@ -1,0 +1,43 @@
+import 'package:eClassify/data/model/blog_model.dart';
+import 'package:eClassify/data/model/data_output.dart';
+import 'package:eClassify/utils/api.dart';
+import 'package:eClassify/utils/json_helper.dart';
+import 'package:eClassify/utils/log.dart';
+
+class BlogsRepository {
+  Future<DataOutput<BlogModel>> fetchBlogs({required int page}) async {
+    Map<String, dynamic> parameters = {
+      Api.page: page,
+      Api.sortBy: 'new-to-old',
+    };
+
+    Map<String, dynamic> result = await Api.get(
+      url: Api.getBlogApi,
+      queryParameters: parameters,
+    );
+
+    List<BlogModel> modelList = (result['data']['data'] as List)
+        .map((element) => BlogModel.fromJson(element))
+        .toList();
+
+    return DataOutput<BlogModel>(
+      total: result['data']['total'] ?? 0,
+      modelList: modelList,
+    );
+  }
+
+  Future<BlogModel?> getBlogDetails({required BlogModel blog}) async {
+    try {
+      final response = await Api.get(
+        url: Api.getBlogApi,
+        queryParameters: {Api.slug: blog.slug, Api.id: blog.id, 'views': 1},
+      );
+
+      final blogJson = (response['data']?['data'] as List?)?.firstOrNull;
+      return JsonHelper.parseObjectOrNull(blogJson as Json, BlogModel.fromJson);
+    } catch (e, st) {
+      Log.error(e.toString(), e, st);
+      rethrow;
+    }
+  }
+}

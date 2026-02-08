@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "124116953140",
+    "firebase_url": "https://ca-hubb-default-rtdb.firebaseio.com",
+    "project_id": "ca-hubb",
+    "storage_bucket": "ca-hubb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:124116953140:android:00c5b420a91b2cff5e4261",
+        "android_client_info": {
+          "package_name": "com.cahubb.pakistan"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "124116953140-bijekbh7ksrlid7bk3rocl4c9dracfd0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cahubb.pakistan",
+            "certificate_hash": "1301816268237a7c73d01e89858e3f713ae4fdd3"
+          }
+        },
+        {
+          "client_id": "124116953140-vn1f1lecjvecnilm1vh1iglk166ssjm1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqa8pV7AC7KbKdkLZwBHmoUPMZ3T75rHk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "124116953140-vn1f1lecjvecnilm1vh1iglk166ssjm1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
