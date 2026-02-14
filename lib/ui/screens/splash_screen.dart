@@ -35,8 +35,8 @@ class SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   bool isTimerCompleted = false;
   bool isSettingsLoaded = false;
-  bool isLanguageLoaded = false;
   bool _hasNavigated = false;
+  bool _timerStarted = false;
   bool hasInternet = true;
 
   late StreamSubscription<List<ConnectivityResult>> subscription;
@@ -47,6 +47,8 @@ class SplashScreenState extends State<SplashScreen>
     super.initState();
 
     _lottieController = AnimationController(vsync: this);
+    context.read<FetchSystemSettingsCubit>().fetchSettings();
+    startTimer();
 
     subscription = Connectivity().onConnectivityChanged.listen((result) {
       setState(() {
@@ -70,6 +72,8 @@ class SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> startTimer() async {
+    if (_timerStarted) return;
+    _timerStarted = true;
     Timer(const Duration(seconds: 2), () {
       isTimerCompleted = true;
       navigateCheck();
@@ -78,7 +82,7 @@ class SplashScreenState extends State<SplashScreen>
 
   void navigateCheck() {
     if (_hasNavigated) return;
-    if (isTimerCompleted && isSettingsLoaded && isLanguageLoaded) {
+    if (isTimerCompleted && isSettingsLoaded) {
       _hasNavigated = true;
       navigateToScreen();
     }
@@ -142,8 +146,6 @@ class SplashScreenState extends State<SplashScreen>
 
               HiveUtils.storeLanguage(map);
               context.read<LanguageCubit>().changeLanguages(map);
-              isLanguageLoaded = true;
-              navigateCheck();
             }
           },
         ),
@@ -155,14 +157,19 @@ class SplashScreenState extends State<SplashScreen>
                   .read<FetchSystemSettingsCubit>()
                   .getSetting(SystemSetting.demoMode);
 
-              context.read<FetchLanguageCubit>().getLanguage(
-                state.settings['data']['default_language'],
-              );
+              // Keep splash fast: do not block navigation on language/currency APIs.
+              if (HiveUtils.getLanguage() == null) {
+                context.read<FetchLanguageCubit>().getLanguage(
+                  state.settings['data']['default_language'],
+                );
+              }
+              context.read<FetchCurrenciesCubit>().fetchCurrencies();
 
-              context
-                  .read<FetchCurrenciesCubit>()
-                  .fetchCurrencies();
-
+              isSettingsLoaded = true;
+              navigateCheck();
+            }
+            if (state is FetchSystemSettingsFailure) {
+              // Allow app to continue with defaults/local values if settings API fails.
               isSettingsLoaded = true;
               navigateCheck();
             }
@@ -193,7 +200,7 @@ class SplashScreenState extends State<SplashScreen>
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
+                        color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 25,
                           spreadRadius: 2,
                           offset: const Offset(0, 10), // 👈 premium floating effect
