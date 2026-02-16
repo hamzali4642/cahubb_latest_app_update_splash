@@ -840,6 +840,10 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                                 AppIcons.createAddIcon,
                                 height: 74,
                                 width: 62,
+                                colorFilter: ColorFilter.mode(
+                                  context.color.territoryColor,
+                                  BlendMode.srcIn,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 20),
