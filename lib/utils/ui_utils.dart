@@ -27,11 +27,6 @@ import 'package:intl/intl.dart';
 import 'package:mime_type/mime_type.dart';
 
 class UiUtils {
-  static Color _resolveSvgTint(Color? color) {
-    if (color != null) return color;
-    return AppSession.isDarkMode ? territoryColorDark : territoryColor_;
-  }
-
   // Temporary
   // This is to fulfil the case when bottom-sheet cannot show default snack-bars
   // due to absence of Scaffold widget.
@@ -86,10 +81,11 @@ class UiUtils {
     double? width,
     double? height,
   }) {
-    final svgTint = _resolveSvgTint(color);
     return SvgPicture.asset(
       path,
-      colorFilter: ColorFilter.mode(svgTint, BlendMode.srcIn),
+      colorFilter: color != null
+          ? ColorFilter.mode(color, BlendMode.srcIn)
+          : null,
       fit: fit ?? BoxFit.contain,
       width: width,
       height: height,
@@ -215,10 +211,11 @@ class UiUtils {
     bool? showFullScreenImage,
     Color? color,
   }) {
-    final svgTint = _resolveSvgTint(color);
     return SvgPicture.network(
       url,
-      colorFilter: ColorFilter.mode(svgTint, BlendMode.srcIn),
+      colorFilter: color != null
+          ? ColorFilter.mode(color, BlendMode.srcIn)
+          : null,
       width: width,
       height: height,
       fit: fit!,

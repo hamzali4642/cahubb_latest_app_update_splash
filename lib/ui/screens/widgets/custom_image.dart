@@ -2,9 +2,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/app_icon.dart';
-import 'package:eClassify/utils/app_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -47,8 +45,6 @@ class _CustomImageState extends State<CustomImage> {
   double? get width => widget.size?.width;
 
   Size? get res => widget.resolution ?? widget.size;
-  Color get _defaultSvgTint =>
-      AppSession.isDarkMode ? territoryColorDark : territoryColor_;
 
   @override
   void initState() {
@@ -61,7 +57,6 @@ class _CustomImageState extends State<CustomImage> {
           height: height,
           width: width,
           fit: widget.fit,
-          colorFilter: ColorFilter.mode(_defaultSvgTint, BlendMode.srcIn),
         );
     errorImage =
         widget.errorImage ??
@@ -70,7 +65,6 @@ class _CustomImageState extends State<CustomImage> {
           height: height,
           width: width,
           fit: widget.fit,
-          colorFilter: ColorFilter.mode(_defaultSvgTint, BlendMode.srcIn),
         );
   }
 
@@ -89,7 +83,6 @@ class _CustomImageState extends State<CustomImage> {
             height: height,
             width: width,
             fit: widget.fit,
-            colorFilter: ColorFilter.mode(_defaultSvgTint, BlendMode.srcIn),
           );
       errorImage =
           widget.errorImage ??
@@ -98,7 +91,6 @@ class _CustomImageState extends State<CustomImage> {
             height: height,
             width: width,
             fit: widget.fit,
-            colorFilter: ColorFilter.mode(_defaultSvgTint, BlendMode.srcIn),
           );
     }
   }
@@ -125,9 +117,6 @@ class _CustomImageState extends State<CustomImage> {
   @override
   Widget build(BuildContext context) {
     if (_isSvg) {
-      final colorFilter = widget.svgColorMapper == null
-          ? ColorFilter.mode(_defaultSvgTint, BlendMode.srcIn)
-          : null;
       return switch (_fileType) {
         _FileType.asset => SvgPicture.asset(
           widget.src,
@@ -136,7 +125,6 @@ class _CustomImageState extends State<CustomImage> {
           fit: widget.fit,
           errorBuilder: (_, _, _) => errorImage,
           placeholderBuilder: (_) => placeHolderImage,
-          colorFilter: colorFilter,
           colorMapper: widget.svgColorMapper,
         ),
         _FileType.network => SvgPicture.network(
@@ -146,7 +134,6 @@ class _CustomImageState extends State<CustomImage> {
           fit: widget.fit,
           errorBuilder: (_, _, _) => errorImage,
           placeholderBuilder: (_) => placeHolderImage,
-          colorFilter: colorFilter,
           colorMapper: widget.svgColorMapper,
         ),
         _FileType.file => SvgPicture.file(
@@ -156,7 +143,6 @@ class _CustomImageState extends State<CustomImage> {
           fit: widget.fit,
           errorBuilder: (_, _, _) => errorImage,
           placeholderBuilder: (_) => placeHolderImage,
-          colorFilter: colorFilter,
           colorMapper: widget.svgColorMapper,
         ),
       };

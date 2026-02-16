@@ -91,13 +91,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SvgPicture.asset(
-                        AppIcons.verificationMail,
-                        colorFilter: ColorFilter.mode(
-                          context.color.territoryColor,
-                          BlendMode.srcIn,
-                        ),
-                      ),
+                      SvgPicture.asset(AppIcons.verificationMail),
                       const SizedBox(height: 38),
                       CustomText(
                         "youHaveGotEmail".translate(context),

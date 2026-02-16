@@ -37,16 +37,7 @@ class OnboardingPageView extends StatelessWidget {
         return Column(
           spacing: 30,
           children: [
-            Expanded(
-              flex: 2,
-              child: SvgPicture.asset(
-                data['svg'] as String,
-                colorFilter: ColorFilter.mode(
-                  context.color.territoryColor,
-                  BlendMode.srcIn,
-                ),
-              ),
-            ),
+            Expanded(flex: 2, child: SvgPicture.asset(data['svg'] as String)),
             Flexible(
               child: CustomText(
                 (data['title'] as String).translate(context),

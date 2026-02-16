@@ -70,15 +70,7 @@ class DiamondFab extends StatelessWidget {
       }
       child = GestureDetector(
         onTap: () => _onPressed(context),
-        child: SvgPicture.asset(
-          svgAsset!,
-          height: svgSize,
-          width: svgSize,
-          colorFilter: ColorFilter.mode(
-            context.color.territoryColor,
-            BlendMode.srcIn,
-          ),
-        ),
+        child: SvgPicture.asset(svgAsset!, height: svgSize, width: svgSize),
       );
     } else {
       child = FloatingActionButton(
