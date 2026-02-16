@@ -14,7 +14,7 @@ Color widgetsBorderColorLight = const Color(0xffEEEEEE).withValues(alpha: 0.6);
 ///Dark Theme Colors
 Color primaryColorDark = const Color(0xff121212);
 Color secondaryColorDark = const Color(0xff1C1C1C);
-const Color territoryColorDark = Color(0xff9389ec);
+const Color territoryColorDark = Color(0xFF2F8CFF);
 Color deactivateColorLight = const Color(0xff7F7F7F);
 
 const Color forthColorDark = Color(0xffFA6E53);

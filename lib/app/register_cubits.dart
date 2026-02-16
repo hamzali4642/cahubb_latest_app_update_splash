@@ -101,7 +101,6 @@ class RegisterCubits {
     BlocProvider(create: (context) => GetSellerChatListCubit()),
     BlocProvider(create: (context) => FetchHomeScreenCubit()),
     BlocProvider(create: (context) => AuthenticationCubit()),
-    BlocProvider(create: (context) => FetchHomeScreenCubit()),
     BlocProvider(create: (context) => FetchHomeAllItemsCubit()),
     BlocProvider(create: (context) => DeleteItemCubit()),
     BlocProvider(create: (context) => ItemTotalClickCubit()),

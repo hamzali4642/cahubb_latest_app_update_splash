@@ -7,8 +7,11 @@ class VersionUtility {
     return Version.fromString('${info.version}+${info.buildNumber}');
   }
 
-  static Future<bool> isUpdateAvailable(Version required) async {
-    final current = await currentPackageVersion;
-    return required > current;
+  static Future<bool> isUpdateAvailable(
+    Version required, {
+    Version? current,
+  }) async {
+    final effectiveCurrent = current ?? await currentPackageVersion;
+    return required > effectiveCurrent;
   }
 }

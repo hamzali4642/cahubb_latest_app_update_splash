@@ -6,6 +6,7 @@ import 'package:eClassify/data/repositories/location/location_repository.dart';
 import 'package:eClassify/utils/app_session.dart';
 import 'package:eClassify/utils/constant.dart';
 import 'package:eClassify/utils/hive_utils.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Manages the currently selected or active [LeafLocation].
@@ -16,8 +17,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// Think of it as a live feed of "where we at right now?" in the app.
 class LeafLocationCubit extends Cubit<LeafLocation?> {
   LeafLocationCubit() : super(AppSession.currentLocation);
+  final DeepCollectionEquality _deepCollectionEquality =
+      const DeepCollectionEquality();
 
   void setLocation(LeafLocation location, {bool updateState = true}) {
+    final isSameLocation = _deepCollectionEquality.equals(
+      state?.toJson(),
+      location.toJson(),
+    );
+    if (isSameLocation) return;
+
     if (updateState) {
       emit(location);
     }

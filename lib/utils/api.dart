@@ -51,6 +51,52 @@ class Api {
 
   static bool _isProcessing = false;
 
+  static bool _isHandshakeError(DioException e) {
+    return e.error is HandshakeException;
+  }
+
+  static bool _isNetworkError(DioException e) {
+    return e.error is SocketException ||
+        e.error is HandshakeException ||
+        e.type == DioExceptionType.connectionError;
+  }
+
+  static String _resolveApiErrorMessage(DioException e) {
+    return _isNetworkError(e)
+        ? "no-internet"
+        : "Something went wrong with error ${e.response?.statusCode}";
+  }
+
+  static Future<Response<dynamic>> _getWithRetry({
+    required String path,
+    Map<String, dynamic>? queryParameters,
+    bool addContentLanguage = true,
+    int maxRetries = 2,
+  }) async {
+    DioException? lastError;
+
+    for (int attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await _dio.get(
+          path,
+          queryParameters: queryParameters,
+          options: Options(
+            headers: headers(addContentLanguage: addContentLanguage),
+          ),
+        );
+      } on DioException catch (e) {
+        lastError = e;
+        final shouldRetry = _isHandshakeError(e) && attempt < maxRetries;
+        if (!shouldRetry) {
+          rethrow;
+        }
+        await Future.delayed(Duration(milliseconds: 350 * (attempt + 1)));
+      }
+    }
+
+    throw lastError!;
+  }
+
   static Map<String, dynamic> headers({
     bool addContentLanguage = true,
     bool addAcceptLanguage = false,
@@ -343,11 +389,7 @@ class Api {
         throw "server-not-available";
       }
 
-      throw ApiException(
-        e.error is SocketException
-            ? "no-internet"
-            : "Something went wrong with error ${e.response?.statusCode}",
-      );
+      throw ApiException(_resolveApiErrorMessage(e));
     } on ApiException catch (e, st) {
       Log.error(e.toString(), e, st);
       throw ApiException(e.errorMessage);
@@ -423,11 +465,7 @@ class Api {
         throw "server-not-available";
       }
 
-      throw ApiException(
-        e.error is SocketException
-            ? "no-internet"
-            : "Something went wrong with error ${e.response?.statusCode}",
-      );
+      throw ApiException(_resolveApiErrorMessage(e));
     } on ApiException catch (e, st) {
       Log.error(e.toString(), e, st);
       throw ApiException(e.errorMessage);
@@ -443,12 +481,10 @@ class Api {
     bool addContentLanguage = true,
   }) async {
     try {
-      final response = await _dio.get(
-        '$_baseUrl$url',
+      final response = await _getWithRetry(
+        path: '$_baseUrl$url',
         queryParameters: queryParameters,
-        options: Options(
-          headers: headers(addContentLanguage: addContentLanguage),
-        ),
+        addContentLanguage: addContentLanguage,
       );
 
       if (response.data['error'] == true) {
@@ -463,11 +499,7 @@ class Api {
       if (e.response?.statusCode == 503) {
         throw "server-not-available";
       }
-      throw ApiException(
-        e.error is SocketException
-            ? "no-internet"
-            : "Something went wrong with error ${e.response?.statusCode}",
-      );
+      throw ApiException(_resolveApiErrorMessage(e));
     } on ApiException catch (e, st) {
       Log.error(e.toString(), e, st);
       throw ApiException(e.errorMessage);
@@ -505,11 +537,7 @@ class Api {
         throw "server-not-available";
       }
 
-      throw ApiException(
-        e.error is SocketException
-            ? "no-internet"
-            : "Something went wrong with error ${e.response?.statusCode}",
-      );
+      throw ApiException(_resolveApiErrorMessage(e));
     } on ApiException catch (e, st) {
       Log.error(e.toString(), e, st);
       throw ApiException(e.errorMessage);

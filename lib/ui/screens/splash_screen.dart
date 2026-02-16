@@ -19,7 +19,6 @@ import 'package:eClassify/utils/hive_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({this.itemSlug, super.key, this.sellerId});
@@ -40,13 +39,28 @@ class SplashScreenState extends State<SplashScreen>
   bool hasInternet = true;
 
   late StreamSubscription<List<ConnectivityResult>> subscription;
-  late AnimationController _lottieController;
+  late AnimationController _nameController;
+  late Animation<double> _nameOpacity;
+  late Animation<Offset> _nameSlide;
 
   @override
   void initState() {
     super.initState();
 
-    _lottieController = AnimationController(vsync: this);
+    _nameController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _nameOpacity = CurvedAnimation(
+      parent: _nameController,
+      curve: Curves.easeOut,
+    );
+    _nameSlide = Tween<Offset>(begin: const Offset(0, 0.22), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _nameController, curve: Curves.easeOutCubic),
+        );
+    _nameController.forward();
+
     context.read<FetchSystemSettingsCubit>().fetchSettings();
     startTimer();
 
@@ -66,7 +80,7 @@ class SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _lottieController.dispose();
+    _nameController.dispose();
     subscription.cancel();
     super.dispose();
   }
@@ -90,8 +104,8 @@ class SplashScreenState extends State<SplashScreen>
 
   void navigateToScreen() {
     if (context.read<FetchSystemSettingsCubit>().getSetting(
-      SystemSetting.maintenanceMode,
-    ) ==
+          SystemSetting.maintenanceMode,
+        ) ==
         "1") {
       Navigator.of(context).pushReplacementNamed(Routes.maintenanceMode);
     } else if (HiveUtils.isUserFirstTime()) {
@@ -105,147 +119,134 @@ class SplashScreenState extends State<SplashScreen>
           "sellerId": widget.sellerId,
         },
       );
+    } else if (HiveUtils.isUserSkip()) {
+      Navigator.of(context).pushReplacementNamed(
+        Routes.main,
+        arguments: {
+          'from': "main",
+          "slug": widget.itemSlug,
+          "sellerId": widget.sellerId,
+        },
+      );
     } else {
-      if (HiveUtils.isUserSkip()) {
-        Navigator.of(context).pushReplacementNamed(
-          Routes.main,
-          arguments: {
-            'from': "main",
-            "slug": widget.itemSlug,
-            "sellerId": widget.sellerId,
-          },
-        );
-      } else {
-        Navigator.of(context).pushReplacementNamed(Routes.login);
-      }
+      Navigator.of(context).pushReplacementNamed(Routes.login);
     }
   }
 
   Widget? _companyLogo() {
-    if (AppConfig.showCompanyLogo) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: CustomImage(src: AppIcons.companyLogo),
-      );
-    }
-    return null;
+    if (!AppConfig.showCompanyLogo) return null;
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10),
+      child: CustomImage(src: AppIcons.companyLogo),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return hasInternet
         ? MultiBlocListener(
-      listeners: [
-        BlocListener<FetchLanguageCubit, FetchLanguageState>(
-          listener: (context, state) {
-            if (state is FetchLanguageSuccess) {
-              Map<String, dynamic> map = state.toMap();
-              var data = map['file_name'];
-              map['data'] = data;
-              map.remove("file_name");
+            listeners: [
+              BlocListener<FetchLanguageCubit, FetchLanguageState>(
+                listener: (context, state) {
+                  if (state is FetchLanguageSuccess) {
+                    Map<String, dynamic> map = state.toMap();
+                    var data = map['file_name'];
+                    map['data'] = data;
+                    map.remove("file_name");
 
-              HiveUtils.storeLanguage(map);
-              context.read<LanguageCubit>().changeLanguages(map);
-            }
-          },
-        ),
-        BlocListener<FetchSystemSettingsCubit,
-            FetchSystemSettingsState>(
-          listener: (context, state) {
-            if (state is FetchSystemSettingsSuccess) {
-              Constant.isDemoModeOn = context
-                  .read<FetchSystemSettingsCubit>()
-                  .getSetting(SystemSetting.demoMode);
+                    HiveUtils.storeLanguage(map);
+                    context.read<LanguageCubit>().changeLanguages(map);
+                  }
+                },
+              ),
+              BlocListener<FetchSystemSettingsCubit, FetchSystemSettingsState>(
+                listener: (context, state) {
+                  if (state is FetchSystemSettingsSuccess) {
+                    Constant.isDemoModeOn = context
+                        .read<FetchSystemSettingsCubit>()
+                        .getSetting(SystemSetting.demoMode);
 
-              // Keep splash fast: do not block navigation on language/currency APIs.
-              if (HiveUtils.getLanguage() == null) {
-                context.read<FetchLanguageCubit>().getLanguage(
-                  state.settings['data']['default_language'],
-                );
-              }
-              context.read<FetchCurrenciesCubit>().fetchCurrencies();
+                    if (HiveUtils.getLanguage() == null) {
+                      context.read<FetchLanguageCubit>().getLanguage(
+                        state.settings['data']['default_language'],
+                      );
+                    }
+                    context.read<FetchCurrenciesCubit>().fetchCurrencies();
 
-              isSettingsLoaded = true;
-              navigateCheck();
-            }
-            if (state is FetchSystemSettingsFailure) {
-              // Allow app to continue with defaults/local values if settings API fails.
-              isSettingsLoaded = true;
-              navigateCheck();
-            }
-          },
-        ),
-      ],
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.white,
-          statusBarIconBrightness: Brightness.dark,
-          systemNavigationBarColor: Colors.white,
-          systemNavigationBarIconBrightness: Brightness.dark,
-        ),
-        child: Scaffold(
-          backgroundColor: context.color.territoryColor,
-
-          // backgroundColor: Colors.white,
-          bottomNavigationBar: _companyLogo(),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white, // 👈 blue lines hide
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 25,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 10), // 👈 premium floating effect
+                    isSettingsLoaded = true;
+                    navigateCheck();
+                  }
+                  if (state is FetchSystemSettingsFailure) {
+                    isSettingsLoaded = true;
+                    navigateCheck();
+                  }
+                },
+              ),
+            ],
+            child: AnnotatedRegion<SystemUiOverlayStyle>(
+              value: const SystemUiOverlayStyle(
+                statusBarColor: Colors.white,
+                statusBarIconBrightness: Brightness.dark,
+                systemNavigationBarColor: Colors.white,
+                systemNavigationBarIconBrightness: Brightness.dark,
+              ),
+              child: Scaffold(
+                backgroundColor: context.color.territoryColor,
+                bottomNavigationBar: _companyLogo(),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 25,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Lottie.asset(
-                        'assets/lottie/spsp.json',
-                        height: 200,
-                        fit: BoxFit.contain,
-                        controller: _lottieController,
-                        repeat: true,
-                        onLoaded: (composition) {
-                          _lottieController
-                            ..duration = composition.duration + const Duration(seconds: 2)
-                            ..forward();
-                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: CustomImage(
+                            src: AppIcons.splashLogo,
+                            size: Size(200, 200),
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      SlideTransition(
+                        position: _nameSlide,
+                        child: FadeTransition(
+                          opacity: _nameOpacity,
+                          child: CustomText(
+                            AppConfig.applicationName,
+                            fontSize: context.font.xxLarge,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 10),
-                CustomText(
-                  AppConfig.applicationName,
-                  fontSize: context.font.xxLarge,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
-    )
+          )
         : Material(
-      child: Center(
-        child: NoInternet(
-          onRetry: () {
-            setState(() {});
-          },
-        ),
-      ),
-    );
+            child: Center(
+              child: NoInternet(
+                onRetry: () {
+                  setState(() {});
+                },
+              ),
+            ),
+          );
   }
 }

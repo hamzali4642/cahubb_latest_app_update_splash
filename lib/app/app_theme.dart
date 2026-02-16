@@ -76,10 +76,10 @@ final appThemeData = {
 
     // Switch theme configuration
     switchTheme: SwitchThemeData(
-      thumbColor: const WidgetStatePropertyAll(territoryColor_),
+      thumbColor: const WidgetStatePropertyAll(territoryColorDark),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return territoryColor_.withValues(alpha: 0.3);
+          return territoryColorDark.withValues(alpha: 0.3);
         }
         return primaryColor_.withValues(alpha: 0.2);
       }),

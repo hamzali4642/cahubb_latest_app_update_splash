@@ -42,6 +42,18 @@ class MyItemState extends State<ItemsScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  void _jumpToTabSafely(int index) {
+    if (!mounted) return;
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(index);
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients) return;
+      _pageController.jumpToPage(index);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion(
@@ -72,7 +84,7 @@ class MyItemState extends State<ItemsScreen> with TickerProviderStateMixin {
                       selectItemStatus = section["status"]!;
                       //itemScreenCurrentPage = index;
                       setState(() {});
-                      _pageController.jumpToPage(index);
+                      _jumpToTabSafely(index);
                     },
                     name: section['title']!.translate(context),
                   );

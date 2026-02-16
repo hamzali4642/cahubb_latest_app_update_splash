@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:eClassify/data/model/version.dart';
 import 'package:eClassify/utils/constant.dart';
 import 'package:eClassify/utils/version_utility.dart';
@@ -30,14 +28,13 @@ class AppUpdateCubit extends Cubit<AppUpdateState> {
     required String remoteVersion,
     required bool forceUpdate,
   }) async {
-    log('$state');
     if (state is AppUpdateCheckCompleted) return;
     try {
       final required = Version.fromString(remoteVersion);
       final current = await VersionUtility.currentPackageVersion;
-      log('${required.toString()} ${current.toString()}');
       final isUpdateAvailable = await VersionUtility.isUpdateAvailable(
         required,
+        current: current,
       );
       if (isUpdateAvailable) {
         Constant.isUpdateAvailable = true;
@@ -50,9 +47,7 @@ class AppUpdateCubit extends Cubit<AppUpdateState> {
           ),
         );
       }
-    } on Exception catch (e, stack) {
-      log(e.toString(), name: 'checkForUpdates');
-      log('$stack', name: 'checkForUpdates');
+    } on Exception {
     } finally {
       /// We emit this state to avoid re-showing the update dialog.
       ///

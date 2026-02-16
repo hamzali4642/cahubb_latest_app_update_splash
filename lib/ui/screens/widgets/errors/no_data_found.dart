@@ -43,7 +43,8 @@ class NoDataFound extends StatelessWidget {
                 Flexible(
                   child: UiUtils.getSvg(
                     AppIcons.no_data_found,
-                    height: height ?? null,
+                    height: height,
+                    color: context.color.territoryColor,
                   ),
                 ),
               const SizedBox(height: 20),

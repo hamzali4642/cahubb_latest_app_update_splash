@@ -76,6 +76,7 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
       emit(FetchSystemSettingsSuccess(settings: settings));
     } on Exception catch (e, st) {
       log('$e $st');
+      emit(FetchSystemSettingsFailure(e.toString()));
     }
   }
 

@@ -68,8 +68,11 @@ class MainActivityState extends State<MainActivity> {
   final PageController _pageController = PageController();
   final BottomNavigationController _bottomNavigationController =
       BottomNavigationController();
+  final List<Widget?> _lazyPages = List<Widget?>.filled(4, null);
+  late final VoidCallback _bottomNavListener;
 
   Timer? _timer;
+  Timer? _versionCheckTimer;
 
   @override
   void initState() {
@@ -85,38 +88,31 @@ class MainActivityState extends State<MainActivity> {
           settings.getSetting(SystemSetting.demoMode) ?? false;
     }
 
-    ///This will check for update
-    versionCheck(settings);
-
-    if (widget.itemSlug != null) {
-      Navigator.of(context).pushNamed(
-        Routes.adDetailsScreen,
-        arguments: {"slug": widget.itemSlug!},
-      );
-    }
-    if (widget.sellerId != null) {
-      Navigator.pushNamed(
-        context,
-        Routes.sellerProfileScreen,
-        arguments: {"sellerId": int.parse(widget.sellerId!)},
-      );
-    }
-
-    _bottomNavigationController.addListener(() {
-      _pageController.jumpToPage(_bottomNavigationController.index);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _scheduleVersionCheck(settings);
+      _handleDeepLinks();
     });
+
+    _bottomNavListener = () {
+      _syncPageWithBottomNav();
+    };
+    _bottomNavigationController.addListener(_bottomNavListener);
   }
 
   void versionCheck(FetchSystemSettingsCubit settings) async {
-    final remoteVersion =
-        settings.getSetting(
-              Platform.isIOS
-                  ? SystemSetting.iosVersion
-                  : SystemSetting.androidVersion,
-            )
-            as String;
+    final remoteVersion = settings
+        .getSetting(
+          Platform.isIOS
+              ? SystemSetting.iosVersion
+              : SystemSetting.androidVersion,
+        )
+        ?.toString();
+    if (remoteVersion == null || remoteVersion.isEmpty) {
+      return;
+    }
     final forceUpdate =
-        settings.getSetting(SystemSetting.forceUpdate) as String == '1';
+        settings.getSetting(SystemSetting.forceUpdate)?.toString() == '1';
 
     context.read<AppUpdateCubit>().checkForUpdates(
       remoteVersion: remoteVersion,
@@ -126,10 +122,78 @@ class MainActivityState extends State<MainActivity> {
 
   @override
   void dispose() {
+    _bottomNavigationController.removeListener(_bottomNavListener);
     _pageController.dispose();
     _bottomNavigationController.dispose();
+    _versionCheckTimer?.cancel();
     _timer?.cancel();
     super.dispose();
+  }
+
+  void _syncPageWithBottomNav() {
+    if (!mounted) return;
+    final targetPage = _bottomNavigationController.index;
+
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(targetPage);
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients) return;
+      _pageController.jumpToPage(targetPage);
+    });
+  }
+
+  void _scheduleVersionCheck(FetchSystemSettingsCubit settings) {
+    _versionCheckTimer?.cancel();
+    _versionCheckTimer = Timer(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      versionCheck(settings);
+    });
+  }
+
+  void _handleDeepLinks() {
+    if (widget.itemSlug != null) {
+      Navigator.of(context).pushNamed(
+        Routes.adDetailsScreen,
+        arguments: {"slug": widget.itemSlug!},
+      );
+      return;
+    }
+    if (widget.sellerId != null) {
+      Navigator.pushNamed(
+        context,
+        Routes.sellerProfileScreen,
+        arguments: {"sellerId": int.parse(widget.sellerId!)},
+      );
+    }
+  }
+
+  Widget _buildPageAtIndex(int index) {
+    final cached = _lazyPages[index];
+    if (cached != null) return cached;
+
+    late final Widget page;
+    switch (index) {
+      case 0:
+        page = HomeScreen(from: widget.from);
+        break;
+      case 1:
+        page = const ChatListScreen();
+        break;
+      case 2:
+        page = const ItemsScreen();
+        break;
+      case 3:
+        page = const ProfileScreen();
+        break;
+      default:
+        page = const SizedBox.shrink();
+    }
+
+    _lazyPages[index] = page;
+    return page;
   }
 
   @override
@@ -161,7 +225,7 @@ class MainActivityState extends State<MainActivity> {
           }
         },
         child: Scaffold(
-          backgroundColor: context.color.primaryColor,
+          backgroundColor: Colors.transparent,
           bottomNavigationBar: CustomBottomNavigationBar(
             controller: _bottomNavigationController,
           ),
@@ -180,15 +244,11 @@ class MainActivityState extends State<MainActivity> {
             },
             child: Stack(
               children: <Widget>[
-                PageView(
+                PageView.builder(
                   controller: _pageController,
+                  itemCount: 4,
                   physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    HomeScreen(from: widget.from),
-                    ChatListScreen(),
-                    ItemsScreen(),
-                    const ProfileScreen(),
-                  ],
+                  itemBuilder: (context, index) => _buildPageAtIndex(index),
                 ),
                 if (Constant.maintenanceMode == "1") MaintenanceMode(),
               ],

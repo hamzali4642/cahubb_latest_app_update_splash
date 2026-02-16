@@ -23,7 +23,7 @@ class SliderWidget extends StatefulWidget {
 class _SliderWidgetState extends State<SliderWidget>
     with AutomaticKeepAliveClientMixin {
   final ValueNotifier<int> _bannerIndex = ValueNotifier(0);
-  late Timer _timer;
+  Timer? _timer;
   int bannersLength = 0;
   final PageController _pageController = PageController();
 
@@ -39,14 +39,18 @@ class _SliderWidgetState extends State<SliderWidget>
   @override
   void dispose() {
     _bannerIndex.dispose();
-    _timer.cancel();
+    _timer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
 
   void _startAutoSlider() {
     // Set up a timer to automatically change the banner index
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+      if (!mounted || !_pageController.hasClients || bannersLength <= 1) {
+        return;
+      }
       final int nextPage = _bannerIndex.value + 1;
       if (nextPage < bannersLength) {
         _bannerIndex.value = nextPage;

@@ -164,6 +164,17 @@ class _ProfileScreenState extends State<ProfileScreen>
   @override
   bool get wantKeepAlive => true;
 
+  Color _glassSurfaceColor(
+    BuildContext context, {
+    double lightAlpha = 0.88,
+    double darkAlpha = 0.78,
+  }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return context.color.secondaryColor.withValues(
+      alpha: isDark ? darkAlpha : lightAlpha,
+    );
+  }
+
   Widget profileHeader() {
     bool isAuthenticUser = HiveUtils.isUserAuthenticated();
     return BlocBuilder<
@@ -245,7 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     return AnnotatedRegion(
       value: SystemUiOverlayStyle(statusBarColor: context.color.secondaryColor),
       child: Scaffold(
-        backgroundColor: context.color.primaryColor,
+        backgroundColor: Colors.transparent,
         appBar: appbarWidget(),
         body: MultiBlocListener(
           listeners: [
@@ -352,7 +363,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       height: 60,
       margin: const EdgeInsets.only(top: 0.5, bottom: 3),
       decoration: BoxDecoration(
-        color: context.color.secondaryColor,
+        color: _glassSurfaceColor(context),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
@@ -408,7 +419,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: context.color.backgroundColor,
+                      color: _glassSurfaceColor(
+                        context,
+                        lightAlpha: 0.72,
+                        darkAlpha: 0.66,
+                      ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: FittedBox(
@@ -1143,6 +1158,11 @@ class _ProfileScreenState extends State<ProfileScreen>
       showBackButton: false,
       bottomHeight: 10,
       title: "myProfile".translate(context),
+      backgroundColor: _glassSurfaceColor(
+        context,
+        lightAlpha: 0.82,
+        darkAlpha: 0.72,
+      ),
       actions: [
         if (HiveUtils.isUserAuthenticated())
           setIconButtons(

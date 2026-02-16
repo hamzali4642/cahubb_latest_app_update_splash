@@ -67,8 +67,6 @@ dependencies:
   android_intent_plus: 6.0.0
   google_cloud_translation: ^0.0.4
   flutter_launcher_icons: ^0.13.1
-
-
   #payment gateways
   flutter_stripe: ^11.5.0
   in_app_purchase: ^3.2.1
@@ -101,6 +99,7 @@ flutter:
 
   assets:
     - assets/
+    - assets/images/
     - assets/svg/
     - assets/svg/bottomnav/
     - assets/svg/Logo/
@@ -108,6 +107,7 @@ flutter:
     - assets/svg/payment/
     - assets/languages/
     - assets/lottie/
+    - assets/rive/
     - assets/map/
 
 

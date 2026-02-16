@@ -59,7 +59,9 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
       child: SizedBox(
         height: bottomNavHeight,
         child: ColoredBox(
-          color: context.color.secondaryColor,
+          color: context.color.secondaryColor.withValues(
+            alpha: Theme.of(context).brightness == Brightness.dark ? 0.78 : 0.86,
+          ),
           child: ListenableBuilder(
             listenable: widget.controller,
             builder: (context, child) {

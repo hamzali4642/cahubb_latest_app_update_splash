@@ -1,4 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:eClassify/app_config.dart';
 import 'package:eClassify/data/cubits/auth/user_profile_cubit.dart';
 import 'package:eClassify/data/cubits/category/fetch_category_cubit.dart';
 import 'package:eClassify/data/cubits/chat/blocked_users_list_cubit.dart';
@@ -40,6 +44,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:staggered_grid_view/flutter_staggered_grid_view.dart';
 
 const double sidePadding = 10;
+const double topPatternCoverageHeight = 132;
 
 class HomeScreen extends StatefulWidget {
   final String? from;
@@ -59,16 +64,21 @@ class HomeScreenState extends State<HomeScreen>
   bool get wantKeepAlive => true;
 
   final ScrollController _scrollController = ScrollController();
+  Timer? _allItemsFetchTimer;
+  Timer? _secondaryApiTimer;
+  String? _lastPrimaryFetchKey;
+  String? _lastAllItemsFetchKey;
 
   @override
   void initState() {
     super.initState();
 
-    _initialConfiguration();
-
-    if (HiveUtils.isUserAuthenticated()) {
-      _initialApiCalls();
-    }
+    initializeSettings();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      loadInitialInfo();
+      _scheduleSecondaryApiCalls();
+    });
 
     _scrollController.addListener(() {
       if (_scrollController.isEndReached()) {
@@ -81,9 +91,14 @@ class HomeScreenState extends State<HomeScreen>
     });
   }
 
-  void _initialConfiguration() async {
-    initializeSettings();
-    loadInitialInfo();
+  void _scheduleSecondaryApiCalls() {
+    if (!HiveUtils.isUserAuthenticated()) return;
+
+    _secondaryApiTimer?.cancel();
+    _secondaryApiTimer = Timer(const Duration(milliseconds: 900), () {
+      if (!mounted) return;
+      _initialApiCalls();
+    });
   }
 
   void _initialApiCalls() {
@@ -100,16 +115,66 @@ class HomeScreenState extends State<HomeScreen>
     HelperUtils.maybeSubscribeToTopics();
   }
 
-  void loadInitialInfo() async {
-    final location = AppSession.currentLocation;
-    context.read<FetchHomeScreenCubit>().fetch(location: location);
-    context.read<FetchHomeAllItemsCubit>().fetch(location: location);
-    context.read<SliderCubit>().fetchSliders(location: location);
+  void loadInitialInfo({bool force = false}) {
+    _fetchPrimaryHomeData(location: AppSession.currentLocation, force: force);
+    _scheduleAllItemsFetch(
+      location: AppSession.currentLocation,
+      force: force,
+      delay: force ? Duration.zero : const Duration(milliseconds: 350),
+    );
     context.read<FetchCategoryCubit>().fetchCategories();
+  }
+
+  void _fetchPrimaryHomeData({LeafLocation? location, bool force = false}) {
+    final effectiveLocation = location ?? AppConfig.defaultLocation;
+    final fetchKey = _locationRequestKey(effectiveLocation);
+
+    if (!force && _lastPrimaryFetchKey == fetchKey) {
+      return;
+    }
+
+    _lastPrimaryFetchKey = fetchKey;
+    context.read<FetchHomeScreenCubit>().fetch(location: effectiveLocation);
+    context.read<SliderCubit>().fetchSliders(location: effectiveLocation);
+  }
+
+  void _scheduleAllItemsFetch({
+    LeafLocation? location,
+    bool force = false,
+    Duration delay = const Duration(milliseconds: 350),
+  }) {
+    final effectiveLocation = location ?? AppConfig.defaultLocation;
+    final fetchKey = _locationRequestKey(effectiveLocation);
+
+    if (!force && _lastAllItemsFetchKey == fetchKey) {
+      return;
+    }
+
+    _allItemsFetchTimer?.cancel();
+    _allItemsFetchTimer = Timer(delay, () {
+      if (!mounted) return;
+      _fetchAllItems(location: effectiveLocation, force: force);
+    });
+  }
+
+  void _fetchAllItems({required LeafLocation location, bool force = false}) {
+    final fetchKey = _locationRequestKey(location);
+    if (!force && _lastAllItemsFetchKey == fetchKey) {
+      return;
+    }
+
+    _lastAllItemsFetchKey = fetchKey;
+    context.read<FetchHomeAllItemsCubit>().fetch(location: location);
+  }
+
+  String _locationRequestKey(LeafLocation location) {
+    return jsonEncode(location.toApiJson());
   }
 
   @override
   void dispose() {
+    _allItemsFetchTimer?.cancel();
+    _secondaryApiTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -130,9 +195,8 @@ class HomeScreenState extends State<HomeScreen>
     super.build(context);
     return BlocListener<LeafLocationCubit, LeafLocation?>(
       listener: (context, state) {
-        context.read<FetchHomeScreenCubit>().fetch(location: state);
-        context.read<FetchHomeAllItemsCubit>().fetch(location: state);
-        context.read<SliderCubit>().fetchSliders(location: state);
+        _fetchPrimaryHomeData(location: state);
+        _scheduleAllItemsFetch(location: state);
         context.read<FetchCurrenciesCubit>().fetchCurrencies();
       },
       child: SafeArea(
@@ -145,94 +209,108 @@ class HomeScreenState extends State<HomeScreen>
                 start: sidePadding,
                 end: sidePadding,
               ),
-              child: LocationWidget(),
+              child: const LocationWidget(),
             ),
             backgroundColor: Colors.transparent,
             actions: [
               //if (kDebugMode) LogLevelToggler(),
             ],
           ),
-          backgroundColor: context.color.primaryColor,
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: sidePadding),
-            child: RefreshIndicator(
-              triggerMode: RefreshIndicatorTriggerMode.anywhere,
-              color: context.color.territoryColor,
-              onRefresh: () async => loadInitialInfo(),
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                controller: _scrollController,
-                slivers: [
-                  SliverToBoxAdapter(child: HomeSearchField()),
-                  SliverToBoxAdapter(child: SliderWidget()),
-                  SliverToBoxAdapter(child: CategoryWidgetHome()),
-                  BlocBuilder<FetchHomeScreenCubit, FetchHomeScreenState>(
-                    builder: (context, state) {
-                      if (state is FetchHomeScreenSuccess) {
-                        if (state.sections.isNotEmpty)
-                          return SliverList.builder(
-                            itemCount: state.sections.length,
-                            itemBuilder: (context, index) {
-                              return FeaturedSectionWidget(
-                                section: state.sections[index],
-                              );
-                            },
-                          );
-                        else
-                          return SliverToBoxAdapter(child: const SizedBox());
-                      }
-                      if (state is FetchHomeScreenFail) {
-                        if (state.error == 'no-internet') {
-                          return SliverToBoxAdapter(
-                            child: NoInternet(onRetry: loadInitialInfo),
-                          );
-                        }
-                        return SliverToBoxAdapter(child: SomethingWentWrong());
-                      }
-                      return SliverToBoxAdapter(child: shimmerEffect());
-                    },
-                  ),
-                  SliverToBoxAdapter(
-                    child: Constant.isGoogleBannerAdsEnabled == "1"
-                        ? AdBannerWidget(
-                            key: ValueKey('home_banner'),
-                            margin: EdgeInsets.symmetric(vertical: 10),
-                          )
-                        : 10.vGap,
-                  ),
-                  SliverToBoxAdapter(
-                    child:
-                        BlocBuilder<
-                          FetchHomeAllItemsCubit,
-                          FetchHomeAllItemsState
-                        >(
-                          builder: (context, state) {
-                            if (state is FetchHomeAllItemsSuccess) {
-                              final isGlobalList =
-                                  state.message?.contains('No Ads found') ??
-                                  false;
-                              if (isGlobalList) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 10.0),
-                                  child: CustomText(
-                                    state.message!,
-                                    fontSize: context.font.large,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                );
-                              }
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                  ),
-                  AllItemsWidget(onTapRetry: loadInitialInfo),
-                  SliverToBoxAdapter(
-                    child: const SizedBox(height: kToolbarHeight / 2),
-                  ),
-                ],
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                top: topPatternCoverageHeight,
+                child: ColoredBox(color: context.color.primaryColor),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: sidePadding),
+                child: RefreshIndicator(
+                  triggerMode: RefreshIndicatorTriggerMode.anywhere,
+                  color: context.color.territoryColor,
+                  onRefresh: () async => loadInitialInfo(force: true),
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    controller: _scrollController,
+                    slivers: [
+                      const SliverToBoxAdapter(child: HomeSearchField()),
+                      const SliverToBoxAdapter(child: SliderWidget()),
+                      const SliverToBoxAdapter(child: CategoryWidgetHome()),
+                      BlocBuilder<FetchHomeScreenCubit, FetchHomeScreenState>(
+                        builder: (context, state) {
+                          if (state is FetchHomeScreenSuccess) {
+                            if (state.sections.isNotEmpty)
+                              return SliverList.builder(
+                                itemCount: state.sections.length,
+                                itemBuilder: (context, index) {
+                                  return FeaturedSectionWidget(
+                                    section: state.sections[index],
+                                  );
+                                },
+                              );
+                            else
+                              return SliverToBoxAdapter(
+                                child: const SizedBox(),
+                              );
+                          }
+                          if (state is FetchHomeScreenFail) {
+                            if (state.error == 'no-internet') {
+                              return SliverToBoxAdapter(
+                                child: NoInternet(onRetry: loadInitialInfo),
+                              );
+                            }
+                            return SliverToBoxAdapter(
+                              child: SomethingWentWrong(),
+                            );
+                          }
+                          return SliverToBoxAdapter(child: shimmerEffect());
+                        },
+                      ),
+                      SliverToBoxAdapter(
+                        child: Constant.isGoogleBannerAdsEnabled == "1"
+                            ? AdBannerWidget(
+                                key: ValueKey('home_banner'),
+                                margin: EdgeInsets.symmetric(vertical: 10),
+                              )
+                            : 10.vGap,
+                      ),
+                      SliverToBoxAdapter(
+                        child:
+                            BlocBuilder<
+                              FetchHomeAllItemsCubit,
+                              FetchHomeAllItemsState
+                            >(
+                              builder: (context, state) {
+                                if (state is FetchHomeAllItemsSuccess) {
+                                  final isGlobalList =
+                                      state.message?.contains('No Ads found') ??
+                                      false;
+                                  if (isGlobalList) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 10.0,
+                                      ),
+                                      child: CustomText(
+                                        state.message!,
+                                        fontSize: context.font.large,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    );
+                                  }
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                      ),
+                      AllItemsWidget(onTapRetry: loadInitialInfo),
+                      SliverToBoxAdapter(
+                        child: const SizedBox(height: kToolbarHeight / 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -249,7 +327,7 @@ class HomeScreenState extends State<HomeScreen>
             child: CustomShimmer(height: 20, width: 150),
           ),
           10.vGap,
-          Container(
+          SizedBox(
             height: 214,
             child: ListView.separated(
               shrinkWrap: true,
