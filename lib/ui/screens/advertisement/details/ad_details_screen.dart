@@ -590,7 +590,7 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                   setPriceAndStatus(),
                   if (isAddedByMe) setRejectedReason(),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (model.translatedAddress != null)
@@ -2245,18 +2245,23 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
     return Padding(
       padding: const EdgeInsets.only(top: 2.0),
       child: Row(
-        // crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SvgPicture.asset(
-            AppIcons.location,
-            width: 30,
-            height: 30,
-            colorFilter: ColorFilter.mode(
-              context.color.textDefaultColor.withValues(alpha: 0.5),
-              BlendMode.srcIn,
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: ClipRect(
+              child: Align(
+                alignment: Alignment.centerRight,
+                widthFactor: 0.76,
+                child: Icon(
+                  Icons.location_on_outlined,
+                  size: 17,
+                  color: context.color.textDefaultColor.withValues(alpha: 0.5),
+                ),
+              ),
             ),
           ),
-          // const SizedBox(width: 2),
+          const SizedBox(width: 2),
           Expanded(
             child: CustomText(
               address,
