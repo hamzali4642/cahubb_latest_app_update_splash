@@ -162,8 +162,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
       phoneInputController.phoneCode = user.countryCode;
       phoneInputController.regionCode = user.regionCode;
 
-      adTitleControllers[HiveUtils.getLanguage()['code']] =
-          TextEditingController();
+      // Controllers are initialized from system language list in build().
     }
 
     // --- Slug auto-generation logic ---
@@ -220,6 +219,41 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
     slug = slug.replaceAll(RegExp(r'^-+|-+$'), '');
 
     return slug;
+  }
+
+  String _buildTranslationsJson() {
+    // Keep payload consistent whether custom fields screen is opened or skipped.
+    Map<String, Map<String, String>> translations = {};
+
+    for (final lang in languages) {
+      if (lang is! Map) continue;
+
+      final langIdValue = lang['id'];
+      final langCodeValue = lang['code'];
+      if (langIdValue == null || langCodeValue == null) continue;
+
+      final langId = langIdValue.toString();
+      final langCode = langCodeValue.toString();
+
+      if (langCode == defaultLangCode) continue;
+
+      final name = adTitleControllers[langCode]?.text.trim() ?? '';
+      final description = adDescriptionControllers[langCode]?.text.trim() ?? '';
+
+      final langTranslations = <String, String>{};
+      if (name.isNotEmpty) {
+        langTranslations['name'] = name;
+      }
+      if (description.isNotEmpty) {
+        langTranslations['description'] = description;
+      }
+
+      if (langTranslations.isNotEmpty) {
+        translations[langId] = langTranslations;
+      }
+    }
+
+    return json.encode(translations);
   }
 
   bool isJobCategory() {
@@ -391,37 +425,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                           .map((element) => element as File)
                           .toList();
 
-                      // Build translations map for name and description (as strings, all language IDs present)
-                      Map<String, Map<String, String>> translations = {};
-
-                      for (var lang in languages) {
-                        final langId = lang['id'].toString(); // e.g., "1", "2"
-                        final langCode = lang['code']; // e.g., "en", "fr"
-
-                        if (langCode == defaultLangCode)
-                          continue; // Skip default language
-
-                        final name =
-                            adTitleControllers[langCode]?.text.trim() ?? '';
-                        final description =
-                            adDescriptionControllers[langCode]?.text.trim() ??
-                            '';
-
-                        final langTranslations = <String, String>{};
-
-                        if (name.isNotEmpty) {
-                          langTranslations['name'] = name;
-                        }
-                        if (description.isNotEmpty) {
-                          langTranslations['description'] = description;
-                        }
-
-                        if (langTranslations.isNotEmpty) {
-                          translations[langId] = langTranslations;
-                        }
-                      }
-
-                      print("translations***$translations");
+                      final translationsJson = _buildTranslationsJson();
 
                       if (_pickTitleImage.pickedFile == null &&
                           titleImageURL == "") {
@@ -458,7 +462,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                           "min_salary": minSalaryController.text,
                         if (isJobCategory())
                           "max_salary": maxSalaryController.text,
-                        "translations": json.encode(translations),
+                        "translations": translationsJson,
                       });
 
                       screenStack++;
@@ -1303,6 +1307,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
           : selectedCategoryList.join(','),
       if (isJobCategory()) "min_salary": minSalaryController.text,
       if (isJobCategory()) "max_salary": maxSalaryController.text,
+      "translations": _buildTranslationsJson(),
     });
   }
 }

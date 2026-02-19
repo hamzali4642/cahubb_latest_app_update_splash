@@ -13,9 +13,9 @@ extension NumberFormatter on double {
 
   String get decimalFormat {
     final supportsLocale = NumberFormat.localeExists(AppSession.currentLocale);
-    final numberFormat = NumberFormat.decimalPatternDigits(
-      locale: supportsLocale ? AppSession.currentLocale : Intl.defaultLocale,
-      decimalDigits: 2,
+    final numberFormat = NumberFormat(
+      '#,##0.##',
+      supportsLocale ? AppSession.currentLocale : Intl.defaultLocale,
     );
     return numberFormat.format(this);
   }

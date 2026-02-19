@@ -234,6 +234,7 @@ class _SignupScreenState extends CloudState<SignupScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: SkipButtonWidget(
+                  labelKey: 'continueAsGuest',
                   onTap: () {
                     HelperUtils.killPreviousPages(context, Routes.main, {
                       "from": "login",

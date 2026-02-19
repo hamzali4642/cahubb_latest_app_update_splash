@@ -152,6 +152,7 @@ class LoginScreenState extends State<LoginScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: SkipButtonWidget(
+                    labelKey: 'continueAsGuest',
                     onTap: () {
                       HelperUtils.killPreviousPages(context, Routes.main, {
                         "from": "login",
@@ -316,7 +317,14 @@ class LoginScreenState extends State<LoginScreen> {
         ),
         Align(
           alignment: AlignmentDirectional.centerEnd,
-          child: MaterialButton(
+          child: TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              foregroundColor: context.color.textLightColor,
+            ),
             onPressed: () {
               // Validate phone before showing bottom sheet
               String? prefilledPhone;
@@ -342,7 +350,7 @@ class LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         UiUtils.buildButton(
           context,
           onPressed: _onTapContinue,
@@ -391,7 +399,14 @@ class LoginScreenState extends State<LoginScreen> {
         ),
         Align(
           alignment: AlignmentDirectional.centerEnd,
-          child: MaterialButton(
+          child: TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              foregroundColor: context.color.textLightColor,
+            ),
             onPressed: () {
               // Validate email before showing bottom sheet
               String? prefilledEmail;
@@ -419,7 +434,7 @@ class LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         ListenableBuilder(
           listenable: Listenable.merge([_emailController, _passwordController]),
           builder: (context, child) {
@@ -686,6 +701,7 @@ class LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SkipButtonWidget(
+            labelKey: 'continueAsGuest',
             onTap: () {
               HelperUtils.killPreviousPages(context, Routes.main, {
                 "from": "login",

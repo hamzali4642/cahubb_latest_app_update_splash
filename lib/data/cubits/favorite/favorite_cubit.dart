@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:eClassify/data/model/item/item_model.dart';
 import 'package:eClassify/data/repositories/item/favourites_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,13 +18,14 @@ class FavoriteFetchSuccess extends FavoriteState {
   final bool hasMore;
   final int page;
 
-  FavoriteFetchSuccess(
-      {required this.favorite,
-      required this.isLoadingMore,
-      required this.totalFavoriteCount,
-      required this.hasMoreFetchError,
-      required this.page,
-      required this.hasMore});
+  FavoriteFetchSuccess({
+    required this.favorite,
+    required this.isLoadingMore,
+    required this.totalFavoriteCount,
+    required this.hasMoreFetchError,
+    required this.page,
+    required this.hasMore,
+  });
 
   FavoriteFetchSuccess copyWith({
     List<ItemModel>? favorite,
@@ -58,23 +61,29 @@ class FavoriteCubit extends Cubit<FavoriteState> {
     try {
       emit(FavoriteFetchInProgress());
       final result = await favoriteRepository.fetchFavorites(page: 1);
-      emit(FavoriteFetchSuccess(
+      emit(
+        FavoriteFetchSuccess(
           favorite: result.modelList,
           totalFavoriteCount: result.total,
           hasMoreFetchError: false,
           page: 1,
           isLoadingMore: false,
-          hasMore: (result.modelList.length < result.total)));
+          hasMore: (result.modelList.length < result.total),
+        ),
+      );
     } catch (e) {
       if (e.toString() == "No Data Found") {
         //incase of 0 Favorite length - make it success for fresh users
-        emit(FavoriteFetchSuccess(
+        emit(
+          FavoriteFetchSuccess(
             favorite: [],
             isLoadingMore: false,
             totalFavoriteCount: 0,
             page: 1,
             hasMoreFetchError: false,
-            hasMore: false));
+            hasMore: false,
+          ),
+        );
       } else {
         emit(FavoriteFetchFailure(e.toString()));
       }
@@ -95,72 +104,98 @@ class FavoriteCubit extends Cubit<FavoriteState> {
         }
         emit((state as FavoriteFetchSuccess).copyWith(isLoadingMore: true));
         final result = await favoriteRepository.fetchFavorites(
-            page: (state as FavoriteFetchSuccess).page + 1);
+          page: (state as FavoriteFetchSuccess).page + 1,
+        );
         List<ItemModel> updatedResults =
             (state as FavoriteFetchSuccess).favorite;
         updatedResults.addAll(result.modelList);
-        emit(FavoriteFetchSuccess(
+        emit(
+          FavoriteFetchSuccess(
             isLoadingMore: false,
             favorite: updatedResults,
             totalFavoriteCount: result.total,
             hasMoreFetchError: false,
             page: (state as FavoriteFetchSuccess).page + 1,
-            hasMore: updatedResults.length < result.total));
+            hasMore: updatedResults.length < result.total,
+          ),
+        );
       } catch (e) {
-        emit(FavoriteFetchSuccess(
+        emit(
+          FavoriteFetchSuccess(
             isLoadingMore: false,
             favorite: (state as FavoriteFetchSuccess).favorite,
             hasMoreFetchError: (e.toString() == "No Data Found") ? false : true,
             page: (state as FavoriteFetchSuccess).page + 1,
             totalFavoriteCount:
                 (state as FavoriteFetchSuccess).totalFavoriteCount,
-            hasMore: (state as FavoriteFetchSuccess).hasMore));
+            hasMore: (state as FavoriteFetchSuccess).hasMore,
+          ),
+        );
       }
     }
   }
 
   void addFavoriteitem(ItemModel model) {
-    if (state is FavoriteFetchSuccess) {
-      List<ItemModel> favoriteList = [];
+    final currentState = state;
+    final favoriteList = currentState is FavoriteFetchSuccess
+        ? List<ItemModel>.from(currentState.favorite)
+        : <ItemModel>[];
 
+    final existingIndex = favoriteList.indexWhere(
+      (item) => item.id == model.id,
+    );
+
+    if (existingIndex == -1) {
       model.totalLikes = (model.totalLikes ?? 0) + 1;
-
       favoriteList.insert(0, model);
-      favoriteList.addAll((state as FavoriteFetchSuccess).favorite);
-
-      emit(FavoriteFetchSuccess(
-          isLoadingMore: false,
-          favorite: List.from(favoriteList),
-          hasMoreFetchError: true,
-          page: (state as FavoriteFetchSuccess).page,
-          totalFavoriteCount:
-              (state as FavoriteFetchSuccess).totalFavoriteCount,
-          hasMore: (state as FavoriteFetchSuccess).hasMore));
+    } else {
+      favoriteList[existingIndex] = model;
     }
+
+    emit(
+      FavoriteFetchSuccess(
+        isLoadingMore: false,
+        favorite: favoriteList,
+        hasMoreFetchError: false,
+        page: currentState is FavoriteFetchSuccess ? currentState.page : 1,
+        totalFavoriteCount: currentState is FavoriteFetchSuccess
+            ? math.max(currentState.totalFavoriteCount, favoriteList.length)
+            : favoriteList.length,
+        hasMore: currentState is FavoriteFetchSuccess
+            ? currentState.hasMore
+            : false,
+      ),
+    );
   }
 
   void removeFavoriteItem(ItemModel model) {
     if (state is FavoriteFetchSuccess) {
-      final favorite = (state as FavoriteFetchSuccess).favorite;
+      final currentState = state as FavoriteFetchSuccess;
+      final favorite = List<ItemModel>.from(currentState.favorite);
 
       // Find the index of the item to be removed
-      int indexToRemove =
-          favorite.indexWhere((element) => element.id == model.id);
+      int indexToRemove = favorite.indexWhere(
+        (element) => element.id == model.id,
+      );
       if (indexToRemove != -1) {
         // Decrement totalLikes of the item being removed
         ItemModel removedItem = favorite[indexToRemove];
-        removedItem.totalLikes = (removedItem.totalLikes ?? 0) - 1;
+        removedItem.totalLikes = math.max(0, (removedItem.totalLikes ?? 0) - 1);
         favorite.removeAt(indexToRemove);
 
-        emit(FavoriteFetchSuccess(
-          isLoadingMore: false,
-          favorite: List.from(favorite),
-          hasMoreFetchError: true,
-          page: (state as FavoriteFetchSuccess).page,
-          totalFavoriteCount:
-              (state as FavoriteFetchSuccess).totalFavoriteCount,
-          hasMore: (state as FavoriteFetchSuccess).hasMore,
-        ));
+        emit(
+          FavoriteFetchSuccess(
+            isLoadingMore: false,
+            favorite: favorite,
+            hasMoreFetchError: false,
+            page: currentState.page,
+            totalFavoriteCount: math.max(
+              0,
+              currentState.totalFavoriteCount - 1,
+            ),
+            hasMore: currentState.hasMore,
+          ),
+        );
       }
     }
   }

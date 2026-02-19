@@ -643,7 +643,10 @@ class UiUtils {
     } else if (category?.priceOptional == 1) {
       if (item.price != null) {
         return CustomText(
-          item.formattedPrice ?? item.price!.currencyFormat,
+          normalizePriceText(
+            formattedPrice: item.formattedPrice,
+            fallbackPrice: item.price!,
+          ),
           color: color,
           fontWeight: FontWeight.bold,
           softWrap: true,
@@ -654,7 +657,10 @@ class UiUtils {
       }
     } else {
       return CustomText(
-        item.formattedPrice ?? (item.price ?? 0.0).currencyFormat,
+        normalizePriceText(
+          formattedPrice: item.formattedPrice,
+          fallbackPrice: item.price ?? 0.0,
+        ),
         color: color,
         fontWeight: FontWeight.bold,
         softWrap: true,
@@ -665,6 +671,16 @@ class UiUtils {
     }
 
     return SizedBox.shrink();
+  }
+
+  static String normalizePriceText({
+    required String? formattedPrice,
+    required double fallbackPrice,
+  }) {
+    final value = (formattedPrice != null && formattedPrice.trim().isNotEmpty)
+        ? formattedPrice.trim()
+        : fallbackPrice.currencyFormat;
+    return value.replaceFirst(RegExp(r'([.,])0+$'), '');
   }
 
   static String formatDisplayAddress(String address) {

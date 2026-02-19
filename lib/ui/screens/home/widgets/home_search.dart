@@ -7,6 +7,7 @@ import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/hive_keys.dart' show HiveKeys;
 import 'package:eClassify/utils/json_helper.dart';
+import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
@@ -224,8 +225,14 @@ class _HomeSearchFieldState extends State<HomeSearchField> {
                   side: BorderSide(color: context.color.borderColor),
                 ),
                 child: InkWell(
-                  onTap: () =>
-                      Navigator.pushNamed(context, Routes.favoritesScreen),
+                  onTap: () {
+                    UiUtils.checkUser(
+                      onNotGuest: () {
+                        Navigator.pushNamed(context, Routes.favoritesScreen);
+                      },
+                      context: context,
+                    );
+                  },
                   borderRadius: BorderRadius.circular(8),
                   child: SizedBox(
                     width: 48,
@@ -285,6 +292,11 @@ class _FilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedBackgroundColor = context.color.territoryColor;
+    final selectedTextColor = selectedBackgroundColor.computeLuminance() > 0.9
+        ? territoryColor_
+        : Colors.white;
+
     return AnimatedScale(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutBack,
@@ -322,7 +334,7 @@ class _FilterButton extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: isSelected
-                        ? Colors.white
+                        ? selectedTextColor
                         : context.color.textDefaultColor,
                     fontSize: context.font.normal,
                     fontWeight: FontWeight.w700,
@@ -427,7 +439,7 @@ class _QuickProductCard extends StatelessWidget {
                   child: Text(
                     card.label,
                     textAlign: TextAlign.center,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: context.font.small - 1,

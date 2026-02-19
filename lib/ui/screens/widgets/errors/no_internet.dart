@@ -21,7 +21,7 @@ class NoInternet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          UiUtils.getSvg(AppIcons.no_internet),
+          UiUtils.getSvg(AppIcons.no_internet, color: territoryColor_),
           const SizedBox(height: 20),
           CustomText(
             "noInternet".translate(context),

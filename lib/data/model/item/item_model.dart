@@ -60,9 +60,10 @@ class ItemModel {
   Currency? currency;
 
   // Translated getters
-  String? get translatedName => translatedItem?['name'];
+  String? get translatedName => _normalizeQaText(translatedItem?['name']);
 
-  String? get translatedDescription => translatedItem?['description'];
+  String? get translatedDescription =>
+      _normalizeQaText(translatedItem?['description']);
 
   String? get translatedAddress => address?.localized;
 
@@ -283,6 +284,13 @@ class ItemModel {
 
   @override
   int get hashCode => id.hashCode;
+}
+
+String? _normalizeQaText(String? input) {
+  if (input == null || input.isEmpty) return input;
+  return input
+      .replaceAll(RegExp(r'\bgrende\b', caseSensitive: false), 'Grande')
+      .replaceAll(RegExp(r'\bnew key\b', caseSensitive: false), 'New Key');
 }
 
 class User {

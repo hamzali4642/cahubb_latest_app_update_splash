@@ -353,7 +353,10 @@ class UserProfileScreenState extends State<UserProfileScreen> {
               child: SizedBox(
                 width: 15,
                 height: 15,
-                child: UiUtils.getSvg(AppIcons.edit),
+                child: UiUtils.getSvg(
+                  AppIcons.edit,
+                  color: context.color.buttonColor,
+                ),
               ),
             ),
           ),

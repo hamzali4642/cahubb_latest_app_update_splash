@@ -29,6 +29,22 @@ class ItemCard extends StatelessWidget {
   // Cache the border radius to avoid repeated allocations
   static final _borderRadius = BorderRadius.circular(18);
 
+  String _capitalizeWordStart(String word) {
+    if (word.isEmpty) return word;
+    return '${word[0].toUpperCase()}${word.substring(1)}';
+  }
+
+  String _formatProductTitle(String title) {
+    final words = title.trim().split(RegExp(r'\s+'));
+    if (words.isEmpty) return title;
+
+    for (int i = 0; i < words.length && i < 2; i++) {
+      words[i] = _capitalizeWordStart(words[i]);
+    }
+
+    return words.join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     // RepaintBoundary isolates this card's rasterization from the scroll view,
@@ -93,17 +109,17 @@ class ItemCard extends StatelessWidget {
                   padding: const EdgeInsets.all(10.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.max,
                     children: [
                       if (UiUtils.displayPrice(item!))
                         UiUtils.getPriceWidget(item!, context),
-                      CustomText(
-                        item!.translatedName!,
-                        fontSize: context.font.large,
-                        maxLines: 1,
-                        firstUpperCaseWidget: true,
-                      ),
+                      if ((item?.translatedName ?? "").trim().isNotEmpty)
+                        CustomText(
+                          _formatProductTitle(item!.translatedName ?? ""),
+                          fontSize: context.font.large,
+                          maxLines: 1,
+                        ),
                       if (item?.translatedAddress != "")
                         Row(
                           children: [

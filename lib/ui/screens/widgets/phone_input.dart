@@ -6,6 +6,7 @@ import 'package:eClassify/ui/screens/location/helpers/debounce_search_mixin.dart
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 
 class PhoneInput extends StatefulWidget {
@@ -92,6 +93,11 @@ class _PhoneInputState extends State<PhoneInput> with DebounceSearchMixin {
 
   @override
   Widget build(BuildContext context) {
+    final hintNumber = country.exampleNumberMobileInternational
+        .substring(country.phoneCode.length + 1)
+        .trimLeft()
+        .replaceFirst(RegExp(r'^\|+\s*'), '');
+
     return Directionality(
       textDirection: TextDirection.ltr,
       child: TextFormField(
@@ -112,6 +118,7 @@ class _PhoneInputState extends State<PhoneInput> with DebounceSearchMixin {
               : 'pleaseEnterValidPhoneNumber'.translate(context);
         },
         inputFormatters: [
+          FilteringTextInputFormatter.deny(RegExp(r'\|')),
           LibPhonenumberTextFormatter(
             country: country,
             shouldKeepCursorAtEndOfInput: false,
@@ -121,9 +128,7 @@ class _PhoneInputState extends State<PhoneInput> with DebounceSearchMixin {
           contentPadding: EdgeInsets.symmetric(vertical: 12),
           filled: true,
           fillColor: context.color.secondaryColor,
-          hintText: country.exampleNumberMobileInternational.substring(
-            country.phoneCode.length + 1,
-          ),
+          hintText: hintNumber,
           hintStyle: TextStyle(color: context.color.textLightColor),
           prefix: ExcludeSemantics(
             child: TextButton(

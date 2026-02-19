@@ -30,59 +30,56 @@ class ItemHorizontalCard extends StatelessWidget {
   });
 
   Widget favButton(BuildContext context) {
-    bool isLike = context.read<FavoriteCubit>().isItemFavorite(item.id!);
-    return BlocConsumer<FavoriteCubit, FavoriteState>(
-      bloc: context.read<FavoriteCubit>(),
-      listener: ((context, state) {
-        if (state is FavoriteFetchSuccess) {
-          isLike = context.read<FavoriteCubit>().isItemFavorite(item.id!);
+    final bool isLike = context.select(
+      (FavoriteCubit cubit) => cubit.isItemFavorite(item.id!),
+    );
+
+    return BlocConsumer<UpdateFavoriteCubit, UpdateFavoriteState>(
+      listenWhen: (previous, current) => current.itemId == item.id,
+      listener: (context, state) {
+        if (state is UpdateFavoriteSuccess) {
+          if (state.wasProcess) {
+            context.read<FavoriteCubit>().addFavoriteitem(state.item);
+          } else {
+            context.read<FavoriteCubit>().removeFavoriteItem(state.item);
+          }
         }
-      }),
-      builder: (context, likeAndDislikeState) {
-        return BlocConsumer<UpdateFavoriteCubit, UpdateFavoriteState>(
-          listener: ((context, state) {
-            if (state is UpdateFavoriteSuccess) {
-              if (state.wasProcess) {
-                context.read<FavoriteCubit>().addFavoriteitem(state.item);
-              } else {
-                context.read<FavoriteCubit>().removeFavoriteItem(state.item);
-              }
-            }
-          }),
-          builder: (context, state) {
-            return GestureDetector(
-              onTap: () {
-                UiUtils.checkUser(
-                  onNotGuest: () {
-                    context.read<UpdateFavoriteCubit>().setFavoriteItem(
-                      item: item,
-                      type: isLike ? 0 : 1,
-                    );
-                  },
-                  context: context,
+      },
+      buildWhen: (previous, current) => current.itemId == item.id,
+      builder: (context, state) {
+        final isLoading = state is UpdateFavoriteInProgress;
+
+        return GestureDetector(
+          onTap: () {
+            UiUtils.checkUser(
+              onNotGuest: () {
+                context.read<UpdateFavoriteCubit>().setFavoriteItem(
+                  item: item,
+                  type: isLike ? 0 : 1,
                 );
               },
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: context.color.secondaryColor,
-                  shape: BoxShape.circle,
-                ),
-                child: FittedBox(
-                  fit: BoxFit.none,
-                  child: state is UpdateFavoriteInProgress
-                      ? Center(child: UiUtils.progress())
-                      : UiUtils.getSvg(
-                          isLike ? AppIcons.like_fill : AppIcons.like,
-                          width: 22,
-                          height: 22,
-                          color: context.color.territoryColor,
-                        ),
-                ),
-              ),
+              context: context,
             );
           },
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: context.color.secondaryColor,
+              shape: BoxShape.circle,
+            ),
+            child: FittedBox(
+              fit: BoxFit.none,
+              child: isLoading
+                  ? Center(child: UiUtils.progress())
+                  : UiUtils.getSvg(
+                      isLike ? AppIcons.like_fill : AppIcons.like,
+                      width: 22,
+                      height: 22,
+                      color: context.color.territoryColor,
+                    ),
+            ),
+          ),
         );
       },
     );
@@ -143,7 +140,9 @@ class ItemHorizontalCard extends StatelessWidget {
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 4,
                     children: [
                       Row(
                         children: [
@@ -162,7 +161,8 @@ class ItemHorizontalCard extends StatelessWidget {
                           if (showLikeButton ?? true) favButton(context),
                         ],
                       ),
-                      if (UiUtils.displayPrice(item))
+                      if (UiUtils.displayPrice(item) &&
+                          (item.translatedName ?? "").trim().isNotEmpty)
                         CustomText(
                           item.translatedName!.firstUpperCase(),
                           fontSize: context.font.normal,

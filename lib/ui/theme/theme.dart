@@ -14,7 +14,7 @@ Color widgetsBorderColorLight = const Color(0xffEEEEEE).withValues(alpha: 0.6);
 ///Dark Theme Colors
 Color primaryColorDark = const Color(0xff121212);
 Color secondaryColorDark = const Color(0xff1C1C1C);
-const Color territoryColorDark = Color(0xFF2F8CFF);
+const Color territoryColorDark = Color(0xFFFFFFFF);
 Color deactivateColorLight = const Color(0xff7F7F7F);
 
 const Color forthColorDark = Color(0xffFA6E53);
@@ -85,7 +85,11 @@ extension ColorPrefs on ColorScheme {
     darkColor: backgroundColorDark,
   );
 
-  Color get buttonColor => buttonTextColor;
+  Color get buttonColor => _getColor(
+    brightness,
+    lightColor: buttonTextColor,
+    darkColor: primaryColorDark,
+  );
 
   Color get textColorDark => _getColor(
     brightness,

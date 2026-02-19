@@ -62,6 +62,14 @@ class DiamondFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final fabBackgroundColor = isDarkMode
+        ? territoryColor_
+        : context.color.territoryColor;
+    final fabForegroundColor = fabBackgroundColor.computeLuminance() > 0.9
+        ? territoryColor_
+        : Colors.white;
+
     Widget child;
 
     if (type == FabType.svg) {
@@ -75,8 +83,8 @@ class DiamondFab extends StatelessWidget {
     } else {
       child = FloatingActionButton(
         onPressed: () => _onPressed(context),
-        backgroundColor: context.color.territoryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: fabBackgroundColor,
+        foregroundColor: fabForegroundColor,
         elevation: 2,
         shape: _shapeBorder,
         child: Icon(Icons.add),

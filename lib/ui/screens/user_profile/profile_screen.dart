@@ -701,6 +701,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           width: 18,
           height: 18,
           fit: BoxFit.fill,
+          color: context.color.buttonColor,
         ),
       ),
     );

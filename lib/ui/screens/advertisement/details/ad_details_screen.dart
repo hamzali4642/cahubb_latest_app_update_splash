@@ -591,14 +591,18 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                   if (isAddedByMe) setRejectedReason(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (model.translatedAddress != null)
                         Expanded(child: setAddress()),
-                      CustomText(
-                        model.created!.formatDate(format: "d MMM yyyy"),
-                        maxLines: 1,
-                        color: context.color.textDefaultColor.withValues(
-                          alpha: 0.5,
+                      Flexible(
+                        child: CustomText(
+                          "${_resolvedPostedOnLabel()}: ${model.created!.formatDate(format: "d MMM yyyy")}",
+                          maxLines: 1,
+                          textAlign: TextAlign.end,
+                          color: context.color.textDefaultColor.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ],
@@ -1839,6 +1843,7 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
 
           return BlocConsumer<UpdateFavoriteCubit, UpdateFavoriteState>(
             bloc: context.read<UpdateFavoriteCubit>(),
+            listenWhen: (previous, current) => current.itemId == model.id,
             listener: (context, state) {
               if (state is UpdateFavoriteSuccess) {
                 if (state.wasProcess) {
@@ -1848,6 +1853,7 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                 }
               }
             },
+            buildWhen: (previous, current) => current.itemId == model.id,
             builder: (context, state) {
               return setTopRowItem(
                 alignment: AlignmentDirectional.topEnd,
@@ -2148,12 +2154,7 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: UiUtils.getPriceWidget(model, context),
-          ),
-        ),
+        Expanded(child: UiUtils.getPriceWidget(model, context)),
         if (model.status != null && isAddedByMe)
           Container(
             padding: const EdgeInsets.fromLTRB(18, 4, 18, 4),
@@ -2237,23 +2238,30 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
   }
 
   Widget setAddress() {
+    final address = UiUtils.formatDisplayAddress(
+      model.translatedAddress ?? '',
+    ).trimLeft();
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      padding: const EdgeInsets.only(top: 2.0),
       child: Row(
-        spacing: 5,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        // crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SvgPicture.asset(
             AppIcons.location,
+            width: 30,
+            height: 30,
             colorFilter: ColorFilter.mode(
-              context.color.territoryColor,
+              context.color.textDefaultColor.withValues(alpha: 0.5),
               BlendMode.srcIn,
             ),
           ),
+          // const SizedBox(width: 2),
           Expanded(
             child: CustomText(
-              UiUtils.formatDisplayAddress(model.translatedAddress ?? ''),
+              address,
               color: context.color.textDefaultColor.withValues(alpha: 0.5),
+              maxLines: 2,
             ),
           ),
         ],
@@ -2261,7 +2269,19 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
     );
   }
 
+  String _resolvedPostedOnLabel() {
+    final translated = "postedOnLbl".translate(context).trim();
+    if (translated == "postedOnLbl") return "Posted on";
+    return translated.replaceAll(RegExp(r'[:\s]+$'), '');
+  }
+
   Widget setDescription() {
+    final descriptionPoints = (model.translatedDescription ?? '')
+        .split(RegExp(r'[\r\n]+'))
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -2271,13 +2291,40 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
           fontWeight: FontWeight.bold,
           fontSize: context.font.large,
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5.0),
-          child: CustomText(
-            model.translatedDescription!,
-            color: context.color.textDefaultColor.withValues(alpha: 0.5),
+        if (descriptionPoints.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 5.0),
+            child: Column(
+              children: descriptionPoints.map((point) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6.0, right: 6.0),
+                        child: Icon(
+                          Icons.circle,
+                          size: 6,
+                          color: context.color.textDefaultColor.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: CustomText(
+                          point,
+                          color: context.color.textDefaultColor.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
           ),
-        ),
       ],
     );
   }
