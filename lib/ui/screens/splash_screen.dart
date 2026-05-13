@@ -103,9 +103,10 @@ class SplashScreenState extends State<SplashScreen>
   }
 
   void navigateToScreen() {
-    if (context.read<FetchSystemSettingsCubit>().getSetting(
-          SystemSetting.maintenanceMode,
-        ) ==
+    if (context
+            .read<FetchSystemSettingsCubit>()
+            .getSetting(SystemSetting.maintenanceMode)
+            ?.toString() ==
         "1") {
       Navigator.of(context).pushReplacementNamed(Routes.maintenanceMode);
     } else if (HiveUtils.isUserFirstTime()) {

@@ -60,7 +60,9 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
         height: bottomNavHeight,
         child: ColoredBox(
           color: context.color.secondaryColor.withValues(
-            alpha: Theme.of(context).brightness == Brightness.dark ? 0.78 : 0.86,
+            alpha: Theme.of(context).brightness == Brightness.dark
+                ? 0.78
+                : 0.86,
           ),
           child: ListenableBuilder(
             listenable: widget.controller,
@@ -159,6 +161,8 @@ class _BottomNavigationItemWidget extends StatelessWidget {
         children: [
           SvgPicture.asset(
             selected ? item.activeIcon : item.icon,
+            width: 24,
+            height: 24,
             colorMapper: SvgColorMapper(),
             colorFilter: selected
                 ? null

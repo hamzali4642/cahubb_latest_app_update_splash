@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>eClassify</string>
+	<string>CA Hub</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>eClassify</string>
+	<string>CA Hub</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -29,7 +29,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>app-1-6343732161-ios-5cc58a2dcfbbb66b2b5d40</string>
+				<string>app-1-124116953140-ios-25f3b9243c4b13515e4261</string>
 			</array>
 		</dict>
 		<dict>
@@ -37,7 +37,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.6343732161-2d2p8ap7p3t8telagot152vrnotuptav</string>
+				<string>com.googleusercontent.apps.124116953140-p76tu9qbfqpilcp46tsl9318t850bik0</string>
 			</array>
 		</dict>
 		<dict>
@@ -56,7 +56,7 @@
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3940256099942544~1458002511</string>
 	<key>GIDClientID</key>
-	<string>6343732161-2d2p8ap7p3t8telagot152vrnotuptav.apps.googleusercontent.com</string>
+	<string>124116953140-p76tu9qbfqpilcp46tsl9318t850bik0.apps.googleusercontent.com</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>sms</string>

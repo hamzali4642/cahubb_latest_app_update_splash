@@ -100,18 +100,21 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
 
   /// Updates all constant values from settings
   void _updateConstants(Map settings) {
-    Constant.otpServiceProvider = _getSetting(
+    Constant.otpServiceProvider = _getSettingAsString(
       settings,
       SystemSetting.otpServiceProvider,
     );
-    Constant.mapProvider = _getSetting(settings, SystemSetting.mapProvider);
-    Constant.currencySymbol = _getSetting(
+    Constant.mapProvider = _getSettingAsString(
+      settings,
+      SystemSetting.mapProvider,
+    );
+    Constant.currencySymbol = _getSettingAsString(
       settings,
       SystemSetting.currencySymbol,
     );
     Constant.currencyPositionIsLeft =
         _getSetting(settings, SystemSetting.currencySymbolPosition) == 'left';
-    Constant.maintenanceMode = _getSetting(
+    Constant.maintenanceMode = _getSettingAsString(
       settings,
       SystemSetting.maintenanceMode,
     );
@@ -122,7 +125,7 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
     // Location settings
     if (AppConfig.defaultLatitude == 0.0) {
       final latitude = double.tryParse(
-        _getSetting(settings, SystemSetting.defaultLatitude),
+        _getSettingAsString(settings, SystemSetting.defaultLatitude),
       );
       if (latitude != null) {
         AppConfig.defaultLatitude = latitude;
@@ -130,7 +133,7 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
     }
     if (AppConfig.defaultLongitude == 0.0) {
       final longitude = double.tryParse(
-        _getSetting(settings, SystemSetting.defaultLongitude),
+        _getSettingAsString(settings, SystemSetting.defaultLongitude),
       );
       if (longitude != null) {
         AppConfig.defaultLongitude = longitude;
@@ -145,9 +148,15 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
 
     // Radius settings
     Constant.minRadius =
-        double.tryParse(_getSetting(settings, SystemSetting.minRadius)) ?? 0.0;
+        double.tryParse(
+          _getSettingAsString(settings, SystemSetting.minRadius),
+        ) ??
+        0.0;
     Constant.maxRadius =
-        double.tryParse(_getSetting(settings, SystemSetting.maxRadius)) ?? 10.0;
+        double.tryParse(
+          _getSettingAsString(settings, SystemSetting.maxRadius),
+        ) ??
+        10.0;
     AppConfig.defaultLocation = AppConfig.defaultLocation.copyWith(
       radius: Constant.minRadius,
     );
@@ -165,50 +174,83 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
 
   /// Updates ad-related settings
   void _updateAdSettings(Map settings) {
-    Constant.isGoogleBannerAdsEnabled =
-        _getSetting(settings, SystemSetting.bannerAdStatus) ?? "";
-    Constant.isGoogleInterstitialAdsEnabled =
-        _getSetting(settings, SystemSetting.interstitialAdStatus) ?? "";
-    Constant.isGoogleNativeAdsEnabled =
-        _getSetting(settings, SystemSetting.nativeAdStatus) ?? "";
+    Constant.isGoogleBannerAdsEnabled = _getSettingAsString(
+      settings,
+      SystemSetting.bannerAdStatus,
+    );
+    Constant.isGoogleInterstitialAdsEnabled = _getSettingAsString(
+      settings,
+      SystemSetting.interstitialAdStatus,
+    );
+    Constant.isGoogleNativeAdsEnabled = _getSettingAsString(
+      settings,
+      SystemSetting.nativeAdStatus,
+    );
 
-    Constant.bannerAdIdAndroid =
-        _getSetting(settings, SystemSetting.bannerAdAndroidAd) ?? "";
-    Constant.bannerAdIdIOS =
-        _getSetting(settings, SystemSetting.bannerAdiOSAd) ?? "";
-    Constant.interstitialAdIdAndroid =
-        _getSetting(settings, SystemSetting.interstitialAdAndroidAd) ?? "";
-    Constant.interstitialAdIdIOS =
-        _getSetting(settings, SystemSetting.interstitialAdiOSAd) ?? "";
-    Constant.nativeAdIdAndroid =
-        _getSetting(settings, SystemSetting.nativeAndroidAd) ?? "";
-    Constant.nativeAdIdIOS =
-        _getSetting(settings, SystemSetting.nativeAdiOSAd) ?? "";
+    Constant.bannerAdIdAndroid = _getSettingAsString(
+      settings,
+      SystemSetting.bannerAdAndroidAd,
+    );
+    Constant.bannerAdIdIOS = _getSettingAsString(
+      settings,
+      SystemSetting.bannerAdiOSAd,
+    );
+    Constant.interstitialAdIdAndroid = _getSettingAsString(
+      settings,
+      SystemSetting.interstitialAdAndroidAd,
+    );
+    Constant.interstitialAdIdIOS = _getSettingAsString(
+      settings,
+      SystemSetting.interstitialAdiOSAd,
+    );
+    Constant.nativeAdIdAndroid = _getSettingAsString(
+      settings,
+      SystemSetting.nativeAndroidAd,
+    );
+    Constant.nativeAdIdIOS = _getSettingAsString(
+      settings,
+      SystemSetting.nativeAdiOSAd,
+    );
   }
 
   /// Updates store URLs and iOS app ID
   void _updateStoreUrls(Map settings) {
-    Constant.playStoreUrl =
-        _getSetting(settings, SystemSetting.playStoreLink) ?? "";
-    Constant.appStoreUrl =
-        _getSetting(settings, SystemSetting.appStoreLink) ?? "";
-    Constant.iOSAppId =
-        (_getSetting(settings, SystemSetting.appStoreLink) ?? "")
-            .toString()
-            .split('/')
-            .last;
+    Constant.playStoreUrl = _getSettingAsString(
+      settings,
+      SystemSetting.playStoreLink,
+    );
+    Constant.appStoreUrl = _getSettingAsString(
+      settings,
+      SystemSetting.appStoreLink,
+    );
+    Constant.iOSAppId = _getSettingAsString(
+      settings,
+      SystemSetting.appStoreLink,
+    ).split('/').last;
   }
 
   /// Updates authentication-related settings
   void _updateAuthenticationSettings(Map settings) {
-    Constant.mobileAuthentication =
-        _getSetting(settings, SystemSetting.mobileAuthentication) ?? "0";
-    Constant.googleAuthentication =
-        _getSetting(settings, SystemSetting.googleAuthentication) ?? "0";
-    Constant.appleAuthentication =
-        _getSetting(settings, SystemSetting.appleAuthentication) ?? "0";
-    Constant.emailAuthentication =
-        _getSetting(settings, SystemSetting.emailAuthentication) ?? "0";
+    Constant.mobileAuthentication = _getSettingAsString(
+      settings,
+      SystemSetting.mobileAuthentication,
+      fallback: "0",
+    );
+    Constant.googleAuthentication = _getSettingAsString(
+      settings,
+      SystemSetting.googleAuthentication,
+      fallback: "0",
+    );
+    Constant.appleAuthentication = _getSettingAsString(
+      settings,
+      SystemSetting.appleAuthentication,
+      fallback: "0",
+    );
+    Constant.emailAuthentication = _getSettingAsString(
+      settings,
+      SystemSetting.emailAuthentication,
+      fallback: "0",
+    );
   }
 
   /// Gets a specific setting value
@@ -245,4 +287,14 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
   /// Gets a setting value from the settings map
   dynamic _getSetting(Map settings, SystemSetting selected) =>
       settings['data'][Constant.systemSettingKeys[selected]] ?? '';
+
+  String _getSettingAsString(
+    Map settings,
+    SystemSetting selected, {
+    String fallback = '',
+  }) {
+    final value = _getSetting(settings, selected);
+    if (value == null || value.toString().isEmpty) return fallback;
+    return value.toString();
+  }
 }

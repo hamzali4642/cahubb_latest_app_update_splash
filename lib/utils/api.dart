@@ -77,6 +77,7 @@ class Api {
 
     for (int attempt = 0; attempt <= maxRetries; attempt++) {
       try {
+        print("path: $path");
         return await _dio.get(
           path,
           queryParameters: queryParameters,

@@ -5,6 +5,7 @@ import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/app_config.dart';
 import 'package:eClassify/data/cubits/auth/authentication_cubit.dart';
 import 'package:eClassify/data/cubits/auth/login_cubit.dart';
+import 'package:eClassify/data/cubits/system/fetch_system_settings_cubit.dart';
 import 'package:eClassify/data/cubits/system/user_details.dart';
 import 'package:eClassify/ui/screens/auth/widgets/forgot_password_bottom_sheet.dart';
 import 'package:eClassify/ui/screens/home/home_screen.dart';
@@ -59,9 +60,7 @@ class LoginScreenState extends State<LoginScreen> {
   String phoneCode = AppConfig.defaultPhoneCode;
   bool isResendEnabled = false;
   bool isLoginButtonDisabled = true;
-  late final ValueNotifier<bool> isLoginWithMobile = ValueNotifier(
-    widget.email == null || widget.email!.isEmpty,
-  );
+  late final ValueNotifier<bool> isLoginWithMobile;
   bool sendMailClicked = false;
   final _formKey = GlobalKey<FormState>();
 
@@ -73,6 +72,8 @@ class LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    isLoginWithMobile = ValueNotifier(_shouldStartWithMobileLogin);
+    context.read<FetchSystemSettingsCubit>().fetchSettings();
     context.read<AuthenticationCubit>().init();
   }
 
@@ -117,6 +118,31 @@ class LoginScreenState extends State<LoginScreen> {
         setState(() {});
       }
     }
+  }
+
+  bool get _isMobileAuthEnabled =>
+      _isAuthEnabled(Constant.mobileAuthentication);
+
+  bool get _isEmailAuthEnabled => _isAuthEnabled(Constant.emailAuthentication);
+
+  bool get _isGoogleAuthEnabled =>
+      _isAuthEnabled(Constant.googleAuthentication);
+
+  bool get _isAppleAuthEnabled => _isAuthEnabled(Constant.appleAuthentication);
+
+  bool get _hasPrimaryAuth => _isMobileAuthEnabled || _isEmailAuthEnabled;
+
+  bool get _hasSocialAuth =>
+      _isGoogleAuthEnabled || (_isAppleAuthEnabled && Platform.isIOS);
+
+  bool get _shouldStartWithMobileLogin {
+    if (widget.email != null && widget.email!.isNotEmpty) return false;
+    return _isMobileAuthEnabled || !_isEmailAuthEnabled;
+  }
+
+  static bool _isAuthEnabled(String value) {
+    final normalizedValue = value.trim().toLowerCase();
+    return normalizedValue == '1' || normalizedValue == 'true';
   }
 
   @override
@@ -271,12 +297,19 @@ class LoginScreenState extends State<LoginScreen> {
                     LoadingWidgets.showLoader(context);
                   }
                 },
-                builder: (context, state) {
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.only(
-                      top: MediaQuery.of(context).padding.top,
-                    ),
-                    child: Form(key: _formKey, child: buildLoginWidget()),
+                builder: (context, authenticationState) {
+                  return BlocBuilder<
+                    FetchSystemSettingsCubit,
+                    FetchSystemSettingsState
+                  >(
+                    builder: (context, settingsState) {
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).padding.top,
+                        ),
+                        child: Form(key: _formKey, child: buildLoginWidget()),
+                      );
+                    },
                   );
                 },
               ),
@@ -484,16 +517,21 @@ class LoginScreenState extends State<LoginScreen> {
             color: context.color.textDefaultColor,
           ),
           const SizedBox(height: 8),
-          if (Constant.mobileAuthentication == "1" ||
-              Constant.emailAuthentication == "1")
+          if (_hasPrimaryAuth)
             ValueListenableBuilder(
               valueListenable: isLoginWithMobile,
               builder: (context, isMobileLogin, child) {
+                if (_isMobileAuthEnabled && !_isEmailAuthEnabled) {
+                  return mobileLogin();
+                }
+                if (_isEmailAuthEnabled && !_isMobileAuthEnabled) {
+                  return emailLogin();
+                }
                 return isMobileLogin ? mobileLogin() : emailLogin();
               },
             ),
           const SizedBox(height: 20),
-          if (Constant.emailAuthentication == "1")
+          if (_isEmailAuthEnabled)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -523,10 +561,8 @@ class LoginScreenState extends State<LoginScreen> {
 
   List<Widget> googleAndAppleLogin() {
     return [
-      if (Constant.mobileAuthentication == "1" ||
-          Constant.emailAuthentication == "1")
-        if ((Constant.googleAuthentication == "1") ||
-            (Constant.appleAuthentication == "1" && Platform.isIOS))
+      if (_hasPrimaryAuth)
+        if (_hasSocialAuth)
           Align(
             alignment: Alignment.center,
             child: CustomText(
@@ -535,7 +571,7 @@ class LoginScreenState extends State<LoginScreen> {
             ),
           ),
       const SizedBox(height: 20),
-      if (Constant.googleAuthentication == "1") ...[
+      if (_isGoogleAuthEnabled) ...[
         UiUtils.buildButton(
           context,
           prefixWidget: Padding(
@@ -563,7 +599,7 @@ class LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
       ],
-      if (Constant.appleAuthentication == "1" && Platform.isIOS) ...[
+      if (_isAppleAuthEnabled && Platform.isIOS) ...[
         UiUtils.buildButton(
           context,
           prefixWidget: Padding(
@@ -591,8 +627,7 @@ class LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
       ],
-      if (Constant.emailAuthentication == "1" &&
-          Constant.mobileAuthentication == "1")
+      if (_isEmailAuthEnabled && _isMobileAuthEnabled)
         ValueListenableBuilder(
           valueListenable: isLoginWithMobile,
           builder: (context, isMobileField, child) {
