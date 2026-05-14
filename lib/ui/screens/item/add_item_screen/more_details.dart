@@ -64,6 +64,23 @@ class _AddMoreDetailsScreenState extends CloudState<AddMoreDetailsScreen>
   String defaultLangCode = '';
   TabController? _tabController;
 
+  String _currentLanguageId() {
+    final state = context.read<FetchLanguageCubit>().state;
+    if (state is FetchLanguageSuccess) {
+      return state.id.toString();
+    }
+
+    final currentLanguage = languages.firstWhere(
+      (language) =>
+          language is Map &&
+          language['code']?.toString().toLowerCase() ==
+              AppSession.currentLanguageCode.toLowerCase(),
+      orElse: () => languages.first,
+    );
+
+    return (currentLanguage['id'] ?? languages.first['id']).toString();
+  }
+
   void updateDynamicFields() {
     for (var field in moreDetailDynamicFields) {
       if (field.field['type'] == 'textbox' && languages.length > 1) {
@@ -331,11 +348,7 @@ class _AddMoreDetailsScreenState extends CloudState<AddMoreDetailsScreen>
                     }
                   }
 
-                  final languageId =
-                      (context.read<FetchLanguageCubit>().state
-                              as FetchLanguageSuccess)
-                          .id
-                          .toString();
+                  final languageId = _currentLanguageId();
                   if (customFieldTranslations.containsKey(languageId)) {
                     customFieldTranslations[languageId]!.addAll(
                       nonTextboxFields,
