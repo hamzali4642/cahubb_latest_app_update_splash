@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 ///This color format is different, isn't it? .You can use hex colors here also but you have to remove '#' symbol and add 0xff instead.
 const Color primaryColor_ = Color(0xFFF6F5FA);
 const Color secondaryColor_ = Color(0xFFFFFFFF);
-const Color territoryColor_ = Color(0xFF3F3962);
+const Color territoryColor_ = Color(0xFF293850);
 const Color forthColor_ = Color(0xffFA6E53);
 const Color _backgroundColor = primaryColor_; //here you can change if you need
 const Color textDarkColor = Color(0xFF000000);

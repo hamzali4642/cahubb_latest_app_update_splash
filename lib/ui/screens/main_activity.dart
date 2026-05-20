@@ -201,7 +201,7 @@ class MainActivityState extends State<MainActivity> {
     return AnnotatedRegion(
       value: UiUtils.getSystemUiOverlayStyle(
         context: context,
-        statusBarColor: context.color.primaryColor,
+        statusBarColor: const Color(0xFF0F172A),
       ),
       child: PopScope(
         canPop: false,
@@ -225,6 +225,8 @@ class MainActivityState extends State<MainActivity> {
           }
         },
         child: Scaffold(
+          extendBody: true,
+          extendBodyBehindAppBar: true,
           backgroundColor: Colors.transparent,
           bottomNavigationBar: CustomBottomNavigationBar(
             controller: _bottomNavigationController,

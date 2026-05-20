@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:eClassify/ui/screens/widgets/bottom_navigation_bar/svg_color_mapper.dart';
-import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/app_icon.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
@@ -11,7 +10,10 @@ import 'package:flutter_svg/svg.dart';
 
 /// Custom Navigation bar that gives space to the centerDocked FAB button
 class CustomBottomNavigationBar extends StatefulWidget {
-  const CustomBottomNavigationBar({required this.controller, super.key});
+  const CustomBottomNavigationBar({
+    required this.controller,
+    super.key,
+  });
 
   final BottomNavigationController controller;
 
@@ -20,7 +22,8 @@ class CustomBottomNavigationBar extends StatefulWidget {
       _CustomBottomNavigationBarState();
 }
 
-class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
+class _CustomBottomNavigationBarState
+    extends State<CustomBottomNavigationBar> {
   final items = [
     _BottomNavigationItem(
       icon: AppIcons.homeNav,
@@ -32,8 +35,10 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
       activeIcon: AppIcons.chatNavActive,
       label: 'chat',
     ),
-    // This null value is to be used for giving space at the center of bottom nav to avoid placing items behind the FAB
+
+    // Space for FAB
     null,
+
     _BottomNavigationItem(
       icon: AppIcons.myAdsNav,
       activeIcon: AppIcons.myAdsNavActive,
@@ -48,58 +53,71 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
 
   @override
   Widget build(BuildContext context) {
-    // We need SafeArea here because we are not using conventional BottomNavigationBar
-    // widget, hence it will not automatically add padding on Android 15 edge-to-edge mode
-    double bottomNavHeight = kBottomNavigationBarHeight;
+double bottomNavHeight = 78;
     if (Platform.isIOS) {
       bottomNavHeight += MediaQuery.paddingOf(context).bottom;
     }
+
     return SafeArea(
-      bottom: Platform.isAndroid,
-      child: SizedBox(
-        height: bottomNavHeight,
-        child: ColoredBox(
-          color: context.color.secondaryColor.withValues(
-            alpha: Theme.of(context).brightness == Brightness.dark
-                ? 0.78
-                : 0.86,
-          ),
-          child: ListenableBuilder(
-            listenable: widget.controller,
-            builder: (context, child) {
-              final selectedIndex = widget.controller.index;
-              // Track the index of each child.
-              // We do it manually as we are using SizedBox and we don't want
-              // it to occupy any index, hence that is why we can't use conventional
-              // NavigationBar or BottomNavigationBar because they will assign index
-              // to SizedBox also
-              int itemIndex = 0;
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: items.map((item) {
-                  if (item == null) return SizedBox(width: 25);
-                  final index = itemIndex++;
-                  return Expanded(
-                    child: _BottomNavigationItemWidget(
-                      item: item,
-                      selected: selectedIndex == index,
-                      onPressed: () {
-                        if (item.label case == 'chat' || 'myAdsTab') {
-                          UiUtils.checkUser(
-                            onNotGuest: () {
-                              widget.controller.changeIndex(index);
-                            },
-                            context: context,
-                          );
-                        } else {
-                          widget.controller.changeIndex(index);
-                        }
-                      },
-                    ),
-                  );
-                }).toList(),
-              );
-            },
+  bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: SizedBox(
+          height: bottomNavHeight,
+          child: Container(
+            decoration: BoxDecoration(
+color: const Color(0xFF0F172A),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(28),
+                topRight: Radius.circular(28),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: ListenableBuilder(
+              listenable: widget.controller,
+              builder: (context, child) {
+                final selectedIndex = widget.controller.index;
+
+                int itemIndex = 0;
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: items.map((item) {
+                    if (item == null) {
+                      return const SizedBox(width: 40);
+                    }
+
+                    final index = itemIndex++;
+
+                    return Expanded(
+                      child: _BottomNavigationItemWidget(
+                        item: item,
+                        selected: selectedIndex == index,
+                        onPressed: () {
+                          if (item.label == 'chat' ||
+                              item.label == 'myAdsTab') {
+                            UiUtils.checkUser(
+                              onNotGuest: () {
+                                widget.controller.changeIndex(index);
+                              },
+                              context: context,
+                            );
+                          } else {
+                            widget.controller.changeIndex(index);
+                          }
+                        },
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -107,24 +125,6 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
   }
 }
 
-/// A custom controller for [CustomBottomNavigationBar].
-///
-/// While it's technically possible to use the [PageController] from the main screen,
-/// this controller encapsulates the state and interactions specific to the bottom navigation bar.
-///
-/// This keeps responsibilities clear: the bottom navigation bar manages its own state
-/// and communicates intent, rather than directly controlling screen content.
-///
-/// NOTE: This controller is only valid because the `PageView` in `MainActivity`
-/// uses `physics: NeverScrollableScrollPhysics()`.
-///
-/// As a result, the bottom navigation is the single source of truth for tab state,
-/// and it drives the `PageView` directly.
-///
-/// If scroll physics were enabled (i.e., allowing swipe gestures),
-/// this controller would become invalid, and synchronization would need to happen
-/// via a shared [PageController] instead.
-///
 class BottomNavigationController extends ChangeNotifier {
   int index = 0;
 
@@ -135,7 +135,7 @@ class BottomNavigationController extends ChangeNotifier {
 }
 
 class _BottomNavigationItemWidget extends StatelessWidget {
-  _BottomNavigationItemWidget({
+  const _BottomNavigationItemWidget({
     required this.item,
     required this.selected,
     required this.onPressed,
@@ -147,35 +147,39 @@ class _BottomNavigationItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        overlayColor: Colors.transparent,
-        padding: EdgeInsets.zero,
-        shape: LinearBorder.none,
-      ),
+    return TextButton(
+    style: TextButton.styleFrom(
+  overlayColor: Colors.transparent,
+  padding: EdgeInsets.zero,
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(0),
+  ),
+),
       onPressed: onPressed,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SvgPicture.asset(
             selected ? item.activeIcon : item.icon,
-            width: 24,
             height: 24,
+            width: 24,
             colorMapper: SvgColorMapper(),
-            colorFilter: selected
-                ? null
-                : ColorFilter.mode(
-                    context.color.textLightColor,
-                    BlendMode.srcIn,
-                  ),
+           colorFilter: ColorFilter.mode(
+  selected
+      ? const Color(0xFFC9A227)
+      : Colors.white70,
+  BlendMode.srcIn,
+),
           ),
+
+          const SizedBox(height: 4),
+
           CustomText(
             item.label.translate(context),
             maxLines: 1,
             textAlign: TextAlign.center,
-            color: selected ? null : context.color.textLightColor,
+color: Colors.white,
+                fontSize: 12,
           ),
         ],
       ),
