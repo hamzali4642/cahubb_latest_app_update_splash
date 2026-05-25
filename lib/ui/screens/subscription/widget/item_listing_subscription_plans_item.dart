@@ -5,18 +5,12 @@ import 'package:eClassify/ui/screens/subscription/widget/planHelper.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
-import 'package:eClassify/utils/payment/gateaways/inapp_purchase_manager.dart';
 import 'package:flutter/material.dart';
 
 class ItemListingSubscriptionPlansItem extends StatefulWidget {
   final SubscriptionPackageModel model;
-  final InAppPurchaseManager? inAppPurchaseManager;
 
-  const ItemListingSubscriptionPlansItem({
-    super.key,
-    required this.model,
-    required this.inAppPurchaseManager,
-  });
+  const ItemListingSubscriptionPlansItem({super.key, required this.model});
 
   @override
   _ItemListingSubscriptionPlansItemState createState() =>
@@ -110,7 +104,6 @@ class _ItemListingSubscriptionPlansItemState
                   : ItemListingPackageFrontCard(
                       model: widget.model,
                       onTap: _toggleFlip,
-                      inAppPurchaseManager: widget.inAppPurchaseManager,
                     ),
             );
           },

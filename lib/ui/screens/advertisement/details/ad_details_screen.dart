@@ -1,7 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:eClassify/app/routes.dart';
+import 'package:eClassify/app_config.dart';
 import 'package:eClassify/data/cubits/chat/delete_message_cubit.dart';
 import 'package:eClassify/data/cubits/chat/get_buyer_chat_users_cubit.dart';
 import 'package:eClassify/data/cubits/chat/load_chat_messages.dart';
@@ -62,9 +64,9 @@ import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/hive_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:eClassify/utils/validator.dart';
+import 'package:eClassify/utils/whatsapp_launcher.dart';
 import 'package:eClassify/utils/widgets.dart';
 import 'package:flick_video_player/flick_video_player.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -113,6 +115,44 @@ class AdDetailsScreen extends StatefulWidget {
           slug: arguments?['slug'],
           itemId: arguments?['item_id'],
           tabStatus: arguments?['status_tab'],
+        ),
+      ),
+    );
+  }
+}
+
+class _ViewMapButton extends StatelessWidget {
+  const _ViewMapButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: context.color.territoryColor,
+      borderRadius: BorderRadius.circular(8),
+      elevation: 0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.map_outlined,
+                color: context.color.buttonColor,
+                size: 18,
+              ),
+              const SizedBox(width: 7),
+              CustomText(
+                'viewMap'.translate(context),
+                color: context.color.buttonColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -906,59 +946,365 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
     if (_uniqueCustomFields.isEmpty) {
       return SizedBox.shrink();
     }
+
+    final featureFields = _uniqueCustomFields
+        .where((field) => _isFeaturesField(field))
+        .toList();
+    final registrationPlaceFields = _uniqueCustomFields
+        .where((field) => _isRegistrationPlaceField(field))
+        .toList();
+    final standardFields = _uniqueCustomFields
+        .where(
+          (field) =>
+              !_isFeaturesField(field) && !_isRegistrationPlaceField(field),
+        )
+        .toList();
+
     return Padding(
-      padding: const EdgeInsets.only(top: 10.0),
-      child: Wrap(
-        runSpacing: 5.0,
-        spacing: 5.0,
-        children: _uniqueCustomFields.map((field) {
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.red.withValues(alpha: 0.0)),
+      padding: const EdgeInsets.only(top: 12.0, bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CustomText(
+            "featuresList".translate(context),
+            fontWeight: FontWeight.bold,
+            fontSize: context.font.large,
+            color: context.color.textDefaultColor,
+          ),
+          const SizedBox(height: 12),
+          if (standardFields.isNotEmpty)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final itemWidth = (constraints.maxWidth - 10) / 2;
+                return Wrap(
+                  runSpacing: 10,
+                  spacing: 10,
+                  children: standardFields.map((field) {
+                    return SizedBox(
+                      width: itemWidth,
+                      child: _FeatureTile(
+                        field: field,
+                        valueBuilder: (values) => valueContent(values),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
             ),
-            child: SizedBox(
-              width: MediaQuery.sizeOf(context).width * .45,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 33,
-                    width: 33,
-                    alignment: Alignment.center,
-                    child: UiUtils.imageType(
-                      field['image'] ?? '',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  SizedBox(width: 7),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Tooltip(
-                          message: field['translated_name'],
-                          child: CustomText(
-                            field['translated_name'] ?? "",
-                            fontSize: context.font.small,
-                            color: context.color.textLightColor,
-                          ),
-                        ),
-                        if (field['type'] == 'fileinput')
-                          valueContent([field['value']])
-                        else
-                          valueContent(field['translated_selected_values']),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+          ...featureFields.map(
+            (field) => Padding(
+              padding: EdgeInsets.only(top: standardFields.isEmpty ? 0 : 10),
+              child: _FeaturesChipSection(field: field),
             ),
-          );
-        }).toList(),
+          ),
+          ...registrationPlaceFields.map(
+            (field) => Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: _RegistrationPlaceTile(field: field),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  bool _isFeaturesField(dynamic field) {
+    return _fieldName(field) == "features";
+  }
+
+  bool _isRegistrationPlaceField(dynamic field) {
+    final name = _fieldName(field);
+    return name.contains("registration") && name.contains("place");
+  }
+
+  String _fieldName(dynamic field) {
+    return (field['translated_name'] ?? field['name'] ?? "")
+        .toString()
+        .trim()
+        .toLowerCase();
+  }
+
+  String _fieldTitle(dynamic field) {
+    return (field['translated_name'] ?? field['name'] ?? "").toString();
+  }
+
+  List<dynamic> _fieldValues(dynamic field) {
+    final rawValues = field['type'] == 'fileinput'
+        ? [field['value']]
+        : field['translated_selected_values'] as List<dynamic>?;
+    return rawValues
+            ?.where(
+              (value) => value != null && value.toString().trim().isNotEmpty,
+            )
+            .toList() ??
+        [];
+  }
+
+  Widget _FeatureTile({
+    required dynamic field,
+    required Widget Function(List<dynamic>? values) valueBuilder,
+  }) {
+    final name = _fieldTitle(field);
+    final values = _fieldValues(field);
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: 86),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.color.secondaryColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.color.borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _FeatureIcon(field: field, values: values),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Tooltip(
+                  message: name,
+                  child: CustomText(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    fontSize: context.font.small,
+                    fontWeight: FontWeight.w600,
+                    color: context.color.textLightColor,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                valueBuilder(values),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _FeaturesChipSection({required dynamic field}) {
+    final values = _fieldValues(field);
+    if (values.isEmpty) return SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.color.territoryColor.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: context.color.territoryColor.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: context.color.territoryColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(
+                  Icons.checklist_rounded,
+                  color: context.color.territoryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: CustomText(
+                  _fieldTitle(field),
+                  color: context.color.textDefaultColor,
+                  fontSize: context.font.large,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: values.map((value) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: context.color.secondaryColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: context.color.territoryColor.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_rounded,
+                      size: 15,
+                      color: context.color.territoryColor,
+                    ),
+                    const SizedBox(width: 5),
+                    CustomText(
+                      value.toString(),
+                      color: context.color.textDefaultColor,
+                      fontSize: context.font.small,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _RegistrationPlaceTile({required dynamic field}) {
+    final values = _fieldValues(field);
+    if (values.isEmpty) return SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.color.secondaryColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.color.borderColor),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _FeatureIcon(field: field, values: values),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CustomText(
+                  _fieldTitle(field),
+                  color: context.color.textLightColor,
+                  fontSize: context.font.small,
+                  fontWeight: FontWeight.w600,
+                ),
+                const SizedBox(height: 6),
+                valueContent(values),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _FeatureIcon({
+    required dynamic field,
+    required List<dynamic>? values,
+  }) {
+    final colorValue = _maybeParseColorValue(field, values);
+
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: context.color.territoryColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      alignment: Alignment.center,
+      child: colorValue != null
+          ? Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: colorValue,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: context.color.borderColor,
+                  width: 1.5,
+                ),
+              ),
+            )
+          : field['image'] != null && field['image'].toString().isNotEmpty
+          ? UiUtils.imageType(
+              field['image'],
+              fit: BoxFit.contain,
+              width: 22,
+              height: 22,
+              color: context.color.territoryColor,
+            )
+          : Icon(
+              _featureFallbackIcon(field['translated_name'] ?? field['name']),
+              color: context.color.territoryColor,
+              size: 22,
+            ),
+    );
+  }
+
+  IconData _featureFallbackIcon(dynamic name) {
+    final normalized = name?.toString().toLowerCase() ?? "";
+    if (normalized.contains("mile") || normalized.contains("km")) {
+      return Icons.speed_outlined;
+    }
+    if (normalized.contains("color") || normalized.contains("colour")) {
+      return Icons.palette_outlined;
+    }
+    if (normalized.contains("fuel")) {
+      return Icons.local_gas_station_outlined;
+    }
+    if (normalized.contains("transmission")) {
+      return Icons.settings_outlined;
+    }
+    return Icons.tune_outlined;
+  }
+
+  Color? _maybeParseColorValue(dynamic field, List<dynamic>? values) {
+    final name =
+        field['translated_name']?.toString().toLowerCase() ??
+        field['name']?.toString().toLowerCase() ??
+        "";
+    if (!name.contains("color") && !name.contains("colour")) return null;
+    if (values == null || values.isEmpty) return null;
+
+    final value = values.first.toString().trim().toLowerCase();
+    const namedColors = {
+      "black": Colors.black,
+      "white": Colors.white,
+      "red": Colors.red,
+      "blue": Colors.blue,
+      "green": Colors.green,
+      "yellow": Colors.yellow,
+      "grey": Colors.grey,
+      "gray": Colors.grey,
+      "silver": Color(0xFFC0C0C0),
+      "brown": Colors.brown,
+      "orange": Colors.orange,
+      "purple": Colors.purple,
+      "gold": Color(0xFFFFD700),
+    };
+    if (namedColors.containsKey(value)) return namedColors[value];
+
+    final hex = value.replaceFirst("#", "");
+    if (RegExp(r'^[0-9a-f]{6}$').hasMatch(hex)) {
+      return Color(int.parse("ff$hex", radix: 16));
+    }
+    return null;
   }
 
   void _prepareCustomFields() {
@@ -1043,14 +1389,42 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
       }
     }
 
-    // Default text if not a supported format or not a URL
-    return SizedBox(
-      width: MediaQuery.sizeOf(context).width * .3,
-      child: CustomText(
-        value.length == 1 ? value[0].toString() : value.join(','),
-        softWrap: true,
-        color: context.color.textDefaultColor,
-      ),
+    final values = value
+        .where((item) => item != null && item.toString().trim().isNotEmpty)
+        .toList();
+
+    if (values.isEmpty) return SizedBox.shrink();
+
+    if (values.length > 1) {
+      return Wrap(
+        spacing: 5,
+        runSpacing: 5,
+        children: values.map((item) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: context.color.territoryColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: CustomText(
+              item.toString(),
+              color: context.color.textDefaultColor,
+              fontSize: context.font.small,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    return CustomText(
+      values.first.toString(),
+      softWrap: true,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      color: context.color.textDefaultColor,
+      fontWeight: FontWeight.w600,
     );
   }
 
@@ -1275,6 +1649,9 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
               final bool showPrimaryAction =
                   showMakeOfferButton || showApplyButton;
               final bool showCallAction = _getSellerDialNumber() != null;
+              final bool showChatAction = !showMakeOfferButton;
+              final bool showWhatsAppAction =
+                  _getSellerWhatsAppNumber() != null;
 
               return BlocListener<MakeAnOfferItemCubit, MakeAnOfferItemState>(
                 listener: (context, state) {
@@ -1403,91 +1780,110 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                         },
                       ),
                     if (showCallAction) const SizedBox(width: 10),
-                    _buildIconActionButton(
-                      icon: Icons.chat_bubble_outline_rounded,
-                      onPressed: () {
-                        UiUtils.checkUser(
-                          onNotGuest: () {
-                            if (chatedUser != null) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) {
-                                    return MultiBlocProvider(
-                                      providers: [
-                                        BlocProvider(
-                                          create: (context) =>
-                                              SendMessageCubit(),
+                    if (showChatAction)
+                      _buildIconActionButton(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        onPressed: () {
+                          UiUtils.checkUser(
+                            onNotGuest: () {
+                              if (chatedUser != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      return MultiBlocProvider(
+                                        providers: [
+                                          BlocProvider(
+                                            create: (context) =>
+                                                SendMessageCubit(),
+                                          ),
+                                          BlocProvider(
+                                            create: (context) =>
+                                                LoadChatMessagesCubit(),
+                                          ),
+                                          BlocProvider(
+                                            create: (context) =>
+                                                DeleteMessageCubit(),
+                                          ),
+                                        ],
+                                        child: ChatScreen(
+                                          itemId: chatedUser.itemId.toString(),
+                                          profilePicture:
+                                              chatedUser.seller != null &&
+                                                  chatedUser.seller!.profile !=
+                                                      null
+                                              ? chatedUser.seller!.profile!
+                                              : "",
+                                          userName:
+                                              chatedUser.seller != null &&
+                                                  chatedUser.seller!.name !=
+                                                      null
+                                              ? chatedUser.seller!.name!
+                                              : "",
+                                          date: chatedUser.createdAt!,
+                                          itemOfferId: chatedUser.id!,
+                                          itemPrice:
+                                              chatedUser.item != null &&
+                                                  chatedUser.item!.price != null
+                                              ? chatedUser.item!.price
+                                                    .toString()
+                                              : null,
+                                          itemOfferPrice:
+                                              chatedUser.amount != null
+                                              ? chatedUser.amount!
+                                              : null,
+                                          itemImage:
+                                              chatedUser.item != null &&
+                                                  chatedUser.item!.image != null
+                                              ? chatedUser.item!.image!
+                                              : "",
+                                          itemTitle:
+                                              chatedUser.item != null &&
+                                                  chatedUser.item!.name != null
+                                              ? chatedUser.item!.name!.localized
+                                              : "",
+                                          userId: chatedUser.sellerId
+                                              .toString(),
+                                          buyerId: chatedUser.buyerId
+                                              .toString(),
+                                          status: chatedUser.item!.status,
+                                          from: "item",
+                                          isPurchased: model.isPurchased!,
+                                          alreadyReview: model.review == null
+                                              ? false
+                                              : model.review!.isEmpty
+                                              ? false
+                                              : true,
+                                          isFromBuyerList: true,
                                         ),
-                                        BlocProvider(
-                                          create: (context) =>
-                                              LoadChatMessagesCubit(),
-                                        ),
-                                        BlocProvider(
-                                          create: (context) =>
-                                              DeleteMessageCubit(),
-                                        ),
-                                      ],
-                                      child: ChatScreen(
-                                        itemId: chatedUser.itemId.toString(),
-                                        profilePicture:
-                                            chatedUser.seller != null &&
-                                                chatedUser.seller!.profile !=
-                                                    null
-                                            ? chatedUser.seller!.profile!
-                                            : "",
-                                        userName:
-                                            chatedUser.seller != null &&
-                                                chatedUser.seller!.name != null
-                                            ? chatedUser.seller!.name!
-                                            : "",
-                                        date: chatedUser.createdAt!,
-                                        itemOfferId: chatedUser.id!,
-                                        itemPrice:
-                                            chatedUser.item != null &&
-                                                chatedUser.item!.price != null
-                                            ? chatedUser.item!.price.toString()
-                                            : null,
-                                        itemOfferPrice:
-                                            chatedUser.amount != null
-                                            ? chatedUser.amount!
-                                            : null,
-                                        itemImage:
-                                            chatedUser.item != null &&
-                                                chatedUser.item!.image != null
-                                            ? chatedUser.item!.image!
-                                            : "",
-                                        itemTitle:
-                                            chatedUser.item != null &&
-                                                chatedUser.item!.name != null
-                                            ? chatedUser.item!.name!.localized
-                                            : "",
-                                        userId: chatedUser.sellerId.toString(),
-                                        buyerId: chatedUser.buyerId.toString(),
-                                        status: chatedUser.item!.status,
-                                        from: "item",
-                                        isPurchased: model.isPurchased!,
-                                        alreadyReview: model.review == null
-                                            ? false
-                                            : model.review!.isEmpty
-                                            ? false
-                                            : true,
-                                        isFromBuyerList: true,
-                                      ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              } else {
+                                context
+                                    .read<MakeAnOfferItemCubit>()
+                                    .makeAnOfferItem(
+                                      id: model.id!,
+                                      from: "chat",
                                     );
-                                  },
-                                ),
-                              );
-                            } else {
-                              context
-                                  .read<MakeAnOfferItemCubit>()
-                                  .makeAnOfferItem(id: model.id!, from: "chat");
-                            }
-                          },
-                          context: context,
-                        );
-                      },
-                    ),
+                              }
+                            },
+                            context: context,
+                          );
+                        },
+                      ),
+                    if (showChatAction && showWhatsAppAction)
+                      const SizedBox(width: 10),
+                    if (showWhatsAppAction)
+                      _buildWhatsAppActionButton(
+                        onPressed: () {
+                          UiUtils.checkUser(
+                            onNotGuest: _openSellerWhatsApp,
+                            context: context,
+                          );
+                        },
+                      ),
                   ],
                 ),
               );
@@ -1514,6 +1910,10 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
     return cleaned.isEmpty ? null : cleaned;
   }
 
+  String? _getSellerWhatsAppNumber() {
+    return _getSellerDialNumber();
+  }
+
   String _sanitizePhoneNumber(String value) {
     final hasPlus = value.trim().startsWith('+');
     final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
@@ -1538,6 +1938,29 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
       isMail: false,
       value: number,
       context: context,
+    );
+  }
+
+  Future<void> _openSellerWhatsApp() async {
+    final number = _getSellerWhatsAppNumber();
+    if (number == null) {
+      HelperUtils.showSnackBarMessage(
+        context,
+        "defaultErrorMsg".translate(context),
+      );
+      return;
+    }
+
+    final message =
+        'Hi! I saw your advertisement for ${model.translatedName ?? model.name} on ${AppConfig.applicationName} '
+        'and I’m interested in buying it. Is it still available?'
+        '\n${HelperUtils.shareUrl('ad-details', model.slug!)}';
+
+    final launched = await WhatsAppLauncher.launch(number, message: message);
+    if (!mounted || launched) return;
+    HelperUtils.showSnackBarMessage(
+      context,
+      "defaultErrorMsg".translate(context),
     );
   }
 
@@ -1664,6 +2087,29 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
           borderRadius: BorderRadius.circular(12),
           onTap: onPressed,
           child: Icon(icon, color: context.color.buttonColor, size: 24),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWhatsAppActionButton({required VoidCallback onPressed}) {
+    return SizedBox(
+      width: 52,
+      height: 52,
+      child: Material(
+        color: const Color(0xFF25D366),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onPressed,
+          child: Center(
+            child: CustomText(
+              "WA",
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: context.font.normal,
+            ),
+          ),
         ),
       ),
     );
@@ -2370,17 +2816,36 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
           borderRadius: BorderRadius.circular(18),
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.28,
-            child: kReleaseMode && Constant.showGoogleMap
+            child: _locationController != null
                 ? Stack(
                     children: [
-                      LocationMapWidget(
-                        controller: _locationController!,
-                        showMyLocationButton: false,
-                        showMarker: false,
-                        interactive: false,
+                      Positioned.fill(
+                        child: ImageFiltered(
+                          imageFilter: ui.ImageFilter.blur(
+                            sigmaX: 1.6,
+                            sigmaY: 1.6,
+                          ),
+                          child: LocationMapWidget(
+                            controller: _locationController!,
+                            showMyLocationButton: false,
+                            showMarker: true,
+                            interactive: false,
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: ColoredBox(
+                          color: Colors.black.withValues(alpha: 0.08),
+                        ),
+                      ),
+                      Center(
+                        child: _ViewMapButton(
+                          onTap: () => _navigateToGoogleMapScreen(context),
+                        ),
                       ),
                       Positioned.fill(
                         child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
                           onTap: () {
                             _navigateToGoogleMapScreen(context);
                           },
@@ -2391,27 +2856,23 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                 : Stack(
                     fit: StackFit.expand,
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Image.asset(
-                          'assets/map/map.png',
-                          fit: BoxFit.cover,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: context.color.territoryColor.withValues(
+                            alpha: 0.08,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.map_outlined,
+                          size: 54,
+                          color: context.color.territoryColor.withValues(
+                            alpha: 0.45,
+                          ),
                         ),
                       ),
                       Center(
-                        child: MaterialButton(
-                          onPressed: () {
-                            _navigateToGoogleMapScreen(context);
-                          },
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          color: context.color.territoryColor,
-                          elevation: 0,
-                          child: CustomText(
-                            'viewMap'.translate(context),
-                            color: context.color.buttonColor,
-                          ),
+                        child: _ViewMapButton(
+                          onTap: () => _navigateToGoogleMapScreen(context),
                         ),
                       ),
                     ],

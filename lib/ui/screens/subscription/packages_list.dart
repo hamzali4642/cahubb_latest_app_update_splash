@@ -1,6 +1,4 @@
 import 'dart:developer';
-import 'dart:io';
-
 import 'package:eClassify/data/cubits/subscription/assign_free_package_cubit.dart';
 import 'package:eClassify/data/cubits/subscription/fetch_ads_listing_subscription_packages_cubit.dart';
 import 'package:eClassify/data/cubits/subscription/fetch_featured_subscription_packages_cubit.dart';
@@ -19,13 +17,10 @@ import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/hive_utils.dart';
-import 'package:eClassify/utils/payment/gateaways/inapp_purchase_manager.dart';
 import 'package:eClassify/utils/payment/payment_settings.dart';
 import 'package:eClassify/utils/ui_utils.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 class SubscriptionPackageListScreen extends StatefulWidget {
   const SubscriptionPackageListScreen({super.key});
@@ -52,7 +47,6 @@ class _SubscriptionPackageListScreenState
   List<String> listingAdsProducts = [];
   List<SubscriptionPackageModel> iapFeaturedAdsProducts = [];
   List<String> featuredAdsProducts = [];
-  late final InAppPurchaseManager? _inAppPurchaseManager;
 
   late final bool isFreeAdListingEnabled;
 
@@ -64,13 +58,6 @@ class _SubscriptionPackageListScreenState
     }
     context.read<FetchAdsListingSubscriptionPackagesCubit>().fetchPackages();
     context.read<FetchFeaturedSubscriptionPackagesCubit>().fetchPackages();
-    if (Platform.isIOS) {
-      InAppPurchaseManager.getPending();
-      _inAppPurchaseManager = InAppPurchaseManager();
-      _inAppPurchaseManager!.listenIAP(context);
-    } else {
-      _inAppPurchaseManager = null;
-    }
     isFreeAdListingEnabled =
         context.read<FetchSystemSettingsCubit>().getSetting(
           SystemSetting.freeAdListing,
@@ -83,7 +70,7 @@ class _SubscriptionPackageListScreenState
 
   @override
   void dispose() {
-    _inAppPurchaseManager?.dispose();
+    _tabController?.dispose();
     super.dispose();
   }
 
@@ -97,16 +84,6 @@ class _SubscriptionPackageListScreenState
           fontSize: context.font.larger,
           fontWeight: FontWeight.w600,
         ),
-        actions: [
-          //This is required to comply with AppStore's guideline. Do Not Remove.
-          if (Platform.isIOS)
-            CupertinoButton(
-              child: Text("restore".translate(context)),
-              onPressed: () async {
-                await InAppPurchase.instance.restorePurchases();
-              },
-            ),
-        ],
         bottom: isFreeAdListingEnabled
             ? null
             : TabBar(
@@ -186,7 +163,6 @@ class _SubscriptionPackageListScreenState
                 ],
                 child: ItemListingSubscriptionPlansItem(
                   model: state.subscriptionPackages[index],
-                  inAppPurchaseManager: _inAppPurchaseManager,
                 ),
               );
             },
@@ -239,7 +215,6 @@ class _SubscriptionPackageListScreenState
             ],
             child: FeaturedAdsSubscriptionPlansItem(
               modelList: state.subscriptionPackages,
-              inAppPurchaseManager: _inAppPurchaseManager,
             ),
           );
         }
@@ -250,28 +225,11 @@ class _SubscriptionPackageListScreenState
   }
 
   void setPaymentGateways(GetApiKeysSuccess state) {
-    PaymentSettings.stripeCurrency = state.stripeCurrency ?? "";
-    PaymentSettings.stripePublishableKey = state.stripePublishableKey ?? "";
-    PaymentSettings.stripeStatus = state.stripeStatus;
-    PaymentSettings.payStackCurrency = state.payStackCurrency ?? "";
-    PaymentSettings.payStackKey = state.payStackApiKey ?? "";
-    PaymentSettings.payStackStatus = state.payStackStatus;
-    PaymentSettings.razorpayKey = state.razorPayApiKey ?? "";
-    PaymentSettings.razorpayStatus = state.razorPayStatus;
-    PaymentSettings.phonePeCurrency = state.phonePeCurrency ?? "";
-    PaymentSettings.phonePeKey = state.phonePeKey ?? "";
-    PaymentSettings.phonePeStatus = state.phonePeStatus;
-    PaymentSettings.flutterwaveKey = state.flutterWaveKey ?? "";
-    PaymentSettings.flutterwaveCurrency = state.flutterWaveCurrency ?? "";
-    PaymentSettings.flutterwaveStatus = state.flutterWaveStatus;
-    PaymentSettings.phonePeCurrency = state.phonePeCurrency ?? "";
     PaymentSettings.bankAccountNumber = state.bankAccountNumber ?? "";
     PaymentSettings.bankAccountHolderName = state.bankAccountHolder ?? "";
     PaymentSettings.bankIfscSwiftCode = state.bankIfscSwiftCode ?? "";
     PaymentSettings.bankName = state.bankName ?? "";
     PaymentSettings.bankTransferStatus = state.bankTransferStatus;
-    PaymentSettings.paypalCurrency = state.paypalCurrency ?? '';
-    PaymentSettings.paypalStatus = state.paypalStatus;
 
     PaymentSettings.updatePaymentGateways();
   }

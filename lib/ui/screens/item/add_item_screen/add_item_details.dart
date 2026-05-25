@@ -61,7 +61,8 @@ class AddItemDetails extends StatefulWidget {
 
 class _AddItemDetailsState extends CloudState<AddItemDetails>
     with TickerProviderStateMixin {
-  final PickImage _pickTitleImage = PickImage();
+  static const int _maxItemImages = 15;
+
   final PickImage itemImagePicker = PickImage();
   String titleImageURL = "";
   List<dynamic> mixedItemImageList = [];
@@ -144,7 +145,10 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
       adAdditionalDetailsController.text = item?.videoLink ?? "";
       titleImageURL = item?.image ?? "";
       List<String?>? list = item?.galleryImages?.map((e) => e.image).toList();
-      mixedItemImageList.addAll([...list ?? []]);
+      mixedItemImageList.addAll([
+        if (titleImageURL.isNotEmpty) titleImageURL,
+        ...list ?? [],
+      ]);
 
       Log.debug('${item?.currency}');
 
@@ -168,13 +172,6 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
     // --- Slug auto-generation logic ---
     // Will be set up in build() after languages are loaded
 
-    _pickTitleImage.listener((p0) {
-      titleImageURL = "";
-      WidgetsBinding.instance.addPersistentFrameCallback((timeStamp) {
-        if (mounted) setState(() {});
-      });
-    });
-
     itemImagePicker.listener((images) {
       try {
         mixedItemImageList.addAll(List<dynamic>.from(images));
@@ -197,6 +194,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
     maxSalaryController.dispose();
     _tabController?.dispose();
     _isValid.dispose();
+    itemImagePicker.dispose();
 
     for (final controller in [
       ...adDescriptionControllers.values,
@@ -219,6 +217,19 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
     slug = slug.replaceAll(RegExp(r'^-+|-+$'), '');
 
     return slug;
+  }
+
+  File? get _mainImageFile {
+    if (mixedItemImageList.isEmpty) return null;
+    final firstImage = mixedItemImageList.first;
+    return firstImage is File ? firstImage : null;
+  }
+
+  List<File> get _galleryImageFiles {
+    return mixedItemImageList
+        .skip(_mainImageFile == null ? 0 : 1)
+        .whereType<File>()
+        .toList();
   }
 
   String _buildTranslationsJson() {
@@ -418,17 +429,12 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                     );
                     _isValid.value = _formKey.currentState?.validate() ?? false;
                     if (_isValid.value) {
-                      List<File>? galleryImages = mixedItemImageList
-                          .where(
-                            (element) => element != null && element is File,
-                          )
-                          .map((element) => element as File)
-                          .toList();
+                      final mainImage = _mainImageFile;
+                      final galleryImages = _galleryImageFiles;
 
                       final translationsJson = _buildTranslationsJson();
 
-                      if (_pickTitleImage.pickedFile == null &&
-                          titleImageURL == "") {
+                      if (mixedItemImageList.isEmpty) {
                         UiUtils.showBlurredDialoge(
                           context,
                           dialoge: BlurredDialogBox(
@@ -474,7 +480,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                           Routes.confirmLocationScreen,
                           arguments: {
                             "isEdit": widget.isEdit,
-                            "mainImage": _pickTitleImage.pickedFile,
+                            "mainImage": mainImage,
                             "otherImage": galleryImages,
                           },
                         );
@@ -485,7 +491,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                           arguments: {
                             "context": context,
                             "isEdit": widget.isEdit == true,
-                            "mainImage": _pickTitleImage.pickedFile,
+                            "mainImage": mainImage,
                             "otherImage": galleryImages,
                           },
                         ).then((value) {
@@ -670,41 +676,27 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                   SizedBox(height: 10),
                   Row(
                     children: [
-                      CustomText("mainPicture".translate(context)),
+                      CustomText("pictures".translate(context)),
                       const SizedBox(width: 3),
                       CustomText(
-                        "maxSize".translate(context),
+                        "max15Images".translate(context),
                         fontStyle: FontStyle.italic,
                         fontSize: context.font.small,
                       ),
                     ],
                   ),
                   CustomText(
-                    "recommendedSize".translate(context),
+                    "firstImageMain".translate(context),
                     fontStyle: FontStyle.italic,
                     fontSize: context.font.small,
                     color: context.color.textLightColor.withValues(alpha: 0.4),
                   ),
-                  SizedBox(height: 10),
-                  Wrap(children: [...[], titleImageListener()]),
-                  SizedBox(height: 10),
-                  Row(
-                    spacing: 3,
-                    children: [
-                      CustomText("otherPictures".translate(context)),
-                      CustomText(
-                        "max5Images".translate(context),
-                        fontStyle: FontStyle.italic,
-                        fontSize: context.font.small,
-                      ),
-                    ],
-                  ),
-                  CustomText(
-                    "recommendedSize".translate(context),
-                    fontStyle: FontStyle.italic,
-                    fontSize: context.font.small,
-                    color: context.color.textLightColor.withValues(alpha: 0.4),
-                  ),
+                  // CustomText(
+                  //   "maxSizePerImage".translate(context),
+                  //   fontStyle: FontStyle.italic,
+                  //   fontSize: context.font.small,
+                  //   color: context.color.textLightColor.withValues(alpha: 0.4),
+                  // ),
                   SizedBox(height: 10),
                   itemImagesListener(),
                   SizedBox(height: 10),
@@ -830,120 +822,6 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
     );
   }
 
-  Widget titleImageListener() {
-    return _pickTitleImage.listenChangesInUI((context, List<File>? files) {
-      Widget currentWidget = Container();
-      File? file = files?.isNotEmpty == true ? files![0] : null;
-
-      if (titleImageURL.isNotEmpty) {
-        currentWidget = GestureDetector(
-          onTap: () {
-            UiUtils.showFullScreenImage(
-              context,
-              provider: NetworkImage(titleImageURL),
-            );
-          },
-          child: Container(
-            width: 100,
-            height: 100,
-            margin: const EdgeInsets.all(5),
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
-            child: UiUtils.getImage(titleImageURL, fit: BoxFit.cover),
-          ),
-        );
-      }
-
-      if (file != null) {
-        currentWidget = GestureDetector(
-          onTap: () {
-            UiUtils.showFullScreenImage(context, provider: FileImage(file));
-          },
-          child: Column(
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                margin: const EdgeInsets.all(5),
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Image.file(file, fit: BoxFit.cover),
-              ),
-            ],
-          ),
-        );
-      }
-
-      return Wrap(
-        children: [
-          if (file == null && titleImageURL.isEmpty)
-            DottedBorder(
-              color: context.color.textLightColor,
-              borderType: BorderType.RRect,
-              radius: const Radius.circular(12),
-              child: GestureDetector(
-                onTap: () {
-                  showImageSourceDialog(context, (source) {
-                    _pickTitleImage.resumeSubscription();
-                    _pickTitleImage.pick(
-                      pickMultiple: false,
-                      context: context,
-                      source: source,
-                    );
-                    _pickTitleImage.pauseSubscription();
-                    titleImageURL = "";
-                    setState(() {});
-                  });
-                },
-                child: Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  alignment: AlignmentDirectional.center,
-                  height: 48,
-                  child: CustomText(
-                    "addMainPicture".translate(context),
-                    color: context.color.textDefaultColor,
-                    fontSize: context.font.normal,
-                  ),
-                ),
-              ),
-            ),
-          Stack(
-            children: [
-              currentWidget,
-              closeButton(context, () {
-                _pickTitleImage.clearImage();
-                titleImageURL = "";
-                setState(() {});
-              }),
-            ],
-          ),
-          if (file != null || titleImageURL.isNotEmpty)
-            uploadPhotoCard(
-              context,
-              onTap: () {
-                showImageSourceDialog(context, (source) {
-                  _pickTitleImage.resumeSubscription();
-                  _pickTitleImage.pick(
-                    pickMultiple: false,
-                    context: context,
-                    source: source,
-                  );
-                  _pickTitleImage.pauseSubscription();
-                  titleImageURL = "";
-                  setState(() {});
-                });
-              },
-            ),
-        ],
-      );
-    });
-  }
-
   Widget itemImagesListener() {
     return itemImagePicker.listenChangesInUI((context, files) {
       Widget current = Container();
@@ -979,11 +857,34 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                   child: ImageAdapter(image: image),
                 ),
               ),
+              if (index == 0)
+                PositionedDirectional(
+                  start: 10,
+                  bottom: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.color.territoryColor,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: CustomText(
+                      "mainPicture".translate(context),
+                      color: Colors.white,
+                      fontSize: context.font.small,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               closeButton(context, () {
                 if (image is String) {
-                  final matchingIndex = item!.galleryImages!.indexWhere(
-                    (galleryImage) => galleryImage.image == image,
-                  );
+                  final matchingIndex =
+                      item?.galleryImages?.indexWhere(
+                        (galleryImage) => galleryImage.image == image,
+                      ) ??
+                      -1;
 
                   if (matchingIndex != -1) {
                     deleteItemImageList.add(
@@ -994,6 +895,9 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                   } else {}
                 }
 
+                if (image == titleImageURL) {
+                  titleImageURL = "";
+                }
                 mixedItemImageList.removeAt(index);
                 setState(() {});
               }),
@@ -1016,7 +920,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                     itemImagePicker.pick(
                       pickMultiple: source == ImageSource.gallery,
                       context: context,
-                      imageLimit: 5,
+                      imageLimit: _maxItemImages,
                       maxLength: mixedItemImageList.length,
                       source: source,
                     );
@@ -1030,7 +934,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                   alignment: AlignmentDirectional.center,
                   height: 48,
                   child: CustomText(
-                    "addOtherPicture".translate(context),
+                    "addPictures".translate(context),
                     color: context.color.textDefaultColor,
                     fontSize: context.font.normal,
                   ),
@@ -1038,7 +942,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
               ),
             ),
           current,
-          if (mixedItemImageList.length < 5)
+          if (mixedItemImageList.length < _maxItemImages)
             if (files != null && files.isNotEmpty ||
                 mixedItemImageList.isNotEmpty)
               uploadPhotoCard(
@@ -1048,7 +952,7 @@ class _AddItemDetailsState extends CloudState<AddItemDetails>
                     itemImagePicker.pick(
                       pickMultiple: source == ImageSource.gallery,
                       context: context,
-                      imageLimit: 5,
+                      imageLimit: _maxItemImages,
                       maxLength: mixedItemImageList.length,
                       source: source,
                     );

@@ -65,6 +65,8 @@
 		<string>items-beta</string>
 		<string>https</string>
 		<string>http</string>
+		<string>whatsapp</string>
+		<string>whatsapp-business</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

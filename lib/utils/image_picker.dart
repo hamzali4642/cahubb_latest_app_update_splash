@@ -34,17 +34,41 @@ class PickImage {
   }) async {
     try {
       if (pickMultiple ?? false) {
-        List<XFile> list = await _picker.pickMultiImage(
-          imageQuality: Constant.uploadImageQuality,
-          requestFullMetadata: true,
-        );
+        final remainingLimit = imageLimit != null && maxLength != null
+            ? imageLimit - maxLength
+            : imageLimit;
+
+        if (remainingLimit != null && remainingLimit <= 0) {
+          HelperUtils.showSnackBarMessage(
+            context,
+            "max15ImagesAllowed".translate(context),
+          );
+          return;
+        }
+
+        final List<XFile> list;
+        if (remainingLimit == 1) {
+          final image = await _picker.pickImage(
+            source: ImageSource.gallery,
+            imageQuality: Constant.uploadImageQuality,
+          );
+          list = image == null ? [] : [image];
+        } else {
+          list = await _picker.pickMultiImage(
+            imageQuality: Constant.uploadImageQuality,
+            requestFullMetadata: true,
+            limit: remainingLimit != null && remainingLimit > 1
+                ? remainingLimit
+                : null,
+          );
+        }
 
         if (imageLimit != null &&
             maxLength != null &&
             (list.length + maxLength) > imageLimit) {
           HelperUtils.showSnackBarMessage(
             context,
-            "max5ImagesAllowed".translate(context),
+            "max15ImagesAllowed".translate(context),
           );
           return;
         } else {

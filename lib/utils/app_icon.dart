@@ -85,13 +85,7 @@ class AppIcons {
   static String safetyTipsIcon = _svgPath("Illustrators/safety_tips");
   static String blockedUserIcon = _svgPath("blockuser");
   static String faqsIcon = _svgPath("faqs");
-  static String stripeIcon = _svgPath("payment/ic_stripe");
-  static String razorpayIcon = _svgPath("payment/ic_razorpay");
-  static String paystackIcon = _svgPath("payment/ic_paystack");
-  static String phonePeIcon = _svgPath("payment/ic_phonepe");
-  static String flutterwaveIcon = _svgPath("payment/ic_flutterwave");
   static String bankTransferIcon = _svgPath("payment/ic_banktransfer");
-  static String paypalIcon = _svgPath("payment/ic_paypal");
   static String featuredAdsIcon = _svgPath("featured_Ad");
   static String verifiedIcon = _svgPath("verified");
   static String editProfileIcon = _svgPath("edit_profile");

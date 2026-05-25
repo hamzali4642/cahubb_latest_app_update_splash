@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:eClassify/data/cubits/subscription/assign_free_package_cubit.dart';
 import 'package:eClassify/data/cubits/subscription/get_payment_intent_cubit.dart';
 import 'package:eClassify/data/model/subscription/subscription_package_model.dart';
-import 'package:eClassify/ui/screens/subscription/payment_gatways.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/app_icon.dart';
 import 'package:eClassify/utils/constant.dart';
@@ -11,8 +8,6 @@ import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/currency_formatter.dart';
 import 'package:eClassify/utils/helper_utils.dart';
-import 'package:eClassify/utils/payment/gateaways/payment_webview.dart';
-import 'package:eClassify/utils/payment/gateaways/stripe_service.dart';
 import 'package:eClassify/utils/payment/payment_settings.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:eClassify/utils/widgets.dart';
@@ -24,9 +19,7 @@ class PlanHelper {
     BuildContext mainContext,
     SubscriptionPackageModel plan,
     String? selectedGateway, {
-    Function? iosCallback,
     Function? changePaymentGateway,
-    // Function? setupPaymentGateway,
     String? btnTitle,
   }) {
     return BlocConsumer<GetPaymentIntentCubit, GetPaymentIntentState>(
@@ -37,8 +30,6 @@ class PlanHelper {
         }
         if (state is GetPaymentIntentInSuccess) {
           showHideLoaderWithMsg(false, context);
-
-          setupPaymentGateway(context, state, plan, selectedGateway);
         } else if (state is GetPaymentIntentFailure) {
           showHideLoaderWithMsg(false, context, msg: state.error.toString());
         } else if (state is GetPaymentIntentInProgress) {
@@ -71,19 +62,15 @@ class PlanHelper {
                 onNotGuest: () {
                   if (!plan.isActive!) {
                     if (plan.finalPrice! > 0) {
-                      if (Platform.isIOS && iosCallback != null) {
-                        iosCallback(plan.iosProductId!, plan.id!.toString());
-                      } else {
-                        paymentGatewayBottomSheet(
-                          mainContext,
-                          selectedGateway,
-                          plan.id!,
-                        ).then((value) {
-                          if (value != null && changePaymentGateway != null) {
-                            changePaymentGateway(value);
-                          }
-                        });
-                      }
+                      paymentGatewayBottomSheet(
+                        mainContext,
+                        selectedGateway,
+                        plan.id!,
+                      ).then((value) {
+                        if (value != null && changePaymentGateway != null) {
+                          changePaymentGateway(value);
+                        }
+                      });
                     } else {
                       mainContext
                           .read<AssignFreePackageCubit>()
@@ -124,103 +111,9 @@ class PlanHelper {
     }
   }
 
-  void setupPaymentGateway(
-    BuildContext context,
-    GetPaymentIntentInSuccess state,
-    SubscriptionPackageModel subscriptionPackageModel,
-    String? selectedGateway,
-  ) {
-    if (selectedGateway == Constant.paymentTypeStripe) {
-      StripeService.initStripe(PaymentSettings.stripePublishableKey, "test");
-      PaymentGateways.stripe(
-        context,
-        price: subscriptionPackageModel.finalPrice!.toDouble(),
-        packageId: subscriptionPackageModel.id!,
-        paymentIntent: state.paymentIntent,
-      );
-    } else if (selectedGateway
-        case == Constant.paymentTypePaystack ||
-            Constant.paymentTypeFlutterwave ||
-            Constant.paymentTypePaypal) {
-      if (state.paymentIntent["payment_gateway_response"]['status'] ==
-          'error') {
-        HelperUtils.showSnackBarMessage(
-          context,
-          state.paymentIntent["payment_gateway_response"]['message'],
-        );
-        return;
-      }
-
-      String authUrl() {
-        if (selectedGateway == Constant.paymentTypePaystack) {
-          return state
-              .paymentIntent["payment_gateway_response"]["data"]["authorization_url"];
-        } else if (selectedGateway == Constant.paymentTypeFlutterwave) {
-          return state
-              .paymentIntent["payment_gateway_response"]["data"]["link"];
-        } else if (selectedGateway == Constant.paymentTypePaypal) {
-          return state.paymentIntent["approval_url"];
-        } else {
-          throw UnsupportedError('No authUrl found');
-        }
-      }
-
-      ;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => PaymentWebView(
-            authorizationUrl: authUrl(),
-            reference: selectedGateway == Constant.paymentTypePaystack
-                ? state
-                      .paymentIntent["payment_gateway_response"]["data"]["reference"]
-                : null,
-            onSuccess: (reference) {
-              HelperUtils.showSnackBarMessage(
-                context,
-                "paymentSuccessfullyCompleted".translate(context),
-              );
-              // Handle successful payment
-            },
-            onFailed: (reference) {
-              HelperUtils.showSnackBarMessage(
-                context,
-                "purchaseFailed".translate(context),
-              );
-              // Handle failed payment
-            },
-            onCancel: () {
-              HelperUtils.showSnackBarMessage(
-                context,
-                "subscriptionsCancelled".translate(context),
-              );
-            },
-          ),
-        ),
-      );
-    } else if (selectedGateway == Constant.paymentTypePhonepe) {
-      PaymentGateways.phonepeCheckSum(
-        context: context,
-        getData: state.paymentIntent["payment_gateway_response"],
-      );
-    } else if (selectedGateway == Constant.paymentTypeRazorpay) {
-      PaymentGateways.razorpay(
-        orderId: state.paymentIntent["id"].toString(),
-        context: context,
-        packageId: subscriptionPackageModel.id!,
-        price: subscriptionPackageModel.finalPrice!.toDouble(),
-      );
-    }
-  }
-
   String getSelectedPaymentMethod(String? selectedGateway) {
-    //convert below code in switch case
     return switch (selectedGateway) {
-      Constant.paymentTypeStripe => "Stripe",
-      Constant.paymentTypePaystack => "Paystack",
-      Constant.paymentTypeRazorpay => "Razorpay",
-      Constant.paymentTypePhonepe => "PhonePe",
-      Constant.paymentTypeFlutterwave => "FlutterWave",
-      Constant.paymentTypePaypal => "PayPal",
+      Constant.paymentTypeBankTransfer => "bankTransfer",
       _ => "",
     };
   }
@@ -503,20 +396,8 @@ class PaymentMethodTile extends StatelessWidget {
 
   String gatewayIcon(String type) {
     switch (type) {
-      case Constant.paymentTypeStripe:
-        return AppIcons.stripeIcon;
-      case Constant.paymentTypePaystack:
-        return AppIcons.paystackIcon;
-      case Constant.paymentTypeRazorpay:
-        return AppIcons.razorpayIcon;
-      case Constant.paymentTypePhonepe:
-        return AppIcons.phonePeIcon;
-      case Constant.paymentTypeFlutterwave:
-        return AppIcons.flutterwaveIcon;
       case Constant.paymentTypeBankTransfer:
         return AppIcons.bankTransferIcon;
-      case Constant.paymentTypePaypal:
-        return AppIcons.paypalIcon;
       default:
         return "";
     }

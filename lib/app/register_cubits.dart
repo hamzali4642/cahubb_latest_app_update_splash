@@ -56,7 +56,6 @@ import 'package:eClassify/data/cubits/subscription/bank_transfer_update_cubit.da
 import 'package:eClassify/data/cubits/subscription/fetch_ads_listing_subscription_packages_cubit.dart';
 import 'package:eClassify/data/cubits/subscription/fetch_featured_subscription_packages_cubit.dart';
 import 'package:eClassify/data/cubits/subscription/fetch_user_package_limit_cubit.dart';
-import 'package:eClassify/data/cubits/subscription/in_app_purchase_cubit.dart';
 import 'package:eClassify/data/cubits/system/app_theme_cubit.dart';
 import 'package:eClassify/data/cubits/system/fetch_language_cubit.dart';
 import 'package:eClassify/data/cubits/system/fetch_system_settings_cubit.dart';
@@ -112,7 +111,6 @@ class RegisterCubits {
     BlocProvider(create: (context) => FetchUserPackageLimitCubit()),
     BlocProvider(create: (context) => DeleteUserCubit()),
     BlocProvider(create: (context) => MakeAnOfferItemCubit()),
-    BlocProvider(create: (context) => InAppPurchaseCubit()),
     BlocProvider(create: (context) => SendMessageCubit()),
     BlocProvider(create: (context) => DeleteMessageCubit()),
     BlocProvider(create: (context) => LoadChatMessagesCubit()),

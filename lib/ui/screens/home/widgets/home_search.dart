@@ -21,37 +21,6 @@ class HomeSearchField extends StatefulWidget {
 class _HomeSearchFieldState extends State<HomeSearchField> {
   static const List<_HomeQuickFilter> _quickFilters = [
     _HomeQuickFilter(
-      title: 'Electronics',
-      hint: 'Search for Electronics',
-      searchKeyword: 'electronics',
-      cards: [
-        _QuickCardData(
-          title: 'Mobile Phones',
-          label: 'Mobiles',
-          icon: Icons.smartphone,
-          searchKeyword: 'mobile',
-        ),
-        _QuickCardData(
-          title: 'Laptops',
-          label: 'Laptops',
-          icon: Icons.laptop_mac,
-          searchKeyword: 'laptop',
-        ),
-        _QuickCardData(
-          title: 'Appliances',
-          label: 'Home',
-          icon: Icons.kitchen_outlined,
-          searchKeyword: 'appliance',
-        ),
-        _QuickCardData(
-          title: 'Cameras',
-          label: 'Cameras',
-          icon: Icons.photo_camera_outlined,
-          searchKeyword: 'camera',
-        ),
-      ],
-    ),
-    _HomeQuickFilter(
       title: 'Motors',
       hint: 'Search for Motors',
       searchKeyword: 'motors',
@@ -79,6 +48,37 @@ class _HomeSearchFieldState extends State<HomeSearchField> {
           label: 'Trucks',
           icon: Icons.local_shipping_outlined,
           searchKeyword: 'truck',
+        ),
+      ],
+    ),
+    _HomeQuickFilter(
+      title: 'Electronics',
+      hint: 'Search for Electronics',
+      searchKeyword: 'electronics',
+      cards: [
+        _QuickCardData(
+          title: 'Mobile Phones',
+          label: 'Mobiles',
+          icon: Icons.smartphone,
+          searchKeyword: 'mobile',
+        ),
+        _QuickCardData(
+          title: 'Laptops',
+          label: 'Laptops',
+          icon: Icons.laptop_mac,
+          searchKeyword: 'laptop',
+        ),
+        _QuickCardData(
+          title: 'Appliances',
+          label: 'Home',
+          icon: Icons.kitchen_outlined,
+          searchKeyword: 'appliance',
+        ),
+        _QuickCardData(
+          title: 'Cameras',
+          label: 'Cameras',
+          icon: Icons.photo_camera_outlined,
+          searchKeyword: 'camera',
         ),
       ],
     ),
@@ -115,7 +115,7 @@ class _HomeSearchFieldState extends State<HomeSearchField> {
     ),
   ];
 
-  int _selectedIndex = 2;
+  int _selectedIndex = 0;
 
   void _openSearch(
     BuildContext context, {

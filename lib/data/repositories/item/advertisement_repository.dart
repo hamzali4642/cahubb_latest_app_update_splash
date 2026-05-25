@@ -52,12 +52,7 @@ class AdvertisementRepository {
   }) async {
     Map response = await Api.post(
       url: Api.getPaymentIntentApi,
-      parameter: {
-        Api.packageId: packageId,
-        Api.paymentMethod: paymentMethod,
-        if (paymentMethod case == "Paystack" || "PhonePe" || "PayPal")
-          Api.platformType: "app",
-      },
+      parameter: {Api.packageId: packageId, Api.paymentMethod: paymentMethod},
     );
     return response;
   }

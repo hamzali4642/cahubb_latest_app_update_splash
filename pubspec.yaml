@@ -62,17 +62,11 @@ dependencies:
   path: ^1.9.1
   device_info_plus: ^11.4.0
   sms_autofill: ^2.4.1
-  webview_flutter: ^4.11.0
   flutter_widget_from_html: ^0.16.0
   file_picker: ^10.1.2
   android_intent_plus: 6.0.0
   google_cloud_translation: ^0.0.4
   flutter_launcher_icons: ^0.13.1
-  #payment gateways
-  flutter_stripe: ^11.5.0
-  in_app_purchase: ^3.2.1
-  razorpay_flutter: ^1.4.0
-  phonepe_payment_sdk: ^3.0.0
   firebase_app_check: ^0.3.2+10
   collection: ^1.19.1
   open_file: ^3.5.10

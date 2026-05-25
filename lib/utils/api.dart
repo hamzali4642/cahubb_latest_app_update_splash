@@ -149,7 +149,6 @@ class Api {
   static String assignFreePackageApi = "assign-free-package";
   static String getLimitsOfPackageApi = "get-limits";
   static String getPaymentIntentApi = "payment-intent";
-  static String inAppPurchaseApi = "in-app-purchase";
   static String getTipsApi = "tips";
   static String getCountriesApi = "countries";
   static String getStatesApi = "states";
@@ -311,20 +310,12 @@ class Api {
   static String jobId = "job_id";
   static String popularItems = "popular_items";
   static String advertisement = "advertisement";
-  static String razorpay = "Razorpay";
-  static String payStack = "Paystack";
-  static String stripe = "Stripe";
-  static String phonePe = "PhonePe";
-  static String flutterwave = "flutterwave";
   static String bankTransfer = "bankTransfer";
-  static String apiKey = "api_key";
-  static String currencyCode = "currency_code";
   static String currencyId = "currency_id";
   static String accountHolderName = "account_holder_name";
   static String accountNumber = "account_number";
   static String bankName = "bank_name";
   static String ifscSwiftCode = "ifsc_swift_code";
-  static String paypal = 'Paypal';
 
   static Future<Map<String, dynamic>> post({
     required String url,
@@ -489,7 +480,7 @@ class Api {
       );
 
       if (response.data['error'] == true) {
-        throw ApiException(response.data['message'] .toString());
+        throw ApiException(response.data['message'].toString());
       }
       return Map.from(response.data);
     } on DioException catch (e, st) {

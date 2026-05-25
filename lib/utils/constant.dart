@@ -60,13 +60,7 @@ class Constant {
   static const String statusUnderReview = "under review";
 
   // Payment types
-  static const String paymentTypeStripe = "stripe";
-  static const String paymentTypePaystack = "paystack";
-  static const String paymentTypeRazorpay = "razorpay";
-  static const String paymentTypePhonepe = "phonepe";
-  static const String paymentTypeFlutterwave = "flutterwave";
   static const String paymentTypeBankTransfer = "bankTransfer";
-  static const String paymentTypePaypal = "PayPal";
 
   // Subscription packages
   static const String itemTypeListing = "item_listing";
