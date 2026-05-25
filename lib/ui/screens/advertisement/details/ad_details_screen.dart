@@ -2103,11 +2103,11 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
           borderRadius: BorderRadius.circular(12),
           onTap: onPressed,
           child: Center(
-            child: CustomText(
-              "WA",
+            child: UiUtils.getSvg(
+              AppIcons.whatsapp,
+              width: 24,
+              height: 24,
               color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: context.font.normal,
             ),
           ),
         ),

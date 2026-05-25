@@ -38,6 +38,7 @@ class AppIcons {
   static String edit = _svgPath("edit");
   static String call = _svgPath("call");
   static String message = _svgPath("message");
+  static String whatsapp = _svgPath("whatsapp");
   static String defaultPersonLogo = _svgPath("defaultProfileIcon");
   static String arrowLeft = _svgPath("arrow_left");
   static String warning = _svgPath("warning");
