@@ -173,6 +173,7 @@ class _AddMoreDetailsScreenState extends CloudState<AddMoreDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
+    
     languages =
         context.watch<FetchSystemSettingsCubit>().getSetting(
               SystemSetting.language,
@@ -217,7 +218,7 @@ class _AddMoreDetailsScreenState extends CloudState<AddMoreDetailsScreen>
     if (widget.isEdit ?? false) {
       // Get all custom fields
       var customFields = context.read<FetchCustomFieldsCubit>().getFields();
-
+      
       for (var field in customFields) {
         if (field.type == 'textbox') {
           var storedTranslations = getCloudData(
@@ -322,6 +323,7 @@ class _AddMoreDetailsScreenState extends CloudState<AddMoreDetailsScreen>
 
                   // Only non-textbox fields in custom_fields
                   Map<String, List<dynamic>> nonTextboxFields = {};
+
                   for (var entry in AbstractField.fieldsData.entries) {
                     // Only add if the key does not match the textbox composite key pattern
                     // (i.e., does not match fieldId_langId for a textbox field)

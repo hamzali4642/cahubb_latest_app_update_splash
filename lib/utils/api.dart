@@ -489,7 +489,7 @@ class Api {
       );
 
       if (response.data['error'] == true) {
-        throw ApiException(response.data['message'].toString());
+        throw ApiException(response.data['message'] .toString());
       }
       return Map.from(response.data);
     } on DioException catch (e, st) {
