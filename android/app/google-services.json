@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "124116953140-topjtnlbag9t2kakuuqvdp1pqu37ot46.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cahubb.pakistan",
+            "certificate_hash": "9b6ce60325956965af04d02a2eebc19bb7a03286"
+          }
+        },
+        {
           "client_id": "124116953140-vn1f1lecjvecnilm1vh1iglk166ssjm1.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -38,6 +46,14 @@
             {
               "client_id": "124116953140-vn1f1lecjvecnilm1vh1iglk166ssjm1.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "124116953140-j45eoqgu6hr847v2n8hp7invmiiodtdu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.cahubb.pakistan",
+                "app_store_id": "6774878754"
+              }
             }
           ]
         }

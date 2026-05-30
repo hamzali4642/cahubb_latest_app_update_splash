@@ -128,12 +128,9 @@ class LoginScreenState extends State<LoginScreen> {
   bool get _isGoogleAuthEnabled =>
       _isAuthEnabled(Constant.googleAuthentication);
 
-  bool get _isAppleAuthEnabled => _isAuthEnabled(Constant.appleAuthentication);
-
   bool get _hasPrimaryAuth => _isMobileAuthEnabled || _isEmailAuthEnabled;
 
-  bool get _hasSocialAuth =>
-      _isGoogleAuthEnabled || (_isAppleAuthEnabled && Platform.isIOS);
+  bool get _hasSocialAuth => _isGoogleAuthEnabled || Platform.isIOS;
 
   bool get _shouldStartWithMobileLogin {
     if (widget.email != null && widget.email!.isNotEmpty) return false;
@@ -599,7 +596,7 @@ class LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 12),
       ],
-      if (_isAppleAuthEnabled && Platform.isIOS) ...[
+      if (Platform.isIOS) ...[
         UiUtils.buildButton(
           context,
           prefixWidget: Padding(

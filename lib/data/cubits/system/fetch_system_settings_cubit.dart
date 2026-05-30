@@ -244,7 +244,7 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
     Constant.appleAuthentication = _getSettingAsString(
       settings,
       SystemSetting.appleAuthentication,
-      fallback: "0",
+      fallback: Constant.googleAuthentication,
     );
     Constant.emailAuthentication = _getSettingAsString(
       settings,

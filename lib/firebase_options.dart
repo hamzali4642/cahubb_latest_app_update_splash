@@ -50,22 +50,24 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: '',
-    appId: '',
-    messagingSenderId: '',
-    projectId: '',
-    storageBucket: '',
+    apiKey: 'AIzaSyAqa8pV7AC7KbKdkLZwBHmoUPMZ3T75rHk',
+    appId: '1:124116953140:android:00c5b420a91b2cff5e4261',
+    messagingSenderId: '124116953140',
+    projectId: 'ca-hubb',
+    databaseURL: 'https://ca-hubb-default-rtdb.firebaseio.com',
+    storageBucket: 'ca-hubb.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: '',
-    appId: '',
-    messagingSenderId: '',
-    projectId: '',
-    storageBucket: '',
-    androidClientId: '',
-    iosClientId: '',
-    iosBundleId: '',
+    apiKey: 'AIzaSyBt6UEpn55wyFwHUPNVjdR-D64J9WFW7_U',
+    appId: '1:124116953140:ios:25f3b9243c4b13515e4261',
+    messagingSenderId: '124116953140',
+    projectId: 'ca-hubb',
+    databaseURL: 'https://ca-hubb-default-rtdb.firebaseio.com',
+    storageBucket: 'ca-hubb.firebasestorage.app',
+    androidClientId: '124116953140-bijekbh7ksrlid7bk3rocl4c9dracfd0.apps.googleusercontent.com',
+    iosClientId: '124116953140-j45eoqgu6hr847v2n8hp7invmiiodtdu.apps.googleusercontent.com',
+    iosBundleId: 'com.cahubb.pakistan',
   );
 
 }

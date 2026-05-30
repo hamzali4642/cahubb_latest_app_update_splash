@@ -90,6 +90,7 @@ void _setupErrorHandling() {
 
 /// Initializes Firebase with appropriate options
 Future<void> _initializeFirebase() async {
+  
   if (Firebase.apps.isNotEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
