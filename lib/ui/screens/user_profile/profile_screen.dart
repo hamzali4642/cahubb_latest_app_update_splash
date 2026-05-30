@@ -1148,7 +1148,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             subtitle: 'v${Constant.newVersionNumber}',
           ),
         ],
-        const SizedBox(height: 20),
+        const SizedBox(height: 150),
       ],
     );
   }

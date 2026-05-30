@@ -5,7 +5,6 @@ import 'package:eClassify/utils/app_session.dart';
 import 'package:eClassify/utils/constant.dart';
 import 'package:eClassify/utils/hive_keys.dart';
 import 'package:eClassify/utils/map_style.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -90,19 +89,11 @@ void _setupErrorHandling() {
 
 /// Initializes Firebase with appropriate options
 Future<void> _initializeFirebase() async {
-  
-  if (Firebase.apps.isNotEmpty) {
+  if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-  } else {
-    await Firebase.initializeApp();
   }
-
-  await FirebaseAppCheck.instance.activate(
-    appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
-    androidProvider: AndroidProvider.playIntegrity,
-  );
 }
 
 /// Initializes Hive and opens all required boxes

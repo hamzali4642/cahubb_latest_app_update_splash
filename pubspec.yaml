@@ -67,7 +67,6 @@ dependencies:
   android_intent_plus: 6.0.0
   google_cloud_translation: ^0.0.4
   flutter_launcher_icons: ^0.13.1
-  firebase_app_check: ^0.3.2+10
   collection: ^1.19.1
   open_file: ^3.5.10
   timeago: ^3.7.1

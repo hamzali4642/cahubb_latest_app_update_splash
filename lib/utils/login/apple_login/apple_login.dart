@@ -9,7 +9,6 @@ import 'package:eClassify/utils/login/lib/login_system.dart';
 
 class AppleLogin extends LoginSystem {
   OAuthCredential? credential;
-  OAuthProvider? oAuthProvider;
 
   @override
   void init() async {}
@@ -29,32 +28,40 @@ class AppleLogin extends LoginSystem {
             nonce: nonce,
           );
 
-      oAuthProvider = OAuthProvider('apple.com');
-      if (oAuthProvider != null) {
-        credential = oAuthProvider!.credential(
-          idToken: appleIdCredential.identityToken,
-          rawNonce: rawNonce,
+      final identityToken = appleIdCredential.identityToken;
+      if (identityToken == null || identityToken.isEmpty) {
+        throw FirebaseAuthException(
+          code: 'missing-apple-identity-token',
+          message: 'Apple did not return an identity token.',
         );
-
-        final UserCredential userCredential = await firebaseAuth
-            .signInWithCredential(credential!);
-
-        if (userCredential.additionalUserInfo!.isNewUser) {
-          final String givenName = appleIdCredential.givenName ?? "";
-          final String familyName = appleIdCredential.familyName ?? "";
-          final displayName = "$givenName $familyName".trim();
-
-          if (displayName.isNotEmpty) {
-            await userCredential.user!.updateDisplayName(displayName);
-            await userCredential.user!.reload();
-          }
-        }
-
-        emit(MSuccess());
-
-        return userCredential;
       }
-      return null;
+
+      credential = AppleAuthProvider.credentialWithIDToken(
+        identityToken,
+        rawNonce,
+        AppleFullPersonName(
+          givenName: appleIdCredential.givenName,
+          familyName: appleIdCredential.familyName,
+        ),
+      );
+
+      final UserCredential userCredential = await firebaseAuth
+          .signInWithCredential(credential!);
+
+      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+        final String givenName = appleIdCredential.givenName ?? "";
+        final String familyName = appleIdCredential.familyName ?? "";
+        final displayName = "$givenName $familyName".trim();
+
+        if (displayName.isNotEmpty) {
+          await userCredential.user!.updateDisplayName(displayName);
+          await userCredential.user!.reload();
+        }
+      }
+
+      emit(MSuccess());
+
+      return userCredential;
     } catch (e) {
       emit(MFail(e.toString()));
       rethrow;
