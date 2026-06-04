@@ -133,6 +133,7 @@ class Api {
   static String getPackageApi = "get-package";
   static String getLanguageApi = "get-languages";
   static String getPaymentSettingsApi = "get-payment-settings";
+  static String inAppPurchaseApi = "in-app-purchase";
   static String getSystemSettingsApi = "get-system-settings";
   static String getCurrenciesApi = "get-currencies";
   static String getFavoriteItemApi = "get-favourite-item";
