@@ -40,8 +40,8 @@ class NoChatFound extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          const SizedBox(height: 120),
           UiUtils.getSvg(AppIcons.no_chat_found),
           const SizedBox(height: 20),
           Padding(

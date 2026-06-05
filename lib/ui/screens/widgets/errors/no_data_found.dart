@@ -33,47 +33,45 @@ class NoDataFound extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap ?? null,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (showImage != false)
-                Flexible(
-                  child: UiUtils.getSvg(
-                    AppIcons.no_data_found,
-                    height: height,
-                    color: territoryColor_,
-                  ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 80),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showImage != false)
+              Flexible(
+                child: UiUtils.getSvg(
+                  AppIcons.no_data_found,
+                  height: height,
+                  color: territoryColor_,
                 ),
-              const SizedBox(height: 20),
-              CustomText(
-                mainMessage ?? "nodatafound".translate(context),
-                fontSize: mainMsgStyle ?? context.font.extraLarge,
-                color: context.color.territoryColor,
-                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(height: 14),
-              CustomText(
-                subMessage ?? "sorryLookingFor".translate(context),
-                fontSize: subMsgStyle ?? context.font.larger,
-                textAlign: TextAlign.center,
-              ),
-              if (showBtn!)
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: UiUtils.buildButton(
-                    context,
-                    onPressed: onTap!,
-                    buttonTitle: btnName ?? "",
-                    height: 40,
-                    width: MediaQuery.of(context).size.width / 1.5,
-                    radius: 8,
-                  ),
+            const SizedBox(height: 20),
+            CustomText(
+              mainMessage ?? "nodatafound".translate(context),
+              fontSize: mainMsgStyle ?? context.font.extraLarge,
+              color: context.color.territoryColor,
+              fontWeight: FontWeight.w600,
+            ),
+            const SizedBox(height: 14),
+            CustomText(
+              subMessage ?? "sorryLookingFor".translate(context),
+              fontSize: subMsgStyle ?? context.font.larger,
+              textAlign: TextAlign.center,
+            ),
+            if (showBtn!)
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0),
+                child: UiUtils.buildButton(
+                  context,
+                  onPressed: onTap!,
+                  buttonTitle: btnName ?? "",
+                  height: 40,
+                  width: MediaQuery.of(context).size.width / 1.5,
+                  radius: 8,
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );

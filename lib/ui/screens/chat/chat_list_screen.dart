@@ -100,8 +100,8 @@ class _ChatListScreenState extends State<ChatListScreen>
             bottom: [
               TabBar(
                 tabs: [
-                  Tab(text: 'selling'.translate(context)),
                   Tab(text: 'buying'.translate(context)),
+                  Tab(text: 'selling'.translate(context)),
                 ],
 
                 indicatorColor: context.color.textDefaultColor,
@@ -134,10 +134,10 @@ class _ChatListScreenState extends State<ChatListScreen>
           ),
           body: TabBarView(
             children: [
-              // Content of the 'Selling' tab
-              sellingChatListData(),
               // Content of the 'Buying' tab
               buyingChatListData(),
+              // Content of the 'Selling' tab
+              sellingChatListData(),
             ],
           ),
         ),
