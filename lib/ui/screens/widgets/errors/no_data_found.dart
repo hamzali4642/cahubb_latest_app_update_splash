@@ -49,14 +49,14 @@ class NoDataFound extends StatelessWidget {
             const SizedBox(height: 20),
             CustomText(
               mainMessage ?? "nodatafound".translate(context),
-              fontSize: mainMsgStyle ?? context.font.extraLarge,
+              fontSize: mainMsgStyle ?? context.font.normal,
               color: context.color.territoryColor,
               fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 4),
             CustomText(
               subMessage ?? "sorryLookingFor".translate(context),
-              fontSize: subMsgStyle ?? context.font.larger,
+              fontSize: subMsgStyle ?? context.font.normal,
               textAlign: TextAlign.center,
             ),
             if (showBtn!)
