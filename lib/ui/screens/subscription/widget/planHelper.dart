@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:eClassify/data/cubits/subscription/assign_free_package_cubit.dart';
 import 'package:eClassify/data/cubits/subscription/get_payment_intent_cubit.dart';
 import 'package:eClassify/data/model/subscription/subscription_package_model.dart';
@@ -21,7 +19,6 @@ class PlanHelper {
     BuildContext mainContext,
     SubscriptionPackageModel plan,
     String? selectedGateway, {
-    Function? iosCallback,
     Function? changePaymentGateway,
     String? btnTitle,
   }) {
@@ -65,19 +62,15 @@ class PlanHelper {
                 onNotGuest: () {
                   if (!plan.isActive!) {
                     if (plan.finalPrice! > 0) {
-                      if (Platform.isIOS && iosCallback != null) {
-                        iosCallback(plan.iosProductId!, plan.id!.toString());
-                      } else {
-                        paymentGatewayBottomSheet(
-                          mainContext,
-                          selectedGateway,
-                          plan.id!,
-                        ).then((value) {
-                          if (value != null && changePaymentGateway != null) {
-                            changePaymentGateway(value);
-                          }
-                        });
-                      }
+                      paymentGatewayBottomSheet(
+                        mainContext,
+                        selectedGateway,
+                        plan.id!,
+                      ).then((value) {
+                        if (value != null && changePaymentGateway != null) {
+                          changePaymentGateway(value);
+                        }
+                      });
                     } else {
                       mainContext
                           .read<AssignFreePackageCubit>()

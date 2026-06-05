@@ -9,7 +9,6 @@ import 'package:eClassify/utils/extensions/lib/build_context.dart';
 import 'package:eClassify/utils/extensions/lib/currency_formatter.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
 import 'package:eClassify/utils/extensions/lib/translate.dart';
-import 'package:eClassify/utils/payment/gateaways/inapp_purchase_manager.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -18,12 +17,10 @@ class ItemListingPackageFrontCard extends StatefulWidget {
   const ItemListingPackageFrontCard({
     required this.model,
     required this.onTap,
-    this.inAppPurchaseManager,
     super.key,
   });
 
   final SubscriptionPackageModel model;
-  final InAppPurchaseManager? inAppPurchaseManager;
   final VoidCallback onTap;
 
   @override
@@ -356,9 +353,6 @@ class _ItemListingPackageFrontCardState
       context,
       widget.model,
       _selectedGateway,
-      iosCallback: (String productId, String packageId) {
-        widget.inAppPurchaseManager!.buy(productId, packageId);
-      },
       btnTitle: widget.model.isActive ?? false
           ? "purchased".translate(context)
           : "purchaseThisPackage".translate(context),

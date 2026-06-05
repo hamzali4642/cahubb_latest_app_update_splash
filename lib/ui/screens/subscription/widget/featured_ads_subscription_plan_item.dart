@@ -7,19 +7,13 @@ import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/currency_formatter.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
-import 'package:eClassify/utils/payment/gateaways/inapp_purchase_manager.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 
 class FeaturedAdsSubscriptionPlansItem extends StatefulWidget {
   final List<SubscriptionPackageModel> modelList;
-  final InAppPurchaseManager? inAppPurchaseManager;
 
-  const FeaturedAdsSubscriptionPlansItem({
-    super.key,
-    required this.modelList,
-    required this.inAppPurchaseManager,
-  });
+  const FeaturedAdsSubscriptionPlansItem({super.key, required this.modelList});
 
   @override
   _FeaturedAdsSubscriptionPlansItemState createState() =>
@@ -309,9 +303,6 @@ class _FeaturedAdsSubscriptionPlansItemState
       context,
       widget.modelList[selectedIndex!],
       _selectedGateway,
-      iosCallback: (String productId, String packageId) {
-        widget.inAppPurchaseManager!.buy(productId, packageId);
-      },
       changePaymentGateway: (String selectedPaymentGateway) {
         setState(() {
           _selectedGateway = selectedPaymentGateway;
