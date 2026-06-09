@@ -22,6 +22,7 @@ import 'package:eClassify/ui/screens/home/mixins/root_location_resolver_mixin.da
 import 'package:eClassify/ui/screens/home/slider_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/category_widget_home.dart';
 import 'package:eClassify/ui/screens/home/widgets/featured_section_widget.dart';
+import 'package:eClassify/ui/screens/home/widgets/home_services_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/home_search.dart';
 import 'package:eClassify/ui/screens/home/widgets/item_card_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/location_widget.dart';
@@ -236,6 +237,7 @@ class HomeScreenState extends State<HomeScreen>
                       const SliverToBoxAdapter(child: HomeSearchField()),
                       const SliverToBoxAdapter(child: SliderWidget()),
                       const SliverToBoxAdapter(child: CategoryWidgetHome()),
+                      const SliverToBoxAdapter(child: HomeServicesWidget()),
                       BlocBuilder<FetchHomeScreenCubit, FetchHomeScreenState>(
                         builder: (context, state) {
                           if (state is FetchHomeScreenSuccess) {
