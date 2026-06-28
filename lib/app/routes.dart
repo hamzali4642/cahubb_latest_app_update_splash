@@ -31,6 +31,9 @@ import 'package:eClassify/ui/screens/location/widgets/location_map_picker.dart';
 import 'package:eClassify/ui/screens/main_activity.dart';
 import 'package:eClassify/ui/screens/my_review_screen.dart';
 import 'package:eClassify/ui/screens/onboarding/onboarding_screen.dart';
+import 'package:eClassify/ui/screens/services/car_inspection_booking_screen.dart';
+import 'package:eClassify/ui/screens/services/service_packages_screen.dart';
+import 'package:eClassify/ui/screens/services/service_page_config.dart';
 import 'package:eClassify/ui/screens/seller/seller_intro_verification.dart';
 import 'package:eClassify/ui/screens/seller/seller_profile.dart';
 import 'package:eClassify/ui/screens/seller/seller_verification.dart';
@@ -83,6 +86,11 @@ class Routes {
   static const String blogsScreenRoute = 'blogsScreenRoute';
   static const String subscriptionPackageListRoute =
       'subscriptionPackageListRoute';
+  static const String carInspectionServiceScreen =
+      '/carInspectionServiceScreen';
+  static const String sellItForMeServiceScreen = '/sellItForMeServiceScreen';
+  static const String carInspectionBookingScreen =
+      '/carInspectionBookingScreen';
   static const String maintenanceMode = '/maintenanceMode';
   static const String favoritesScreen = '/favoritescreen';
   static const String blogDetailsScreenRoute = '/blogDetailsScreenRoute';
@@ -257,6 +265,18 @@ class Routes {
         return BlogDetails.route(routeSettings);
       case subscriptionPackageListRoute:
         return SubscriptionPackageListScreen.route(routeSettings);
+      case carInspectionServiceScreen:
+        return ServicePackagesScreen.route(
+          config: ServicePageConfig.carInspection,
+          settings: routeSettings,
+        );
+      case carInspectionBookingScreen:
+        return CarInspectionBookingScreen.route(routeSettings);
+      case sellItForMeServiceScreen:
+        return ServicePackagesScreen.route(
+          config: ServicePageConfig.sellItForMe,
+          settings: routeSettings,
+        );
       case favoritesScreen:
         return FavoriteScreen.route(routeSettings);
       case transactionHistory:

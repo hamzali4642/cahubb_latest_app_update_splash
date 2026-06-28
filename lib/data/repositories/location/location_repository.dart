@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:eClassify/data/model/data_output.dart';
 import 'package:eClassify/data/model/location/leaf_location.dart';
 import 'package:eClassify/data/model/location/location_node.dart';
 import 'package:eClassify/utils/api.dart';
@@ -69,6 +70,39 @@ class LocationRepository {
     } on Exception catch (e, stack) {
       log(e.toString(), name: 'fetchLocation<$T>');
       log('$stack', name: 'fetchLocation<$T>');
+      throw ApiException(e.toString());
+    }
+  }
+
+  Future<DataOutput<City>> fetchCities({
+    int page = 1,
+    String? search,
+    int? stateId,
+  }) async {
+    try {
+      final response = await Api.get(
+        url: Api.getCitiesApi,
+        queryParameters: {
+          Api.page: page,
+          if (search != null && search.trim().isNotEmpty)
+            Api.search: search.trim(),
+          if (stateId != null) Api.stateId: stateId,
+        },
+      );
+
+      final cities = JsonHelper.parseList(
+        response['data']['data'] as List?,
+        City.fromJson,
+      );
+
+      return DataOutput(
+        total: response['data']['total'] as int? ?? cities.length,
+        modelList: cities,
+        page: response['data']['current_page'] as int?,
+      );
+    } on Exception catch (e, stack) {
+      log(e.toString(), name: 'fetchCities');
+      log('$stack', name: 'fetchCities');
       throw ApiException(e.toString());
     }
   }

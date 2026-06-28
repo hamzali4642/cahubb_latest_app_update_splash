@@ -131,6 +131,7 @@ class Api {
   static String deleteUserApi = "delete-user";
   static String manageFavouriteApi = "manage-favourite";
   static String getPackageApi = "get-package";
+  static String getServicePackagesApi = "get-service-packages";
   static String getLanguageApi = "get-languages";
   static String getPaymentSettingsApi = "get-payment-settings";
   static String getSystemSettingsApi = "get-system-settings";

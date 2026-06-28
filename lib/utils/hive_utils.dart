@@ -1,6 +1,7 @@
 import 'package:eClassify/app/app_theme.dart';
 import 'package:eClassify/app_config.dart';
 import 'package:eClassify/data/model/location/leaf_location.dart';
+import 'package:eClassify/data/model/service/service_package_model.dart';
 import 'package:eClassify/data/model/user/user_model.dart';
 import 'package:eClassify/utils/constant.dart';
 import 'package:eClassify/utils/hive_keys.dart';
@@ -125,5 +126,35 @@ class HiveUtils {
 
   static Future<void> setHasSubscribedToTopics(bool value) async {
     await Hive.box(HiveKeys.authBox).put(HiveKeys.hasSubscribedToTopics, value);
+  }
+
+  static String _servicePackagesCacheKey(String type) {
+    return '${HiveKeys.servicePackagesCachePrefix}_$type';
+  }
+
+  static List<ServicePackageModel>? getCachedServicePackages(String type) {
+    final cachedPackages = Hive.box(
+      HiveKeys.authBox,
+    ).get(_servicePackagesCacheKey(type));
+
+    if (cachedPackages is! List) return null;
+
+    final parsedPackages = cachedPackages.whereType<Map>().map((entry) {
+      return ServicePackageModel.fromJson(
+        Map<String, dynamic>.from(entry.cast<String, dynamic>()),
+      );
+    }).toList();
+
+    return parsedPackages.isEmpty ? null : parsedPackages;
+  }
+
+  static Future<void> setCachedServicePackages(
+    String type,
+    List<ServicePackageModel> packages,
+  ) async {
+    await Hive.box(HiveKeys.authBox).put(
+      _servicePackagesCacheKey(type),
+      packages.map((package) => package.toJson()).toList(),
+    );
   }
 }

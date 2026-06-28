@@ -144,6 +144,33 @@ class ItemRepository {
     return DataOutput(total: modelList.length, modelList: modelList);
   }
 
+  Future<DataOutput<ItemModel>> fetchItemsByCategorySlug({
+    required String categorySlug,
+    int page = 1,
+    int? limit,
+    String? search,
+  }) async {
+    final response = await Api.get(
+      url: Api.getItemApi,
+      queryParameters: {
+        'category_slug': categorySlug,
+        Api.page: page,
+        if (limit != null) 'limit': limit,
+        if (search != null && search.trim().isNotEmpty) Api.search: search,
+      },
+    );
+
+    final items = (response['data']['data'] as List)
+        .map((element) => ItemModel.fromJson(element))
+        .toList();
+
+    return DataOutput(
+      total: response['data']['total'] ?? items.length,
+      modelList: items,
+      page: response['data']['current_page'] as int?,
+    );
+  }
+
   Future<Map> changeMyItemStatus({
     required int itemId,
     required String status,

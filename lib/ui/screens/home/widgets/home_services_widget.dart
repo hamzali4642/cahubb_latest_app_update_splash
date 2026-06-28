@@ -1,50 +1,30 @@
-import 'package:eClassify/ui/screens/widgets/custom_image.dart';
+import 'package:eClassify/data/repositories/service_packages_repository.dart';
+import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
 import 'package:flutter/material.dart';
 
-class HomeServicesWidget extends StatelessWidget {
+class HomeServicesWidget extends StatefulWidget {
   const HomeServicesWidget({super.key});
 
-  static const List<HomeServiceItem> _featuredServices = [
-    HomeServiceItem(
-      title: 'Car Inspection',
-      subtitle: 'Buy & Sell Confidently',
-      imagePath: 'assets/images/inspection.png',
-      layout: HomeServiceLayout.large,
-    ),
-    HomeServiceItem(
-      title: 'Sell It For Me',
-      subtitle: 'Hassle Free Selling',
-      imagePath: 'assets/images/sellForMe.png',
-    ),
-    HomeServiceItem(
-      title: 'Autostore',
-      subtitle: 'Products For You',
-      layout: HomeServiceLayout.placeholder,
-    ),
-  ];
+  @override
+  State<HomeServicesWidget> createState() => _HomeServicesWidgetState();
+}
 
-  static const List<HomeServiceItem> _scrollableServices = [
-    HomeServiceItem(
-      title: 'Auction Sheet Verification',
-      imagePath: 'assets/images/auctionSheet.png',
-    ),
-    HomeServiceItem(
-      title: 'Car Registration',
-      imagePath: 'assets/images/carRegistration.png',
-    ),
-    HomeServiceItem(
-      title: 'Ownership Transfer',
-      imagePath: 'assets/images/ownershipTransfer.png',
-    ),
-    HomeServiceItem(
-      title: 'Car Finance',
-      imagePath: 'assets/images/carFinance.png',
-    ),
-  ];
+class _HomeServicesWidgetState extends State<HomeServicesWidget> {
+  final ServicePackagesRepository _servicePackagesRepository =
+      ServicePackagesRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _servicePackagesRepository.prefetchPackages(type: 'car_inspection');
+      _servicePackagesRepository.prefetchPackages(type: 'sell_for_me');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +64,46 @@ class HomeServicesWidget extends StatelessWidget {
       ),
     );
   }
+
+  static const List<HomeServiceItem> _featuredServices = [
+    HomeServiceItem(
+      title: 'Car Inspection',
+      subtitle: 'Buy & Sell Confidently',
+      imagePath: 'assets/images/inspection.png',
+      layout: HomeServiceLayout.large,
+      routeName: Routes.carInspectionServiceScreen,
+    ),
+    HomeServiceItem(
+      title: 'Sell It For Me',
+      subtitle: 'Hassle Free Selling',
+      imagePath: 'assets/images/sellForMe.png',
+      routeName: Routes.sellItForMeServiceScreen,
+    ),
+    HomeServiceItem(
+      title: 'Autostore',
+      subtitle: 'Products For You',
+      layout: HomeServiceLayout.placeholder,
+    ),
+  ];
+
+  static const List<HomeServiceItem> _scrollableServices = [
+    HomeServiceItem(
+      title: 'Auction Sheet Verification',
+      imagePath: 'assets/images/auctionSheet.png',
+    ),
+    HomeServiceItem(
+      title: 'Car Registration',
+      imagePath: 'assets/images/carRegistration.png',
+    ),
+    HomeServiceItem(
+      title: 'Ownership Transfer',
+      imagePath: 'assets/images/ownershipTransfer.png',
+    ),
+    HomeServiceItem(
+      title: 'Car Finance',
+      imagePath: 'assets/images/carFinance.png',
+    ),
+  ];
 }
 
 enum HomeServiceLayout { large, regular, placeholder }
@@ -93,12 +113,14 @@ class HomeServiceItem {
   final String? subtitle;
   final String? imagePath;
   final HomeServiceLayout layout;
+  final String? routeName;
 
   const HomeServiceItem({
     required this.title,
     this.subtitle,
     this.imagePath,
     this.layout = HomeServiceLayout.regular,
+    this.routeName,
   });
 }
 
@@ -178,51 +200,58 @@ class _FeaturedServiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPlaceholder = item.layout == HomeServiceLayout.placeholder;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.color.secondaryColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CustomText(
-                  item.title,
-                  fontSize: item.layout == HomeServiceLayout.large
-                      ? context.font.larger
-                      : context.font.small,
-                  fontWeight: FontWeight.w700,
-                  maxLines: 2,
-                ),
-                if (item.subtitle?.isNotEmpty ?? false) ...[
+    return InkWell(
+      onTap: item.routeName == null
+          ? null
+          : () {
+              Navigator.pushNamed(context, item.routeName!);
+            },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: context.color.secondaryColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   CustomText(
-                    item.subtitle!,
-                    fontSize: context.font.smaller,
-                    color: context.color.textLightColor,
-                    maxLines: 1,
+                    item.title,
+                    fontSize: item.layout == HomeServiceLayout.large
+                        ? context.font.larger
+                        : context.font.small,
+                    fontWeight: FontWeight.w700,
+                    maxLines: 2,
                   ),
-                ],
-
-                if (!isPlaceholder) ...[
-                  Expanded(
-                    child: Align(
-                      alignment: imageAlignment,
-                      child: SizedBox(
-                        child: Image(image: AssetImage(item.imagePath!)),
+                  if (item.subtitle?.isNotEmpty ?? false) ...[
+                    CustomText(
+                      item.subtitle!,
+                      fontSize: context.font.smaller,
+                      color: context.color.textLightColor,
+                      maxLines: 1,
+                    ),
+                  ],
+                  if (!isPlaceholder) ...[
+                    Expanded(
+                      child: Align(
+                        alignment: imageAlignment,
+                        child: SizedBox(
+                          child: Image(image: AssetImage(item.imagePath!)),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          if (isPlaceholder) _AutostorePlaceholder(height: imageHeight),
-        ],
+            if (isPlaceholder) _AutostorePlaceholder(height: imageHeight),
+          ],
+        ),
       ),
     );
   }

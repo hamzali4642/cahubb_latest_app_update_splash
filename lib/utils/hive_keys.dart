@@ -18,4 +18,5 @@ class HiveKeys {
 
   static String themeBox = "themeBox";
   static String currentTheme = "currentTheme";
+  static String servicePackagesCachePrefix = "servicePackagesCache";
 }
