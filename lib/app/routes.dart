@@ -32,6 +32,7 @@ import 'package:eClassify/ui/screens/main_activity.dart';
 import 'package:eClassify/ui/screens/my_review_screen.dart';
 import 'package:eClassify/ui/screens/onboarding/onboarding_screen.dart';
 import 'package:eClassify/ui/screens/services/car_inspection_booking_screen.dart';
+import 'package:eClassify/ui/screens/services/sell_it_for_me_booking_screen.dart';
 import 'package:eClassify/ui/screens/services/service_packages_screen.dart';
 import 'package:eClassify/ui/screens/services/service_page_config.dart';
 import 'package:eClassify/ui/screens/seller/seller_intro_verification.dart';
@@ -91,6 +92,7 @@ class Routes {
   static const String sellItForMeServiceScreen = '/sellItForMeServiceScreen';
   static const String carInspectionBookingScreen =
       '/carInspectionBookingScreen';
+  static const String sellItForMeBookingScreen = '/sellItForMeBookingScreen';
   static const String maintenanceMode = '/maintenanceMode';
   static const String favoritesScreen = '/favoritescreen';
   static const String blogDetailsScreenRoute = '/blogDetailsScreenRoute';
@@ -272,6 +274,8 @@ class Routes {
         );
       case carInspectionBookingScreen:
         return CarInspectionBookingScreen.route(routeSettings);
+      case sellItForMeBookingScreen:
+        return SellItForMeBookingScreen.route(routeSettings);
       case sellItForMeServiceScreen:
         return ServicePackagesScreen.route(
           config: ServicePageConfig.sellItForMe,

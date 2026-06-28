@@ -14,6 +14,13 @@ class ServiceBookingNavigator {
           arguments: {'package': package},
         );
         break;
+      case 'sell_for_me':
+        Navigator.pushNamed(
+          context,
+          Routes.sellItForMeBookingScreen,
+          arguments: {'package': package},
+        );
+        break;
       default:
         break;
     }

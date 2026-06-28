@@ -73,6 +73,15 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
     );
   }
 
+  void _handlePrimaryActionTap(FetchServicePackagesState state) {
+    if (state is FetchServicePackagesSuccess && state.packages.isNotEmpty) {
+      ServiceBookingNavigator.open(context, state.packages.first);
+      return;
+    }
+
+    _scrollToPackages();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,7 +103,7 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
                   children: [
                     _ServiceHeroSection(
                       config: widget.config,
-                      onPrimaryActionTap: _scrollToPackages,
+                      onPrimaryActionTap: () => _handlePrimaryActionTap(state),
                     ),
                     20.vGap,
                     _ServicePackagesSection(
@@ -331,10 +340,7 @@ class _ServicePackagesSuccessState extends StatelessWidget {
       children: packages.map((package) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: _ServicePackageCard(
-            package: package,
-            isInteractive: config.apiType == 'car_inspection',
-          ),
+          child: _ServicePackageCard(package: package, isInteractive: true),
         );
       }).toList(),
     );
@@ -395,29 +401,35 @@ class _ServicePackageCard extends StatelessWidget {
                         ),
                       ),
                       8.hGap,
-                      if (isInteractive)
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 16,
-                          color: context.color.textLightColor,
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 7,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEAF3FF),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: CustomText(
+                              _parsedPrice.currencyFormat,
+                              fontWeight: FontWeight.w700,
+                              fontSize: context.font.normal,
+                              color: context.color.territoryColor,
+                            ),
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEAF3FF),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: CustomText(
-                            _parsedPrice.currencyFormat,
-                            fontWeight: FontWeight.w700,
-                            fontSize: context.font.normal,
-                            color: context.color.territoryColor,
-                          ),
-                        ),
+                          if (isInteractive) ...[
+                            8.hGap,
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                              color: context.color.textLightColor,
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                   if (package.typeLabel.isNotEmpty) ...[
