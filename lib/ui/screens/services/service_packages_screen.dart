@@ -75,7 +75,11 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
 
   void _handlePrimaryActionTap(FetchServicePackagesState state) {
     if (state is FetchServicePackagesSuccess && state.packages.isNotEmpty) {
-      ServiceBookingNavigator.open(context, state.packages.first);
+      ServiceBookingNavigator.open(
+        context,
+        state.packages.first,
+        showSelectedPackage: false,
+      );
       return;
     }
 

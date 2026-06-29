@@ -13,9 +13,14 @@ import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 
 class CarInspectionBookingScreen extends StatefulWidget {
-  const CarInspectionBookingScreen({required this.package, super.key});
+  const CarInspectionBookingScreen({
+    required this.package,
+    required this.showSelectedPackage,
+    super.key,
+  });
 
   final ServicePackageModel package;
+  final bool showSelectedPackage;
 
   static Route route(RouteSettings settings) {
     final arguments = settings.arguments! as Map<String, dynamic>;
@@ -23,6 +28,7 @@ class CarInspectionBookingScreen extends StatefulWidget {
       settings: settings,
       builder: (_) => CarInspectionBookingScreen(
         package: arguments['package'] as ServicePackageModel,
+        showSelectedPackage: arguments['showSelectedPackage'] as bool? ?? true,
       ),
     );
   }
@@ -357,6 +363,7 @@ class _CarInspectionBookingScreenState
                   child: _currentStepIndex == 0
                       ? _InspectionBasicInfoStep(
                           package: widget.package,
+                          showSelectedPackage: widget.showSelectedPackage,
                           fullNameController: _fullNameController,
                           phoneController: _phoneController,
                           carModelController: _carModelController,
@@ -377,6 +384,7 @@ class _CarInspectionBookingScreenState
                         )
                       : _InspectionVisitStep(
                           package: widget.package,
+                          showSelectedPackage: widget.showSelectedPackage,
                           visitAreaController: _visitAreaController,
                           selectedVisitDate: _selectedVisitDate,
                           selectedTimeSlot: _selectedTimeSlot,
@@ -647,6 +655,7 @@ class _StepCircle extends StatelessWidget {
 class _InspectionBasicInfoStep extends StatelessWidget {
   const _InspectionBasicInfoStep({
     required this.package,
+    required this.showSelectedPackage,
     required this.fullNameController,
     required this.phoneController,
     required this.carModelController,
@@ -661,6 +670,7 @@ class _InspectionBasicInfoStep extends StatelessWidget {
   });
 
   final ServicePackageModel package;
+  final bool showSelectedPackage;
   final TextEditingController fullNameController;
   final TextEditingController phoneController;
   final TextEditingController carModelController;
@@ -678,8 +688,10 @@ class _InspectionBasicInfoStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SelectedPackageBanner(package: package),
-        24.vGap,
+        if (showSelectedPackage) ...[
+          _SelectedPackageBanner(package: package),
+          24.vGap,
+        ],
         _InspectionTextField(
           title: 'Full name',
           controller: fullNameController,
@@ -757,6 +769,7 @@ class _InspectionBasicInfoStep extends StatelessWidget {
 class _InspectionVisitStep extends StatelessWidget {
   const _InspectionVisitStep({
     required this.package,
+    required this.showSelectedPackage,
     required this.visitAreaController,
     required this.selectedVisitDate,
     required this.selectedTimeSlot,
@@ -768,6 +781,7 @@ class _InspectionVisitStep extends StatelessWidget {
   });
 
   final ServicePackageModel package;
+  final bool showSelectedPackage;
   final TextEditingController visitAreaController;
   final DateTime? selectedVisitDate;
   final _InspectionTimeSlot? selectedTimeSlot;
@@ -784,8 +798,10 @@ class _InspectionVisitStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SelectedPackageBanner(package: package),
-        24.vGap,
+        if (showSelectedPackage) ...[
+          _SelectedPackageBanner(package: package),
+          24.vGap,
+        ],
         _InspectionTextField(
           title: 'Area',
           controller: visitAreaController,

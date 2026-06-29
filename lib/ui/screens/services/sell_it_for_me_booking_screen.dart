@@ -13,9 +13,14 @@ import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 
 class SellItForMeBookingScreen extends StatefulWidget {
-  const SellItForMeBookingScreen({required this.package, super.key});
+  const SellItForMeBookingScreen({
+    required this.package,
+    required this.showSelectedPackage,
+    super.key,
+  });
 
   final ServicePackageModel package;
+  final bool showSelectedPackage;
 
   static Route route(RouteSettings settings) {
     final arguments = settings.arguments! as Map<String, dynamic>;
@@ -23,6 +28,7 @@ class SellItForMeBookingScreen extends StatefulWidget {
       settings: settings,
       builder: (_) => SellItForMeBookingScreen(
         package: arguments['package'] as ServicePackageModel,
+        showSelectedPackage: arguments['showSelectedPackage'] as bool? ?? true,
       ),
     );
   }
@@ -35,6 +41,13 @@ class SellItForMeBookingScreen extends StatefulWidget {
 class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
   static const int _carsCategoryId = 130;
   static List<City> _cachedCities = const [];
+  static const List<String> _registrationAreas = [
+    'Punjab',
+    'KPK',
+    'Sindh',
+    'Balochistan',
+    'AJK',
+  ];
 
   final CategoryRepository _categoryRepository = CategoryRepository();
   final LocationRepository _locationRepository = LocationRepository();
@@ -63,6 +76,7 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
   bool _isLoadingCities = false;
   bool _isSubmitting = false;
   String? _citiesErrorMessage;
+  String? _selectedRegistrationArea;
 
   CategoryModel? _selectedCarBrand;
   City? _selectedLivingCity;
@@ -270,6 +284,8 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
       errorMessage = 'Please enter the car model.';
     } else if (_carVariantController.text.trim().isEmpty) {
       errorMessage = 'Please enter the car variant.';
+    } else if (_selectedRegistrationArea == null) {
+      errorMessage = 'Please select the vehicle registration area.';
     }
 
     if (errorMessage != null && showMessage) {
@@ -356,6 +372,7 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
                   child: _currentStepIndex == 0
                       ? _InspectionBasicInfoStep(
                           package: widget.package,
+                          showSelectedPackage: widget.showSelectedPackage,
                           fullNameController: _fullNameController,
                           phoneController: _phoneController,
                           carModelController: _carModelController,
@@ -364,6 +381,8 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
                           selectedCarBrand: _selectedCarBrand,
                           isUsedCar: _isUsedCar,
                           isLoadingCarBrands: _isLoadingCarBrands,
+                          registrationAreas: _registrationAreas,
+                          selectedRegistrationArea: _selectedRegistrationArea,
                           onSelectLivingCity: () {
                             _selectCity();
                           },
@@ -373,9 +392,15 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
                               _isUsedCar = isUsed;
                             });
                           },
+                          onRegistrationAreaChanged: (area) {
+                            setState(() {
+                              _selectedRegistrationArea = area;
+                            });
+                          },
                         )
                       : _InspectionVisitStep(
                           package: widget.package,
+                          showSelectedPackage: widget.showSelectedPackage,
                           visitAreaController: _visitAreaController,
                           selectedVisitDate: _selectedVisitDate,
                           selectedTimeSlot: _selectedTimeSlot,
@@ -646,6 +671,7 @@ class _StepCircle extends StatelessWidget {
 class _InspectionBasicInfoStep extends StatelessWidget {
   const _InspectionBasicInfoStep({
     required this.package,
+    required this.showSelectedPackage,
     required this.fullNameController,
     required this.phoneController,
     required this.carModelController,
@@ -654,12 +680,16 @@ class _InspectionBasicInfoStep extends StatelessWidget {
     required this.selectedCarBrand,
     required this.isUsedCar,
     required this.isLoadingCarBrands,
+    required this.registrationAreas,
+    required this.selectedRegistrationArea,
     required this.onSelectLivingCity,
     required this.onSelectCarBrand,
     required this.onCarTypeChanged,
+    required this.onRegistrationAreaChanged,
   });
 
   final ServicePackageModel package;
+  final bool showSelectedPackage;
   final TextEditingController fullNameController;
   final TextEditingController phoneController;
   final TextEditingController carModelController;
@@ -668,17 +698,22 @@ class _InspectionBasicInfoStep extends StatelessWidget {
   final CategoryModel? selectedCarBrand;
   final bool isUsedCar;
   final bool isLoadingCarBrands;
+  final List<String> registrationAreas;
+  final String? selectedRegistrationArea;
   final VoidCallback onSelectLivingCity;
   final VoidCallback onSelectCarBrand;
   final ValueChanged<bool> onCarTypeChanged;
+  final ValueChanged<String> onRegistrationAreaChanged;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SelectedPackageBanner(package: package),
-        24.vGap,
+        if (showSelectedPackage) ...[
+          _SelectedPackageBanner(package: package),
+          24.vGap,
+        ],
         _InspectionTextField(
           title: 'Full name',
           controller: fullNameController,
@@ -748,6 +783,24 @@ class _InspectionBasicInfoStep extends StatelessWidget {
             ),
           ],
         ),
+        18.vGap,
+        CustomText(
+          'Which area your vehicle registered in',
+          fontSize: context.font.larger,
+          fontWeight: FontWeight.w600,
+        ),
+        12.vGap,
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: registrationAreas.map((area) {
+            return _RegistrationAreaChip(
+              label: area,
+              isSelected: selectedRegistrationArea == area,
+              onTap: () => onRegistrationAreaChanged(area),
+            );
+          }).toList(),
+        ),
       ],
     );
   }
@@ -756,6 +809,7 @@ class _InspectionBasicInfoStep extends StatelessWidget {
 class _InspectionVisitStep extends StatelessWidget {
   const _InspectionVisitStep({
     required this.package,
+    required this.showSelectedPackage,
     required this.visitAreaController,
     required this.selectedVisitDate,
     required this.selectedTimeSlot,
@@ -767,6 +821,7 @@ class _InspectionVisitStep extends StatelessWidget {
   });
 
   final ServicePackageModel package;
+  final bool showSelectedPackage;
   final TextEditingController visitAreaController;
   final DateTime? selectedVisitDate;
   final _InspectionTimeSlot? selectedTimeSlot;
@@ -783,8 +838,10 @@ class _InspectionVisitStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SelectedPackageBanner(package: package),
-        24.vGap,
+        if (showSelectedPackage) ...[
+          _SelectedPackageBanner(package: package),
+          24.vGap,
+        ],
         _InspectionTextField(
           title: 'Area',
           controller: visitAreaController,
@@ -1063,6 +1120,48 @@ class _CarTypeChip extends StatelessWidget {
                 ? context.color.territoryColor
                 : context.color.textDefaultColor,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RegistrationAreaChip extends StatelessWidget {
+  const _RegistrationAreaChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFEAF3FF)
+              : context.color.secondaryColor,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: isSelected
+                ? context.color.territoryColor
+                : context.color.borderColor,
+          ),
+        ),
+        child: CustomText(
+          label,
+          fontSize: context.font.normal,
+          fontWeight: FontWeight.w600,
+          color: isSelected
+              ? context.color.territoryColor
+              : context.color.textDefaultColor,
         ),
       ),
     );
