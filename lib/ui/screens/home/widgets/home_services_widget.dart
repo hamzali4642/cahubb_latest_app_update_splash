@@ -90,18 +90,22 @@ class _HomeServicesWidgetState extends State<HomeServicesWidget> {
     HomeServiceItem(
       title: 'Auction Sheet Verification',
       imagePath: 'assets/images/auctionSheet.png',
+      routeName: Routes.auctionSheetVerificationScreen,
     ),
     HomeServiceItem(
       title: 'Car Registration',
       imagePath: 'assets/images/carRegistration.png',
+      routeName: Routes.carRegistrationScreen,
     ),
     HomeServiceItem(
-      title: 'Ownership Transfer',
+      title: 'Car Ownership',
       imagePath: 'assets/images/ownershipTransfer.png',
+      routeName: Routes.carOwnershipScreen,
     ),
     HomeServiceItem(
       title: 'Car Finance',
       imagePath: 'assets/images/carFinance.png',
+      routeName: Routes.carFinanceScreen,
     ),
   ];
 }
@@ -264,37 +268,40 @@ class _CompactServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 122,
-      height: 122,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: context.color.secondaryColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          Expanded(
-            child: Center(
-              child: Expanded(
+    return InkWell(
+      onTap: item.routeName == null
+          ? null
+          : () {
+              Navigator.pushNamed(context, item.routeName!);
+            },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 122,
+        height: 122,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: context.color.secondaryColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Center(
                 child: Image(
                   image: AssetImage(item.imagePath!),
-
                   fit: BoxFit.contain,
                 ),
               ),
             ),
-          ),
-
-          CustomText(
-            item.title + "\n",
-            fontSize: context.font.small,
-            fontWeight: FontWeight.w600,
-            maxLines: 2,
-          ),
-        ],
+            CustomText(
+              '${item.title}\n',
+              fontSize: context.font.small,
+              fontWeight: FontWeight.w600,
+              maxLines: 2,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -31,6 +31,10 @@ import 'package:eClassify/ui/screens/location/widgets/location_map_picker.dart';
 import 'package:eClassify/ui/screens/main_activity.dart';
 import 'package:eClassify/ui/screens/my_review_screen.dart';
 import 'package:eClassify/ui/screens/onboarding/onboarding_screen.dart';
+import 'package:eClassify/ui/screens/services/auction_sheet_verification_screen.dart';
+import 'package:eClassify/ui/screens/services/car_finance_screen.dart';
+import 'package:eClassify/ui/screens/services/car_ownership_screen.dart';
+import 'package:eClassify/ui/screens/services/car_registration_screen.dart';
 import 'package:eClassify/ui/screens/services/car_inspection_booking_screen.dart';
 import 'package:eClassify/ui/screens/services/sell_it_for_me_booking_screen.dart';
 import 'package:eClassify/ui/screens/services/service_packages_screen.dart';
@@ -90,6 +94,14 @@ class Routes {
   static const String carInspectionServiceScreen =
       '/carInspectionServiceScreen';
   static const String sellItForMeServiceScreen = '/sellItForMeServiceScreen';
+  static const String auctionSheetVerificationScreen =
+      '/auctionSheetVerificationScreen';
+  static const String carFinanceScreen = '/carFinanceScreen';
+  static const String carRegistrationScreen = '/carRegistrationScreen';
+  static const String carRegistrationRequestScreen =
+      '/carRegistrationRequestScreen';
+  static const String carOwnershipScreen = '/carOwnershipScreen';
+  static const String carOwnershipRequestScreen = '/carOwnershipRequestScreen';
   static const String carInspectionBookingScreen =
       '/carInspectionBookingScreen';
   static const String sellItForMeBookingScreen = '/sellItForMeBookingScreen';
@@ -272,6 +284,18 @@ class Routes {
           config: ServicePageConfig.carInspection,
           settings: routeSettings,
         );
+      case auctionSheetVerificationScreen:
+        return AuctionSheetVerificationScreen.route(routeSettings);
+      case carFinanceScreen:
+        return CarFinanceScreen.route(routeSettings);
+      case carRegistrationScreen:
+        return CarRegistrationScreen.route(routeSettings);
+      case carRegistrationRequestScreen:
+        return CarRegistrationRequestScreen.route(routeSettings);
+      case carOwnershipScreen:
+        return CarOwnershipScreen.route(routeSettings);
+      case carOwnershipRequestScreen:
+        return CarOwnershipRequestScreen.route(routeSettings);
       case carInspectionBookingScreen:
         return CarInspectionBookingScreen.route(routeSettings);
       case sellItForMeBookingScreen:
