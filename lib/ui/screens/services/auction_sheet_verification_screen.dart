@@ -1,11 +1,11 @@
+import 'package:eClassify/data/cubits/service/auction_sheet_verification_cubit.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
-import 'package:eClassify/utils/helper_utils.dart';
-import 'package:eClassify/utils/hive_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AuctionSheetVerificationScreen extends StatefulWidget {
   const AuctionSheetVerificationScreen({super.key});
@@ -13,7 +13,10 @@ class AuctionSheetVerificationScreen extends StatefulWidget {
   static Route route(RouteSettings settings) {
     return MaterialPageRoute(
       settings: settings,
-      builder: (_) => const AuctionSheetVerificationScreen(),
+      builder: (_) => BlocProvider(
+        create: (_) => AuctionSheetVerificationCubit()..initialize(),
+        child: const AuctionSheetVerificationScreen(),
+      ),
     );
   }
 
@@ -27,24 +30,35 @@ class _AuctionSheetVerificationScreenState
   final TextEditingController _chassisController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    final cubit = context.read<AuctionSheetVerificationCubit>();
+    _chassisController.text = cubit.state.chassisNumber;
+    _chassisController.addListener(() {
+      cubit.updateChassisNumber(_chassisController.text);
+    });
+  }
+
+  @override
   void dispose() {
     _chassisController.dispose();
     super.dispose();
   }
 
   void _verifyAuctionSheet() {
-    if (_chassisController.text.trim().isEmpty) {
-      HelperUtils.showSnackBarMessage(context, 'Please enter chassis number.');
-      return;
-    }
+    final cubit = context.read<AuctionSheetVerificationCubit>();
+    if (!cubit.requestVerification()) return;
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return _AuctionSheetNotifySheet(
-          chassisNumber: _chassisController.text.trim(),
+        return BlocProvider.value(
+          value: cubit,
+          child: _AuctionSheetNotifySheet(
+            chassisNumber: cubit.state.chassisNumber.trim(),
+          ),
         );
       },
     );
@@ -52,62 +66,88 @@ class _AuctionSheetVerificationScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.color.primaryColor,
-      appBar: UiUtils.buildAppBar(
-        context,
-        showBackButton: true,
-        title: 'Auction Sheet Verification',
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(14, 16, 14, 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _AuctionHeroSection(),
-            18.vGap,
-            _AuctionInputCard(
-              controller: _chassisController,
-              onVerify: _verifyAuctionSheet,
+    return BlocConsumer<
+      AuctionSheetVerificationCubit,
+      AuctionSheetVerificationState
+    >(
+      listenWhen: (previous, current) =>
+          previous.feedbackToken != current.feedbackToken ||
+          previous.chassisNumber != current.chassisNumber,
+      listener: (context, state) {
+        if (_chassisController.text != state.chassisNumber) {
+          _chassisController.value = _chassisController.value.copyWith(
+            text: state.chassisNumber,
+            selection: TextSelection.collapsed(
+              offset: state.chassisNumber.length,
             ),
-            20.vGap,
-            const _AuctionStatsRow(),
-            28.vGap,
-            const _InfoSection(
-              title: 'Three things sellers often hide',
-              subtitle:
-                  'Auction sheet verification helps bring those hidden details out early.',
+            composing: TextRange.empty,
+          );
+        }
+        if (state.feedbackMessage == null) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(state.feedbackMessage!)));
+        context.read<AuctionSheetVerificationCubit>().clearFeedback();
+      },
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: context.color.primaryColor,
+          appBar: UiUtils.buildAppBar(
+            context,
+            showBackButton: true,
+            title: 'Auction Sheet Verification',
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(14, 16, 14, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _InfoTile(
-                  icon: Icons.speed_rounded,
-                  title: 'Meter reverse',
-                  description:
-                      'Spot mileage inconsistencies before you commit to the car.',
+                const _AuctionHeroSection(),
+                18.vGap,
+                _AuctionInputCard(
+                  controller: _chassisController,
+                  onVerify: _verifyAuctionSheet,
                 ),
-                _InfoTile(
-                  icon: Icons.gavel_rounded,
-                  title: 'Fake auction sheets',
-                  description:
-                      'Catch edited or manipulated reports that misrepresent the grade.',
+                20.vGap,
+                const _AuctionStatsRow(),
+                28.vGap,
+                const _InfoSection(
+                  title: 'Three things sellers often hide',
+                  subtitle:
+                      'Auction sheet verification helps bring those hidden details out early.',
+                  children: [
+                    _InfoTile(
+                      icon: Icons.speed_rounded,
+                      title: 'Meter reverse',
+                      description:
+                          'Spot mileage inconsistencies before you commit to the car.',
+                    ),
+                    _InfoTile(
+                      icon: Icons.gavel_rounded,
+                      title: 'Fake auction sheets',
+                      description:
+                          'Catch edited or manipulated reports that misrepresent the grade.',
+                    ),
+                    _InfoTile(
+                      icon: Icons.car_crash_rounded,
+                      title: 'Hidden repairs',
+                      description:
+                          'Understand if accident work or repainting is being covered up.',
+                    ),
+                  ],
                 ),
-                _InfoTile(
-                  icon: Icons.car_crash_rounded,
-                  title: 'Hidden repairs',
-                  description:
-                      'Understand if accident work or repainting is being covered up.',
+                28.vGap,
+                const _InfoSection(
+                  title: 'Why choose CA Hubb',
+                  subtitle:
+                      'Designed around clarity, fast turnaround, and trusted verification.',
+                  children: [_FeatureGrid()],
                 ),
               ],
             ),
-            28.vGap,
-            const _InfoSection(
-              title: 'Why choose CA Hubb',
-              subtitle:
-                  'Designed around clarity, fast turnaround, and trusted verification.',
-              children: [_FeatureGrid()],
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -538,9 +578,11 @@ class _AuctionSheetNotifySheetState extends State<_AuctionSheetNotifySheet> {
   @override
   void initState() {
     super.initState();
-    if (HiveUtils.isUserAuthenticated()) {
-      _phoneController.text = HiveUtils.getUserDetails().mobile ?? '';
-    }
+    final cubit = context.read<AuctionSheetVerificationCubit>();
+    _phoneController.text = cubit.state.phoneNumber;
+    _phoneController.addListener(() {
+      cubit.updatePhoneNumber(_phoneController.text);
+    });
   }
 
   @override
@@ -550,16 +592,11 @@ class _AuctionSheetNotifySheetState extends State<_AuctionSheetNotifySheet> {
   }
 
   void _notifyMe() {
-    if (_phoneController.text.trim().isEmpty) {
-      HelperUtils.showSnackBarMessage(context, 'Please enter phone number.');
-      return;
-    }
-
+    final shouldClose = context
+        .read<AuctionSheetVerificationCubit>()
+        .notifyMe();
+    if (!shouldClose) return;
     Navigator.of(context).pop();
-    HelperUtils.showSnackBarMessage(
-      context,
-      'Auction sheet alert saved for ${widget.chassisNumber}. Backend will be connected next.',
-    );
   }
 
   @override

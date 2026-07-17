@@ -125,6 +125,7 @@ class Api {
   static String userProfile = 'get-user-info';
   static String getSliderApi = "get-slider";
   static String getCategoriesApi = "get-categories";
+  static String getCarModelsApi = "get-car-models";
   static String getItemApi = "get-item";
   static String getMyItemApi = "my-items";
   static String getNotificationListApi = "get-notification-list";
@@ -220,6 +221,7 @@ class Api {
   static String userid = "userid";
   static String measurement = "measurement";
   static String categoryId = "category_id";
+  static String brandName = "brand_name";
   static String title = "title";
   static String description = "description";
   static String price = "price";
@@ -292,6 +294,7 @@ class Api {
   static String videoLink = "video_link";
   static String categoryIds = "category_ids";
   static String sortBy = "sort_by";
+  static String sortOrder = "sort_order";
   static String stateId = "state_id";
   static String countryId = "country_id";
   static String cityId = "city_id";

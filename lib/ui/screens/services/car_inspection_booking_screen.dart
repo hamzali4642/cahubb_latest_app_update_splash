@@ -1,16 +1,14 @@
-import 'package:eClassify/data/model/category_model.dart';
+import 'package:eClassify/data/cubits/service/service_booking_form_cubit.dart';
+import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/data/model/location/location_node.dart' show City;
 import 'package:eClassify/data/model/service/service_package_model.dart';
-import 'package:eClassify/data/repositories/category_repository.dart';
-import 'package:eClassify/data/repositories/location/location_repository.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
-import 'package:eClassify/utils/helper_utils.dart';
-import 'package:eClassify/utils/hive_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CarInspectionBookingScreen extends StatefulWidget {
   const CarInspectionBookingScreen({
@@ -26,9 +24,18 @@ class CarInspectionBookingScreen extends StatefulWidget {
     final arguments = settings.arguments! as Map<String, dynamic>;
     return MaterialPageRoute(
       settings: settings,
-      builder: (_) => CarInspectionBookingScreen(
-        package: arguments['package'] as ServicePackageModel,
-        showSelectedPackage: arguments['showSelectedPackage'] as bool? ?? true,
+      builder: (_) => BlocProvider(
+        create: (_) => ServiceBookingFormCubit(
+          package: arguments['package'] as ServicePackageModel,
+          flowType: ServiceBookingFlowType.inspection,
+          showSelectedPackage:
+              arguments['showSelectedPackage'] as bool? ?? true,
+        )..initialize(),
+        child: CarInspectionBookingScreen(
+          package: arguments['package'] as ServicePackageModel,
+          showSelectedPackage:
+              arguments['showSelectedPackage'] as bool? ?? true,
+        ),
       ),
     );
   }
@@ -40,14 +47,8 @@ class CarInspectionBookingScreen extends StatefulWidget {
 
 class _CarInspectionBookingScreenState
     extends State<CarInspectionBookingScreen> {
-  static const int _carsCategoryId = 130;
-  static List<City> _cachedCities = const [];
-
-  final CategoryRepository _categoryRepository = CategoryRepository();
-  final LocationRepository _locationRepository = LocationRepository();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _carModelController = TextEditingController();
   final TextEditingController _carVariantController = TextEditingController();
   final TextEditingController _visitAreaController = TextEditingController();
 
@@ -56,154 +57,48 @@ class _CarInspectionBookingScreenState
     _InspectionStep(title: 'Expert visit', headline: 'Book expert visit'),
   ];
 
-  final List<_InspectionTimeSlot> _timeSlots = List.generate(7, (index) {
-    final startHour = 10 + index;
-    return _InspectionTimeSlot(
-      startHour: startHour,
-      label: '${_formatHour(startHour)} - ${_formatHour(startHour + 1)}',
-    );
-  });
-
-  int _currentStepIndex = 0;
-  bool _isUsedCar = true;
-  bool _isLoadingCarBrands = true;
-  bool _isLoadingCities = false;
-  bool _isSubmitting = false;
-  String? _citiesErrorMessage;
-
-  CategoryModel? _selectedCarBrand;
-  City? _selectedLivingCity;
-  DateTime? _selectedVisitDate;
-  _InspectionTimeSlot? _selectedTimeSlot;
-
-  List<CategoryModel> _carBrands = const [];
-
-  List<DateTime> get _nextSevenDates => List.generate(7, (index) {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day + index);
-  });
-
   @override
   void initState() {
     super.initState();
-    _prefillUserData();
-    _loadCarBrands();
-    _loadCities();
+    final cubit = context.read<ServiceBookingFormCubit>();
+    _fullNameController.text = cubit.state.fullName;
+    _phoneController.text = cubit.state.phoneNumber;
+    _carVariantController.text = cubit.state.carVariant;
+    _visitAreaController.text = cubit.state.visitArea;
+
+    _fullNameController.addListener(() {
+      cubit.updateFullName(_fullNameController.text);
+    });
+    _phoneController.addListener(() {
+      cubit.updatePhoneNumber(_phoneController.text);
+    });
+    _carVariantController.addListener(() {
+      cubit.updateCarVariant(_carVariantController.text);
+    });
+    _visitAreaController.addListener(() {
+      cubit.updateVisitArea(_visitAreaController.text);
+    });
   }
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();
-    _carModelController.dispose();
     _carVariantController.dispose();
     _visitAreaController.dispose();
     super.dispose();
   }
 
-  void _prefillUserData() {
-    if (!HiveUtils.isUserAuthenticated()) return;
-
-    final user = HiveUtils.getUserDetails();
-    _fullNameController.text = user.name ?? '';
-    _phoneController.text = user.mobile ?? '';
-  }
-
-  Future<void> _loadCarBrands() async {
-    setState(() {
-      _isLoadingCarBrands = true;
-    });
-
-    try {
-      final brands = await _fetchCarBrands();
-
-      if (!mounted) return;
-      setState(() {
-        _carBrands = brands;
-        _isLoadingCarBrands = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isLoadingCarBrands = false;
-      });
-      HelperUtils.showSnackBarMessage(
-        context,
-        'Unable to load car brands right now.',
-      );
-    }
-  }
-
-  Future<List<CategoryModel>> _fetchCarBrands() async {
-    final categories = <CategoryModel>[];
-    var page = 1;
-    var total = 1;
-
-    while (categories.length < total) {
-      final response = await _categoryRepository.fetchCategories(
-        page: page,
-        categoryId: _carsCategoryId,
-        isForListing: true,
-      );
-      categories.addAll(response.modelList);
-
-      total = response.total;
-      page += 1;
-
-      if (response.modelList.isEmpty) break;
-    }
-
-    categories.sort(
-      (left, right) => (left.name ?? '').compareTo(right.name ?? ''),
-    );
-    return categories;
-  }
-
-  Future<void> _loadCities() async {
-    if (_cachedCities.isNotEmpty) return;
-
-    setState(() {
-      _isLoadingCities = true;
-      _citiesErrorMessage = null;
-    });
-
-    try {
-      final cities = <City>[];
-      var page = 1;
-      var total = 1;
-
-      while (cities.length < total) {
-        final response = await _locationRepository.fetchCities(page: page);
-        cities.addAll(response.modelList);
-        total = response.total;
-        page += 1;
-
-        if (response.modelList.isEmpty) break;
-      }
-
-      cities.sort(
-        (left, right) => left.name.localized.compareTo(right.name.localized),
-      );
-      _cachedCities = cities;
-
-      if (!mounted) return;
-      setState(() {
-        _isLoadingCities = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _isLoadingCities = false;
-        _citiesErrorMessage = 'Unable to load cities right now.';
-      });
-    }
-  }
-
   Future<void> _selectCity() async {
-    if (_cachedCities.isEmpty && _isLoadingCities) return;
+    final cubit = context.read<ServiceBookingFormCubit>();
+    final state = cubit.state;
 
-    if (_cachedCities.isEmpty && _citiesErrorMessage != null) {
-      HelperUtils.showSnackBarMessage(context, _citiesErrorMessage!);
+    if (state.cities.isEmpty && state.isLoadingCities) return;
+
+    if (state.cities.isEmpty && state.citiesErrorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(state.citiesErrorMessage!)));
       return;
     }
 
@@ -214,222 +109,181 @@ class _CarInspectionBookingScreenState
       builder: (context) {
         return _CityPickerSheet(
           title: 'Select city',
-          selectedCity: _selectedLivingCity,
-          cities: _cachedCities,
+          selectedCity: state.selectedLivingCity,
+          cities: state.cities,
         );
       },
     );
 
     if (result == null) return;
-
-    setState(() {
-      _selectedLivingCity = result;
-    });
+    cubit.selectLivingCity(result);
   }
 
-  Future<void> _selectCarBrand() async {
-    final brand = await _showCategoryPickerSheet(
-      title: 'Select car brand',
-      categories: _carBrands,
-      selectedCategory: _selectedCarBrand,
+  Future<void> _selectCar() async {
+    final cubit = context.read<ServiceBookingFormCubit>();
+    final state = cubit.state;
+    final car = await _showCarPickerSheet(
+      title: 'Select car',
+      cars: state.carModels,
+      selectedCar: state.selectedCar,
     );
 
-    if (brand == null || brand.id == _selectedCarBrand?.id) return;
-
-    setState(() {
-      _selectedCarBrand = brand;
-      _carModelController.clear();
-      _carVariantController.clear();
-    });
+    if (car == null) return;
+    cubit.selectCar(car);
   }
 
-  Future<CategoryModel?> _showCategoryPickerSheet({
+  Future<CarModelModel?> _showCarPickerSheet({
     required String title,
-    required List<CategoryModel> categories,
-    CategoryModel? selectedCategory,
+    required List<CarModelModel> cars,
+    CarModelModel? selectedCar,
   }) {
-    return showModalBottomSheet<CategoryModel>(
+    return showModalBottomSheet<CarModelModel>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return _CategoryPickerSheet(
+        return _CarPickerSheet(
           title: title,
-          categories: categories,
-          selectedCategory: selectedCategory,
+          cars: cars,
+          selectedCar: selectedCar,
         );
       },
     );
   }
 
-  bool _validateBasicInfo({bool showMessage = true}) {
-    String? errorMessage;
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<ServiceBookingFormCubit, ServiceBookingFormState>(
+      listenWhen: (previous, current) =>
+          previous.feedbackToken != current.feedbackToken ||
+          previous.fullName != current.fullName ||
+          previous.phoneNumber != current.phoneNumber ||
+          previous.carVariant != current.carVariant ||
+          previous.visitArea != current.visitArea,
+      listener: (context, state) {
+        _syncController(_fullNameController, state.fullName);
+        _syncController(_phoneController, state.phoneNumber);
+        _syncController(_carVariantController, state.carVariant);
+        _syncController(_visitAreaController, state.visitArea);
 
-    if (_fullNameController.text.trim().isEmpty) {
-      errorMessage = 'Full name is required.';
-    } else if (_phoneController.text.trim().isEmpty) {
-      errorMessage = 'Phone number is required.';
-    } else if (_selectedLivingCity == null) {
-      errorMessage = 'Please select your city.';
-    } else if (_selectedCarBrand == null) {
-      errorMessage = 'Please select a car brand.';
-    } else if (_carModelController.text.trim().isEmpty) {
-      errorMessage = 'Please enter the car model.';
-    } else if (_carVariantController.text.trim().isEmpty) {
-      errorMessage = 'Please enter the car variant.';
-    }
-
-    if (errorMessage != null && showMessage) {
-      HelperUtils.showSnackBarMessage(context, errorMessage);
-    }
-
-    return errorMessage == null;
-  }
-
-  bool _validateVisitInfo({bool showMessage = true}) {
-    String? errorMessage;
-
-    if (_visitAreaController.text.trim().isEmpty) {
-      errorMessage = 'Please enter area.';
-    } else if (_selectedVisitDate == null) {
-      errorMessage = 'Please select a visit date.';
-    } else if (_selectedTimeSlot == null) {
-      errorMessage = 'Please select a time slot.';
-    }
-
-    if (errorMessage != null && showMessage) {
-      HelperUtils.showSnackBarMessage(context, errorMessage);
-    }
-
-    return errorMessage == null;
-  }
-
-  void _continueToVisitStep() {
-    if (!_validateBasicInfo()) return;
-
-    setState(() {
-      _currentStepIndex = 1;
-    });
-  }
-
-  Future<void> _submit() async {
-    if (!_validateBasicInfo() || !_validateVisitInfo()) return;
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-
-    if (!mounted) return;
-    setState(() {
-      _isSubmitting = false;
-    });
-
-    HelperUtils.showSnackBarMessage(
-      context,
-      'Inspection booking validated. API will be connected next.',
+        if (state.feedbackMessage == null) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(state.feedbackMessage!)));
+        context.read<ServiceBookingFormCubit>().clearFeedback();
+      },
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: context.color.primaryColor,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _InspectionBookingHeader(
+                  title: _steps[state.currentStepIndex].title,
+                  headline: _steps[state.currentStepIndex].headline,
+                  steps: _steps,
+                  currentStepIndex: state.currentStepIndex,
+                  onBack: () {
+                    if (state.currentStepIndex == 0) {
+                      Navigator.of(context).pop();
+                    } else {
+                      context.read<ServiceBookingFormCubit>().goBackStep();
+                    }
+                  },
+                ),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    color: context.color.secondaryColor,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(18, 22, 18, 28),
+                      child: state.currentStepIndex == 0
+                          ? _InspectionBasicInfoStep(
+                              package: widget.package,
+                              showSelectedPackage: widget.showSelectedPackage,
+                              fullNameController: _fullNameController,
+                              phoneController: _phoneController,
+                              carVariantController: _carVariantController,
+                              selectedLivingCity: state.selectedLivingCity,
+                              selectedCar: state.selectedCar,
+                              selectedModelYear: state.selectedModelYear,
+                              isUsedCar: state.isUsedCar,
+                              isLoadingCars: state.isLoadingCars,
+                              onSelectLivingCity: _selectCity,
+                              onSelectCar: _selectCar,
+                              onSelectModelYear: (year) {
+                                context
+                                    .read<ServiceBookingFormCubit>()
+                                    .selectModelYear(year);
+                              },
+                              onCarTypeChanged: (isUsed) {
+                                context
+                                    .read<ServiceBookingFormCubit>()
+                                    .updateCarType(isUsed);
+                              },
+                            )
+                          : _InspectionVisitStep(
+                              package: widget.package,
+                              showSelectedPackage: widget.showSelectedPackage,
+                              visitAreaController: _visitAreaController,
+                              selectedVisitDate: state.selectedVisitDate,
+                              selectedTimeSlot: state.selectedTimeSlot,
+                              availableDates: state.availableDates,
+                              timeSlots: state.timeSlots,
+                              onAreaChanged: () {},
+                              onDateSelected: (date) {
+                                context
+                                    .read<ServiceBookingFormCubit>()
+                                    .selectVisitDate(date);
+                              },
+                              onTimeSlotSelected: (slot) {
+                                context
+                                    .read<ServiceBookingFormCubit>()
+                                    .selectTimeSlot(slot);
+                              },
+                            ),
+                    ),
+                  ),
+                ),
+                Container(
+                  color: context.color.secondaryColor,
+                  padding: EdgeInsets.fromLTRB(
+                    18,
+                    8,
+                    18,
+                    MediaQuery.of(context).padding.bottom + 14,
+                  ),
+                  child: UiUtils.buildButton(
+                    context,
+                    onPressed: state.currentStepIndex == 0
+                        ? context
+                              .read<ServiceBookingFormCubit>()
+                              .continueToVisitStep
+                        : context.read<ServiceBookingFormCubit>().submit,
+                    buttonTitle: state.currentStepIndex == 0
+                        ? 'Continue'
+                        : 'Submit',
+                    isInProgress: state.isSubmitting,
+                    disabled: state.isSubmitting,
+                    radius: 28,
+                    height: 58,
+                    buttonColor: context.color.territoryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.color.primaryColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _InspectionBookingHeader(
-              title: _steps[_currentStepIndex].title,
-              headline: _steps[_currentStepIndex].headline,
-              steps: _steps,
-              currentStepIndex: _currentStepIndex,
-              onBack: () {
-                if (_currentStepIndex == 0) {
-                  Navigator.of(context).pop();
-                } else {
-                  setState(() {
-                    _currentStepIndex = 0;
-                  });
-                }
-              },
-            ),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                color: context.color.secondaryColor,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(18, 22, 18, 28),
-                  child: _currentStepIndex == 0
-                      ? _InspectionBasicInfoStep(
-                          package: widget.package,
-                          showSelectedPackage: widget.showSelectedPackage,
-                          fullNameController: _fullNameController,
-                          phoneController: _phoneController,
-                          carModelController: _carModelController,
-                          carVariantController: _carVariantController,
-                          selectedLivingCity: _selectedLivingCity,
-                          selectedCarBrand: _selectedCarBrand,
-                          isUsedCar: _isUsedCar,
-                          isLoadingCarBrands: _isLoadingCarBrands,
-                          onSelectLivingCity: () {
-                            _selectCity();
-                          },
-                          onSelectCarBrand: _selectCarBrand,
-                          onCarTypeChanged: (isUsed) {
-                            setState(() {
-                              _isUsedCar = isUsed;
-                            });
-                          },
-                        )
-                      : _InspectionVisitStep(
-                          package: widget.package,
-                          showSelectedPackage: widget.showSelectedPackage,
-                          visitAreaController: _visitAreaController,
-                          selectedVisitDate: _selectedVisitDate,
-                          selectedTimeSlot: _selectedTimeSlot,
-                          availableDates: _nextSevenDates,
-                          timeSlots: _timeSlots,
-                          onAreaChanged: () => setState(() {}),
-                          onDateSelected: (date) {
-                            setState(() {
-                              _selectedVisitDate = date;
-                              _selectedTimeSlot = null;
-                            });
-                          },
-                          onTimeSlotSelected: (slot) {
-                            setState(() {
-                              _selectedTimeSlot = slot;
-                            });
-                          },
-                        ),
-                ),
-              ),
-            ),
-            Container(
-              color: context.color.secondaryColor,
-              padding: EdgeInsets.fromLTRB(
-                18,
-                8,
-                18,
-                MediaQuery.of(context).padding.bottom + 14,
-              ),
-              child: UiUtils.buildButton(
-                context,
-                onPressed: _currentStepIndex == 0
-                    ? _continueToVisitStep
-                    : _submit,
-                buttonTitle: _currentStepIndex == 0 ? 'Continue' : 'Submit',
-                isInProgress: _isSubmitting,
-                disabled: _isSubmitting,
-                radius: 28,
-                height: 58,
-                buttonColor: context.color.territoryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
+  void _syncController(TextEditingController controller, String value) {
+    if (controller.text == value) return;
+    controller.value = controller.value.copyWith(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+      composing: TextRange.empty,
     );
   }
 }
@@ -658,14 +512,15 @@ class _InspectionBasicInfoStep extends StatelessWidget {
     required this.showSelectedPackage,
     required this.fullNameController,
     required this.phoneController,
-    required this.carModelController,
     required this.carVariantController,
     required this.selectedLivingCity,
-    required this.selectedCarBrand,
+    required this.selectedCar,
+    required this.selectedModelYear,
     required this.isUsedCar,
-    required this.isLoadingCarBrands,
+    required this.isLoadingCars,
     required this.onSelectLivingCity,
-    required this.onSelectCarBrand,
+    required this.onSelectCar,
+    required this.onSelectModelYear,
     required this.onCarTypeChanged,
   });
 
@@ -673,14 +528,15 @@ class _InspectionBasicInfoStep extends StatelessWidget {
   final bool showSelectedPackage;
   final TextEditingController fullNameController;
   final TextEditingController phoneController;
-  final TextEditingController carModelController;
   final TextEditingController carVariantController;
   final City? selectedLivingCity;
-  final CategoryModel? selectedCarBrand;
+  final CarModelModel? selectedCar;
+  final int? selectedModelYear;
   final bool isUsedCar;
-  final bool isLoadingCarBrands;
+  final bool isLoadingCars;
   final VoidCallback onSelectLivingCity;
-  final VoidCallback onSelectCarBrand;
+  final VoidCallback onSelectCar;
+  final ValueChanged<int> onSelectModelYear;
   final ValueChanged<bool> onCarTypeChanged;
 
   @override
@@ -714,19 +570,26 @@ class _InspectionBasicInfoStep extends StatelessWidget {
         18.vGap,
         _InspectionSelectionField(
           title: 'Tell us about your car',
-          value: selectedCarBrand?.name,
-          placeholder: isLoadingCarBrands
-              ? 'Loading car brands...'
-              : 'Select car brand',
-          onTap: isLoadingCarBrands ? null : onSelectCarBrand,
-          isLoading: isLoadingCarBrands,
+          value: selectedCar == null
+              ? null
+              : '${selectedCar!.brandName} ${selectedCar!.name}',
+          placeholder: isLoadingCars ? 'Loading cars...' : 'Select car',
+          onTap: isLoadingCars ? null : onSelectCar,
+          isLoading: isLoadingCars,
         ),
-        if (selectedCarBrand != null) ...[
+        if (selectedCar != null) ...[
           18.vGap,
-          _InspectionTextField(
-            title: 'Car model',
-            controller: carModelController,
-            textInputAction: TextInputAction.next,
+          _InspectionSelectionField(
+            title: 'Model',
+            value: selectedModelYear?.toString(),
+            placeholder: 'Select model year',
+            onTap: () async {
+              final year = await _showYearPickerSheet(
+                context,
+                selectedModelYear,
+              );
+              if (year != null) onSelectModelYear(year);
+            },
           ),
           18.vGap,
           _InspectionTextField(
@@ -1188,16 +1051,16 @@ class _TimeSlotChip extends StatelessWidget {
   }
 }
 
-class _CategoryPickerSheet extends StatelessWidget {
-  const _CategoryPickerSheet({
+class _CarPickerSheet extends StatelessWidget {
+  const _CarPickerSheet({
     required this.title,
-    required this.categories,
-    required this.selectedCategory,
+    required this.cars,
+    required this.selectedCar,
   });
 
   final String title;
-  final List<CategoryModel> categories;
-  final CategoryModel? selectedCategory;
+  final List<CarModelModel> cars;
+  final CarModelModel? selectedCar;
 
   @override
   Widget build(BuildContext context) {
@@ -1237,15 +1100,15 @@ class _CategoryPickerSheet extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-              itemCount: categories.length,
+              itemCount: cars.length,
               separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final category = categories[index];
-                final isSelected = selectedCategory?.id == category.id;
+                final car = cars[index];
+                final isSelected = selectedCar?.id == car.id;
 
                 return InkWell(
                   onTap: () {
-                    Navigator.of(context).pop(category);
+                    Navigator.of(context).pop(car);
                   },
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
@@ -1268,7 +1131,112 @@ class _CategoryPickerSheet extends StatelessWidget {
                       children: [
                         Expanded(
                           child: CustomText(
-                            category.name ?? '',
+                            '${car.brandName} ${car.name}',
+                            fontSize: context.font.large,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (isSelected)
+                          Icon(
+                            Icons.check_circle,
+                            color: context.color.territoryColor,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<int?> _showYearPickerSheet(BuildContext context, int? selectedYear) {
+  return showModalBottomSheet<int>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => _YearPickerSheet(selectedYear: selectedYear),
+  );
+}
+
+class _YearPickerSheet extends StatelessWidget {
+  const _YearPickerSheet({required this.selectedYear});
+
+  final int? selectedYear;
+
+  @override
+  Widget build(BuildContext context) {
+    final years = ServiceBookingFormCubit.modelYears;
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.72,
+      decoration: BoxDecoration(
+        color: context.color.secondaryColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          12.vGap,
+          Container(
+            width: 54,
+            height: 5,
+            decoration: BoxDecoration(
+              color: context.color.borderColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          18.vGap,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CustomText(
+                    'Select model year',
+                    fontSize: context.font.extraLarge,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          12.vGap,
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+              itemCount: years.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final year = years[index];
+                final isSelected = selectedYear == year;
+
+                return InkWell(
+                  onTap: () => Navigator.of(context).pop(year),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFFEAF3FF)
+                          : const Color(0xFFF7F9FE),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected
+                            ? context.color.territoryColor
+                            : context.color.borderColor,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CustomText(
+                            '$year',
                             fontSize: context.font.large,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1476,12 +1444,7 @@ class _InspectionStep {
   const _InspectionStep({required this.title, required this.headline});
 }
 
-class _InspectionTimeSlot {
-  final int startHour;
-  final String label;
-
-  const _InspectionTimeSlot({required this.startHour, required this.label});
-}
+typedef _InspectionTimeSlot = ServiceBookingTimeSlot;
 
 String _weekdayLabel(DateTime date) {
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -1511,11 +1474,4 @@ bool _isSameDay(DateTime? left, DateTime right) {
   return left.year == right.year &&
       left.month == right.month &&
       left.day == right.day;
-}
-
-String _formatHour(int hour) {
-  if (hour == 12) return '12 PM';
-  if (hour == 24) return '12 AM';
-  if (hour > 12) return '${hour - 12} PM';
-  return '$hour AM';
 }

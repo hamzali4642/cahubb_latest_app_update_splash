@@ -1,11 +1,12 @@
+import 'package:eClassify/data/cubits/service/vehicle_service_request_cubit.dart';
+import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
-import 'package:eClassify/utils/helper_utils.dart';
-import 'package:eClassify/utils/hive_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class VehicleServiceFlowConfig {
   final String serviceTitle;
@@ -37,38 +38,6 @@ class VehicleServiceFlowConfig {
     required this.summaryNextStepsTitle,
     required this.summaryNextSteps,
   });
-}
-
-class VehicleServiceRequestModel {
-  final String fullName;
-  final String phoneNumber;
-  final bool? isFiler;
-  final String vehicleInfo;
-  final String registrationPlace;
-
-  const VehicleServiceRequestModel({
-    this.fullName = '',
-    this.phoneNumber = '',
-    this.isFiler,
-    this.vehicleInfo = '',
-    this.registrationPlace = '',
-  });
-
-  VehicleServiceRequestModel copyWith({
-    String? fullName,
-    String? phoneNumber,
-    bool? isFiler,
-    String? vehicleInfo,
-    String? registrationPlace,
-  }) {
-    return VehicleServiceRequestModel(
-      fullName: fullName ?? this.fullName,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-      isFiler: isFiler ?? this.isFiler,
-      vehicleInfo: vehicleInfo ?? this.vehicleInfo,
-      registrationPlace: registrationPlace ?? this.registrationPlace,
-    );
-  }
 }
 
 class VehicleServiceLandingScreen extends StatelessWidget {
@@ -140,109 +109,48 @@ class VehicleServiceRequestScreen extends StatefulWidget {
 
 class _VehicleServiceRequestScreenState
     extends State<VehicleServiceRequestScreen> {
-  static const List<String> _registrationPlaces = [
-    'Punjab',
-    'KPK',
-    'Sindh',
-    'Balochistan',
-    'AJK',
-  ];
-
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _vehicleInfoController = TextEditingController();
-
-  int _currentStepIndex = 0;
-  bool _isSubmitting = false;
-  VehicleServiceRequestModel _request = const VehicleServiceRequestModel();
+  final TextEditingController _carVariantController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    if (HiveUtils.isUserAuthenticated()) {
-      final user = HiveUtils.getUserDetails();
-      _fullNameController.text = user.name ?? '';
-      _phoneController.text = user.mobile ?? '';
-      _request = _request.copyWith(
-        fullName: _fullNameController.text.trim(),
-        phoneNumber: _phoneController.text.trim(),
-      );
-    }
+    final cubit = context.read<VehicleServiceRequestCubit>();
+    _fullNameController.text = cubit.state.fullName;
+    _phoneController.text = cubit.state.phoneNumber;
+    _carVariantController.text = cubit.state.carVariant;
+
+    _fullNameController.addListener(() {
+      cubit.updateFullName(_fullNameController.text);
+    });
+    _phoneController.addListener(() {
+      cubit.updatePhoneNumber(_phoneController.text);
+    });
+    _carVariantController.addListener(() {
+      cubit.updateCarVariant(_carVariantController.text);
+    });
   }
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _phoneController.dispose();
-    _vehicleInfoController.dispose();
+    _carVariantController.dispose();
     super.dispose();
   }
 
-  bool _validateBasicInfo({bool showMessage = true}) {
-    String? message;
-
-    if (_fullNameController.text.trim().isEmpty) {
-      message = 'Please enter full name.';
-    } else if (_phoneController.text.trim().isEmpty) {
-      message = 'Please enter phone number.';
-    } else if (_request.isFiler == null) {
-      message = 'Please select filer status.';
-    }
-
-    if (message != null && showMessage) {
-      HelperUtils.showSnackBarMessage(context, message);
-    }
-
-    return message == null;
-  }
-
-  bool _validateCarInfo({bool showMessage = true}) {
-    String? message;
-
-    if (_vehicleInfoController.text.trim().isEmpty) {
-      message = 'Please enter vehicle information.';
-    } else if (_request.registrationPlace.isEmpty) {
-      message = 'Please select registration place.';
-    }
-
-    if (message != null && showMessage) {
-      HelperUtils.showSnackBarMessage(context, message);
-    }
-
-    return message == null;
-  }
-
-  void _continue() {
-    _request = _request.copyWith(
-      fullName: _fullNameController.text.trim(),
-      phoneNumber: _phoneController.text.trim(),
+  Future<void> _selectCar() async {
+    final cubit = context.read<VehicleServiceRequestCubit>();
+    final selectedCar = await _showSelectionSheet<CarModelModel>(
+      context: context,
+      title: 'Select car',
+      items: cubit.state.carModels,
+      labelBuilder: (car) => '${car.brandName} ${car.name}',
     );
-
-    if (!_validateBasicInfo()) return;
-
-    setState(() {
-      _currentStepIndex = 1;
-    });
-  }
-
-  Future<void> _submit() async {
-    _request = _request.copyWith(
-      vehicleInfo: _vehicleInfoController.text.trim(),
-    );
-
-    if (!_validateBasicInfo() || !_validateCarInfo()) return;
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-
-    if (!mounted) return;
-    setState(() {
-      _isSubmitting = false;
-      _currentStepIndex = 2;
-    });
+    if (selectedCar != null) {
+      cubit.selectCar(selectedCar);
+    }
   }
 
   void _closeFlow() {
@@ -255,104 +163,148 @@ class _VehicleServiceRequestScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isSummary = _currentStepIndex == 2;
+    return BlocConsumer<VehicleServiceRequestCubit, VehicleServiceRequestState>(
+      listenWhen: (previous, current) =>
+          previous.feedbackToken != current.feedbackToken ||
+          previous.fullName != current.fullName ||
+          previous.phoneNumber != current.phoneNumber ||
+          previous.carVariant != current.carVariant,
+      listener: (context, state) {
+        if (_fullNameController.text != state.fullName) {
+          _fullNameController.value = _fullNameController.value.copyWith(
+            text: state.fullName,
+            selection: TextSelection.collapsed(offset: state.fullName.length),
+            composing: TextRange.empty,
+          );
+        }
+        if (_phoneController.text != state.phoneNumber) {
+          _phoneController.value = _phoneController.value.copyWith(
+            text: state.phoneNumber,
+            selection: TextSelection.collapsed(
+              offset: state.phoneNumber.length,
+            ),
+            composing: TextRange.empty,
+          );
+        }
+        if (_carVariantController.text != state.carVariant) {
+          _carVariantController.value = _carVariantController.value.copyWith(
+            text: state.carVariant,
+            selection: TextSelection.collapsed(offset: state.carVariant.length),
+            composing: TextRange.empty,
+          );
+        }
+        if (state.feedbackMessage == null) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(state.feedbackMessage!)));
+        context.read<VehicleServiceRequestCubit>().clearFeedback();
+      },
+      builder: (context, state) {
+        final isSummary = state.currentStepIndex == 2;
 
-    return Scaffold(
-      backgroundColor: context.color.primaryColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _RequestHeader(
-              title: isSummary
-                  ? 'Summary'
-                  : _currentStepIndex == 0
-                  ? 'Basic info'
-                  : 'Car Info',
-              headline: isSummary
-                  ? widget.config.summaryHeadline
-                  : _currentStepIndex == 0
-                  ? 'Basic info'
-                  : 'Car Info',
-              currentStepIndex: _currentStepIndex,
-              onBack: () {
-                if (_currentStepIndex == 0) {
-                  Navigator.of(context).pop();
-                } else if (_currentStepIndex == 2) {
-                  setState(() {
-                    _currentStepIndex = 1;
-                  });
-                } else {
-                  setState(() {
-                    _currentStepIndex = 0;
-                  });
-                }
-              },
-              onClose: isSummary
-                  ? _closeFlow
-                  : () => Navigator.of(context).pop(),
-            ),
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                color: context.color.secondaryColor,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(18, 22, 18, 28),
-                  child: switch (_currentStepIndex) {
-                    0 => _BasicInfoStep(
-                      fullNameController: _fullNameController,
-                      phoneController: _phoneController,
-                      isFiler: _request.isFiler,
-                      onFilerChanged: (value) {
-                        setState(() {
-                          _request = _request.copyWith(isFiler: value);
-                        });
-                      },
-                    ),
-                    1 => _CarInfoStep(
-                      vehicleInfoController: _vehicleInfoController,
-                      request: _request,
-                      registrationPlaces: _registrationPlaces,
-                      onRegistrationChanged: (place) {
-                        setState(() {
-                          _request = _request.copyWith(
-                            registrationPlace: place,
-                          );
-                        });
-                      },
-                    ),
-                    _ => _SummaryStep(
-                      config: widget.config,
-                      request: _request.copyWith(
-                        vehicleInfo: _vehicleInfoController.text.trim(),
-                      ),
-                    ),
+        return Scaffold(
+          backgroundColor: context.color.primaryColor,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _RequestHeader(
+                  title: isSummary
+                      ? 'Summary'
+                      : state.currentStepIndex == 0
+                      ? 'Basic info'
+                      : 'Car Info',
+                  headline: isSummary
+                      ? widget.config.summaryHeadline
+                      : state.currentStepIndex == 0
+                      ? 'Basic info'
+                      : 'Car Info',
+                  currentStepIndex: state.currentStepIndex,
+                  onBack: () {
+                    if (state.currentStepIndex == 0) {
+                      Navigator.of(context).pop();
+                    } else {
+                      context.read<VehicleServiceRequestCubit>().goBack();
+                    }
                   },
+                  onClose: isSummary
+                      ? _closeFlow
+                      : () => Navigator.of(context).pop(),
                 ),
-              ),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    color: context.color.secondaryColor,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(18, 22, 18, 28),
+                      child: switch (state.currentStepIndex) {
+                        0 => _BasicInfoStep(
+                          fullNameController: _fullNameController,
+                          phoneController: _phoneController,
+                          isFiler: state.isFiler,
+                          onFilerChanged: (value) {
+                            context
+                                .read<VehicleServiceRequestCubit>()
+                                .updateFiler(value);
+                          },
+                        ),
+                        1 => _CarInfoStep(
+                          carVariantController: _carVariantController,
+                          request: state,
+                          isLoadingCars: state.isLoadingCars,
+                          modelYears: VehicleServiceRequestCubit.modelYears,
+                          registrationPlaces:
+                              VehicleServiceRequestCubit.registrationPlaces,
+                          onCarSelected: _selectCar,
+                          onModelYearSelected: (year) {
+                            context
+                                .read<VehicleServiceRequestCubit>()
+                                .selectModelYear(year);
+                          },
+                          onRegistrationChanged: (place) {
+                            context
+                                .read<VehicleServiceRequestCubit>()
+                                .updateRegistrationPlace(place);
+                          },
+                        ),
+                        _ => _SummaryStep(
+                          config: widget.config,
+                          request: state,
+                        ),
+                      },
+                    ),
+                  ),
+                ),
+                if (!isSummary)
+                  Container(
+                    color: context.color.secondaryColor,
+                    padding: EdgeInsets.fromLTRB(
+                      18,
+                      8,
+                      18,
+                      MediaQuery.of(context).padding.bottom + 14,
+                    ),
+                    child: UiUtils.buildButton(
+                      context,
+                      onPressed: state.currentStepIndex == 0
+                          ? context
+                                .read<VehicleServiceRequestCubit>()
+                                .continueToCarInfo
+                          : context.read<VehicleServiceRequestCubit>().submit,
+                      buttonTitle: state.currentStepIndex == 0
+                          ? 'Continue'
+                          : 'Submit',
+                      isInProgress: state.isSubmitting,
+                      disabled: state.isSubmitting,
+                      radius: 28,
+                      height: 58,
+                      buttonColor: context.color.territoryColor,
+                    ),
+                  ),
+              ],
             ),
-            if (!isSummary)
-              Container(
-                color: context.color.secondaryColor,
-                padding: EdgeInsets.fromLTRB(
-                  18,
-                  8,
-                  18,
-                  MediaQuery.of(context).padding.bottom + 14,
-                ),
-                child: UiUtils.buildButton(
-                  context,
-                  onPressed: _currentStepIndex == 0 ? _continue : _submit,
-                  buttonTitle: _currentStepIndex == 0 ? 'Continue' : 'Submit',
-                  isInProgress: _isSubmitting,
-                  disabled: _isSubmitting,
-                  radius: 28,
-                  height: 58,
-                  buttonColor: context.color.territoryColor,
-                ),
-              ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -762,15 +714,23 @@ class _BasicInfoStep extends StatelessWidget {
 
 class _CarInfoStep extends StatelessWidget {
   const _CarInfoStep({
-    required this.vehicleInfoController,
+    required this.carVariantController,
     required this.request,
+    required this.isLoadingCars,
+    required this.modelYears,
     required this.registrationPlaces,
+    required this.onCarSelected,
+    required this.onModelYearSelected,
     required this.onRegistrationChanged,
   });
 
-  final TextEditingController vehicleInfoController;
-  final VehicleServiceRequestModel request;
+  final TextEditingController carVariantController;
+  final VehicleServiceRequestState request;
+  final bool isLoadingCars;
+  final List<int> modelYears;
   final List<String> registrationPlaces;
+  final VoidCallback onCarSelected;
+  final ValueChanged<int> onModelYearSelected;
   final ValueChanged<String> onRegistrationChanged;
 
   @override
@@ -778,12 +738,40 @@ class _CarInfoStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _LabeledTextField(
-          title: 'Car information',
-          controller: vehicleInfoController,
-          hintText: 'e.g. Honda City 2005',
-          textInputAction: TextInputAction.done,
+        _SelectionField(
+          title: 'Select car',
+          value: request.selectedCar == null
+              ? null
+              : '${request.selectedCar!.brandName} ${request.selectedCar!.name}',
+          hintText: isLoadingCars ? 'Loading cars...' : 'Choose car',
+          onTap: isLoadingCars ? null : onCarSelected,
         ),
+        if (request.selectedCar != null) ...[
+          18.vGap,
+          _SelectionField(
+            title: 'Model',
+            value: request.selectedModelYear?.toString(),
+            hintText: 'Select model year',
+            onTap: () async {
+              final selectedYear = await _showSelectionSheet<int>(
+                context: context,
+                title: 'Select model year',
+                items: modelYears,
+                labelBuilder: (year) => year.toString(),
+              );
+              if (selectedYear != null) {
+                onModelYearSelected(selectedYear);
+              }
+            },
+          ),
+          18.vGap,
+          _LabeledTextField(
+            title: 'Variant',
+            controller: carVariantController,
+            hintText: 'Enter variant',
+            textInputAction: TextInputAction.done,
+          ),
+        ],
         18.vGap,
         CustomText(
           'Place of registration',
@@ -811,7 +799,7 @@ class _SummaryStep extends StatelessWidget {
   const _SummaryStep({required this.config, required this.request});
 
   final VehicleServiceFlowConfig config;
-  final VehicleServiceRequestModel request;
+  final VehicleServiceRequestState request;
 
   @override
   Widget build(BuildContext context) {
@@ -854,7 +842,22 @@ class _SummaryStep extends StatelessWidget {
                 ],
               ),
               16.vGap,
-              _SummaryRow(label: 'Car information', value: request.vehicleInfo),
+              _SummaryRow(
+                label: 'Car information',
+                value: request.selectedCar == null
+                    ? '-'
+                    : '${request.selectedCar!.brandName} ${request.selectedCar!.name}',
+              ),
+              12.vGap,
+              _SummaryRow(
+                label: 'Model',
+                value: request.selectedModelYear?.toString() ?? '-',
+              ),
+              12.vGap,
+              _SummaryRow(
+                label: 'Variant',
+                value: request.carVariant.isEmpty ? '-' : request.carVariant,
+              ),
               12.vGap,
               _SummaryRow(
                 label: 'Place of registration',
@@ -1077,6 +1080,68 @@ class _LabeledTextField extends StatelessWidget {
   }
 }
 
+class _SelectionField extends StatelessWidget {
+  const _SelectionField({
+    required this.title,
+    required this.hintText,
+    required this.onTap,
+    this.value,
+  });
+
+  final String title;
+  final String hintText;
+  final String? value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = value?.trim().isNotEmpty == true;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CustomText(
+          title,
+          fontSize: context.font.larger,
+          fontWeight: FontWeight.w600,
+        ),
+        10.vGap,
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            decoration: BoxDecoration(
+              color: context.color.secondaryColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.color.borderColor),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CustomText(
+                    hasValue ? value! : hintText,
+                    color: hasValue
+                        ? context.color.textDefaultColor
+                        : context.color.textLightColor,
+                    maxLines: 2,
+                  ),
+                ),
+                12.hGap,
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: context.color.textLightColor,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ChoiceChipButton extends StatelessWidget {
   const _ChoiceChipButton({
     required this.label,
@@ -1117,4 +1182,55 @@ class _ChoiceChipButton extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<T?> _showSelectionSheet<T>({
+  required BuildContext context,
+  required String title,
+  required List<T> items,
+  required String Function(T item) labelBuilder,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    backgroundColor: context.color.secondaryColor,
+    showDragHandle: true,
+    builder: (sheetContext) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomText(
+                title,
+                fontSize: sheetContext.font.extraLarge,
+                fontWeight: FontWeight.w700,
+              ),
+              12.vGap,
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) =>
+                      Divider(color: sheetContext.color.borderColor, height: 1),
+                  itemBuilder: (_, index) {
+                    final item = items[index];
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: CustomText(
+                        labelBuilder(item),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      onTap: () => Navigator.of(sheetContext).pop(item),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

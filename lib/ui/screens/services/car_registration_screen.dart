@@ -1,5 +1,7 @@
+import 'package:eClassify/data/cubits/service/vehicle_service_request_cubit.dart';
 import 'package:eClassify/ui/screens/services/vehicle_service_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 const _carRegistrationConfig = VehicleServiceFlowConfig(
   serviceTitle: 'Car Registration',
@@ -55,7 +57,10 @@ class CarRegistrationRequestScreen extends StatelessWidget {
   static Route route(RouteSettings settings) {
     return MaterialPageRoute(
       settings: settings,
-      builder: (_) => const CarRegistrationRequestScreen(),
+      builder: (_) => BlocProvider(
+        create: (_) => VehicleServiceRequestCubit()..initialize(),
+        child: const CarRegistrationRequestScreen(),
+      ),
     );
   }
 
