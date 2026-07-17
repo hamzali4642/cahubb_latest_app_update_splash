@@ -62,9 +62,27 @@ class Api {
   }
 
   static String _resolveApiErrorMessage(DioException e) {
-    return _isNetworkError(e)
-        ? "no-internet"
-        : "Something went wrong with error ${e.response?.statusCode}";
+    if (_isNetworkError(e)) return "no-internet";
+
+    final responseData = e.response?.data;
+    if (responseData is Map) {
+      final errors = responseData['errors'];
+      if (errors is Map) {
+        for (final value in errors.values) {
+          if (value is List && value.isNotEmpty) {
+            final message = value.first?.toString().trim();
+            if (message != null && message.isNotEmpty) return message;
+          }
+          final message = value?.toString().trim();
+          if (message != null && message.isNotEmpty) return message;
+        }
+      }
+
+      final message = responseData['message']?.toString().trim();
+      if (message != null && message.isNotEmpty) return message;
+    }
+
+    return "Something went wrong with error ${e.response?.statusCode}";
   }
 
   static Future<Response<dynamic>> _getWithRetry({

@@ -3,9 +3,11 @@ import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
+import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 class AuctionSheetVerificationScreen extends StatefulWidget {
   const AuctionSheetVerificationScreen({super.key});
@@ -45,22 +47,27 @@ class _AuctionSheetVerificationScreenState
     super.dispose();
   }
 
-  void _verifyAuctionSheet() {
+  Future<void> _verifyAuctionSheet() async {
     final cubit = context.read<AuctionSheetVerificationCubit>();
     if (!cubit.requestVerification()) return;
 
-    showModalBottomSheet<void>(
+    final submitted = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return BlocProvider.value(
           value: cubit,
-          child: _AuctionSheetNotifySheet(
-            chassisNumber: cubit.state.chassisNumber.trim(),
-          ),
+          child: const _AuctionSheetNotifySheet(),
         );
       },
+    );
+    if (!mounted || submitted != true) return;
+    HelperUtils.showSnackBarMessage(
+      context,
+      'Request received. We will notify you once the auction sheet is available.',
+      messageDuration: 4,
+      type: MessageType.success,
     );
   }
 
@@ -83,11 +90,15 @@ class _AuctionSheetVerificationScreenState
             composing: TextRange.empty,
           );
         }
-        if (state.feedbackMessage == null) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(state.feedbackMessage!)));
-        context.read<AuctionSheetVerificationCubit>().clearFeedback();
+        final cubit = context.read<AuctionSheetVerificationCubit>();
+        if (state.feedbackMessage != null) {
+          HelperUtils.showSnackBarMessage(
+            context,
+            state.feedbackMessage!,
+            type: MessageType.error,
+          );
+          cubit.clearFeedback();
+        }
       },
       builder: (context, state) {
         return Scaffold(
@@ -106,7 +117,11 @@ class _AuctionSheetVerificationScreenState
                 18.vGap,
                 _AuctionInputCard(
                   controller: _chassisController,
+                  state: state,
                   onVerify: _verifyAuctionSheet,
+                  onRetryPrice: () => context
+                      .read<AuctionSheetVerificationCubit>()
+                      .fetchPrice(),
                 ),
                 20.vGap,
                 const _AuctionStatsRow(),
@@ -251,10 +266,17 @@ class _HeroBullet extends StatelessWidget {
 }
 
 class _AuctionInputCard extends StatelessWidget {
-  const _AuctionInputCard({required this.controller, required this.onVerify});
+  const _AuctionInputCard({
+    required this.controller,
+    required this.state,
+    required this.onVerify,
+    required this.onRetryPrice,
+  });
 
   final TextEditingController controller;
+  final AuctionSheetVerificationState state;
   final VoidCallback onVerify;
+  final VoidCallback onRetryPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -304,14 +326,76 @@ class _AuctionInputCard extends StatelessWidget {
             height: 52,
           ),
           10.vGap,
-          Center(
-            child: CustomText(
-              'PKR 2,950 · Delivered in minutes',
+          _AuctionPriceLabel(state: state, onRetry: onRetryPrice),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuctionPriceLabel extends StatelessWidget {
+  const _AuctionPriceLabel({required this.state, required this.onRetry});
+
+  final AuctionSheetVerificationState state;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.isPriceLoading) {
+      return Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: context.color.territoryColor,
+              ),
+            ),
+            8.hGap,
+            CustomText(
+              'Loading current price...',
               fontSize: context.font.small,
               color: context.color.textLightColor,
             ),
+          ],
+        ),
+      );
+    }
+
+    final price = state.price;
+    if (price != null) {
+      final formattedAmount = NumberFormat('#,##0.##').format(price.amount);
+      return Center(
+        child: CustomText(
+          '${price.currencyCode} $formattedAmount · Delivered in minutes',
+          fontSize: context.font.small,
+          color: context.color.textLightColor,
+        ),
+      );
+    }
+
+    return Center(
+      child: InkWell(
+        onTap: onRetry,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.refresh_rounded, size: 16, color: errorMessageColor),
+              6.hGap,
+              CustomText(
+                'Price unavailable · Tap to retry',
+                fontSize: context.font.small,
+                color: errorMessageColor,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -563,9 +647,7 @@ class _FeatureGrid extends StatelessWidget {
 }
 
 class _AuctionSheetNotifySheet extends StatefulWidget {
-  const _AuctionSheetNotifySheet({required this.chassisNumber});
-
-  final String chassisNumber;
+  const _AuctionSheetNotifySheet();
 
   @override
   State<_AuctionSheetNotifySheet> createState() =>
@@ -591,17 +673,19 @@ class _AuctionSheetNotifySheetState extends State<_AuctionSheetNotifySheet> {
     super.dispose();
   }
 
-  void _notifyMe() {
-    final shouldClose = context
+  Future<void> _notifyMe() async {
+    final shouldClose = await context
         .read<AuctionSheetVerificationCubit>()
         .notifyMe();
+    if (!mounted) return;
     if (!shouldClose) return;
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(true);
   }
 
   @override
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    final state = context.watch<AuctionSheetVerificationCubit>().state;
 
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets),
@@ -714,6 +798,8 @@ class _AuctionSheetNotifySheetState extends State<_AuctionSheetNotifySheet> {
                     context,
                     onPressed: _notifyMe,
                     buttonTitle: 'Notify Me',
+                    isInProgress: state.isSubmitting,
+                    disabled: state.isSubmitting,
                     radius: 12,
                     height: 52,
                   ),

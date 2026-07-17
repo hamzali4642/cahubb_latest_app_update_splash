@@ -1,3 +1,4 @@
+import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/data/cubits/service/service_booking_form_cubit.dart';
 import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/data/model/location/location_node.dart' show City;
@@ -155,6 +156,7 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
     return BlocConsumer<ServiceBookingFormCubit, ServiceBookingFormState>(
       listenWhen: (previous, current) =>
           previous.feedbackToken != current.feedbackToken ||
+          previous.submissionToken != current.submissionToken ||
           previous.fullName != current.fullName ||
           previous.phoneNumber != current.phoneNumber ||
           previous.carVariant != current.carVariant ||
@@ -164,6 +166,14 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
         _syncController(_phoneController, state.phoneNumber);
         _syncController(_carVariantController, state.carVariant);
         _syncController(_visitAreaController, state.visitArea);
+
+        if (state.submissionResult != null && state.submissionToken > 0) {
+          Navigator.of(context).pushNamed(
+            Routes.serviceRequestSuccessScreen,
+            arguments: state.submissionResult,
+          );
+          return;
+        }
 
         if (state.feedbackMessage == null) return;
         ScaffoldMessenger.of(

@@ -1,7 +1,10 @@
 import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/data/model/location/location_node.dart' show City;
 import 'package:eClassify/data/model/service/service_package_model.dart';
+import 'package:eClassify/data/model/service/service_request_model.dart';
 import 'package:eClassify/data/repositories/service/service_lead_repository.dart';
+import 'package:eClassify/data/repositories/service/service_request_repository.dart';
+import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/hive_utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -40,6 +43,8 @@ class ServiceBookingFormState {
   final List<ServiceBookingTimeSlot> timeSlots;
   final String? feedbackMessage;
   final int feedbackToken;
+  final ServiceRequestResult? submissionResult;
+  final int submissionToken;
 
   const ServiceBookingFormState({
     required this.package,
@@ -67,6 +72,8 @@ class ServiceBookingFormState {
     this.selectedTimeSlot,
     this.feedbackMessage,
     this.feedbackToken = 0,
+    this.submissionResult,
+    this.submissionToken = 0,
   });
 
   factory ServiceBookingFormState.initial({
@@ -134,6 +141,8 @@ class ServiceBookingFormState {
     bool clearSelectedTimeSlot = false,
     bool clearFeedbackMessage = false,
     int? feedbackToken,
+    ServiceRequestResult? submissionResult,
+    int? submissionToken,
   }) {
     return ServiceBookingFormState(
       package: package,
@@ -175,6 +184,8 @@ class ServiceBookingFormState {
           ? null
           : (feedbackMessage ?? this.feedbackMessage),
       feedbackToken: feedbackToken ?? this.feedbackToken,
+      submissionResult: submissionResult ?? this.submissionResult,
+      submissionToken: submissionToken ?? this.submissionToken,
     );
   }
 }
@@ -185,7 +196,10 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
     required ServiceBookingFlowType flowType,
     required bool showSelectedPackage,
     ServiceLeadRepository? repository,
+    ServiceRequestRepository? requestRepository,
   }) : _repository = repository ?? ServiceLeadRepository(),
+       _requestRepository =
+           requestRepository ?? const ServiceRequestRepository(),
        super(
          ServiceBookingFormState.initial(
            package: package,
@@ -195,6 +209,7 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
        );
 
   final ServiceLeadRepository _repository;
+  final ServiceRequestRepository _requestRepository;
 
   static const List<String> registrationAreas = [
     'Punjab',
@@ -262,15 +277,19 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
 
   void updateFullName(String value) => emit(state.copyWith(fullName: value));
 
-  void updatePhoneNumber(String value) => emit(state.copyWith(phoneNumber: value));
+  void updatePhoneNumber(String value) =>
+      emit(state.copyWith(phoneNumber: value));
 
-  void updateCarVariant(String value) => emit(state.copyWith(carVariant: value));
+  void updateCarVariant(String value) =>
+      emit(state.copyWith(carVariant: value));
 
   void updateVisitArea(String value) => emit(state.copyWith(visitArea: value));
 
-  void updateCarType(bool isUsedCar) => emit(state.copyWith(isUsedCar: isUsedCar));
+  void updateCarType(bool isUsedCar) =>
+      emit(state.copyWith(isUsedCar: isUsedCar));
 
-  void selectLivingCity(City city) => emit(state.copyWith(selectedLivingCity: city));
+  void selectLivingCity(City city) =>
+      emit(state.copyWith(selectedLivingCity: city));
 
   void selectCar(CarModelModel car) {
     if (car.id == state.selectedCar?.id) return;
@@ -283,7 +302,8 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
     );
   }
 
-  void selectModelYear(int year) => emit(state.copyWith(selectedModelYear: year));
+  void selectModelYear(int year) =>
+      emit(state.copyWith(selectedModelYear: year));
 
   void selectRegistrationArea(String area) {
     emit(state.copyWith(selectedRegistrationArea: area));
@@ -314,6 +334,8 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
   }
 
   Future<void> submit() async {
+    if (state.isSubmitting) return;
+
     final errorMessage = _validateBasicInfo() ?? _validateVisitInfo();
     if (errorMessage != null) {
       _emitFeedback(errorMessage);
@@ -321,34 +343,117 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
     }
 
     emit(state.copyWith(isSubmitting: true));
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    emit(state.copyWith(isSubmitting: false));
-    _emitFeedback(
-      state.flowType == ServiceBookingFlowType.inspection
-          ? 'Inspection booking validated. API will be connected next.'
-          : 'Sell it for me request validated. API will be connected next.',
-    );
+    try {
+      final result = await _requestRepository.submit(_buildPayload());
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          submissionResult: result,
+          submissionToken: state.submissionToken + 1,
+        ),
+      );
+    } on ApiException catch (error) {
+      emit(state.copyWith(isSubmitting: false));
+      _emitFeedback(error.errorMessage.toString());
+    } catch (_) {
+      emit(state.copyWith(isSubmitting: false));
+      _emitFeedback('Unable to submit the service request. Please try again.');
+    }
   }
 
   String? _validateBasicInfo() {
+    final expectedPackageType =
+        state.flowType == ServiceBookingFlowType.inspection
+        ? 'car_inspection'
+        : 'sell_for_me';
+    if (state.package.id > 0 && state.package.type != expectedPackageType) {
+      return 'The selected package does not match this service.';
+    }
     if (state.fullName.trim().isEmpty) return 'Full name is required.';
+    if (state.fullName.trim().length > 150) {
+      return 'Full name must not exceed 150 characters.';
+    }
     if (state.phoneNumber.trim().isEmpty) return 'Phone number is required.';
+    if (state.phoneNumber.trim().length > 30) {
+      return 'Phone number must not exceed 30 characters.';
+    }
     if (state.selectedLivingCity == null) return 'Please select your city.';
     if (state.selectedCar == null) return 'Please select a car.';
     if (state.selectedModelYear == null) return 'Please select model year.';
+    if (state.selectedModelYear! < 1990 ||
+        state.selectedModelYear! > DateTime.now().year) {
+      return 'Please select a valid model year.';
+    }
     if (state.carVariant.trim().isEmpty) return 'Please enter the car variant.';
+    if (state.carVariant.trim().length > 150) {
+      return 'Car variant must not exceed 150 characters.';
+    }
     if (state.flowType == ServiceBookingFlowType.sellItForMe &&
         state.selectedRegistrationArea == null) {
       return 'Please select the vehicle registration area.';
+    }
+    if (state.selectedRegistrationArea != null &&
+        !registrationAreas.contains(state.selectedRegistrationArea)) {
+      return 'Please select a valid vehicle registration area.';
     }
     return null;
   }
 
   String? _validateVisitInfo() {
     if (state.visitArea.trim().isEmpty) return 'Please enter area.';
+    if (state.visitArea.trim().length > 255) {
+      return 'Area must not exceed 255 characters.';
+    }
     if (state.selectedVisitDate == null) return 'Please select a visit date.';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final visitDate = state.selectedVisitDate!;
+    if (DateTime(
+      visitDate.year,
+      visitDate.month,
+      visitDate.day,
+    ).isBefore(today)) {
+      return 'Visit date cannot be in the past.';
+    }
     if (state.selectedTimeSlot == null) return 'Please select a time slot.';
+    if (state.selectedTimeSlot!.startHour < 10 ||
+        state.selectedTimeSlot!.startHour > 16) {
+      return 'Please select a valid time slot.';
+    }
     return null;
+  }
+
+  ServiceRequestPayload _buildPayload() {
+    final date = state.selectedVisitDate!;
+    final startHour = state.selectedTimeSlot!.startHour;
+    return ServiceRequestPayload(
+      type: state.flowType == ServiceBookingFlowType.inspection
+          ? ServiceRequestType.carInspection
+          : ServiceRequestType.sellForMe,
+      servicePackageId: state.package.id > 0 ? state.package.id : null,
+      fullName: state.fullName,
+      phoneNumber: state.phoneNumber,
+      cityId: state.selectedLivingCity!.id,
+      carModelId: state.selectedCar!.id,
+      modelYear: state.selectedModelYear!,
+      carVariant: state.carVariant,
+      carCondition: state.isUsedCar ? 'used' : 'new',
+      registrationArea: state.selectedRegistrationArea,
+      visitArea: state.visitArea,
+      visitDate: _formatDate(date),
+      visitStartTime: _formatTime(startHour),
+      visitEndTime: _formatTime(startHour + 1),
+    );
+  }
+
+  static String _formatDate(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  static String _formatTime(int hour) {
+    return '${hour.toString().padLeft(2, '0')}:00:00';
   }
 
   void _emitFeedback(String message) {
