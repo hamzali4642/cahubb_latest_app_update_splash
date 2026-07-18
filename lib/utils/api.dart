@@ -175,6 +175,8 @@ class Api {
   static String getCitiesApi = "cities";
   static String getAreasApi = "areas";
   static String getBlogApi = "blogs";
+  static String latestFuelPricesApi = "fuel-prices/latest";
+  static String newsApi = "news";
   static String getFaqApi = "faq";
   static String getItemBuyerListApi = "item-buyer-list";
   static String getSellerApi = "get-seller";

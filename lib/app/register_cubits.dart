@@ -26,9 +26,11 @@ import 'package:eClassify/data/cubits/fetch_faqs_cubit.dart';
 import 'package:eClassify/data/cubits/fetch_item_buyer_cubit.dart';
 import 'package:eClassify/data/cubits/fetch_my_reviews_cubit.dart';
 import 'package:eClassify/data/cubits/fetch_notifications_cubit.dart';
+import 'package:eClassify/data/cubits/fuel_prices/fetch_fuel_prices_cubit.dart';
 import 'package:eClassify/data/cubits/home/fetch_home_all_items_cubit.dart';
 import 'package:eClassify/data/cubits/home/fetch_home_screen_cubit.dart';
 import 'package:eClassify/data/cubits/home/fetch_section_items_cubit.dart';
+import 'package:eClassify/data/cubits/news/fetch_news_cubit.dart';
 import 'package:eClassify/data/cubits/item/change_my_items_status_cubit.dart';
 import 'package:eClassify/data/cubits/item/create_featured_ad_cubit.dart';
 import 'package:eClassify/data/cubits/item/delete_item_cubit.dart';
@@ -99,6 +101,8 @@ class RegisterCubits {
     BlocProvider(create: (context) => GetBuyerChatListCubit()),
     BlocProvider(create: (context) => GetSellerChatListCubit()),
     BlocProvider(create: (context) => FetchHomeScreenCubit()),
+    BlocProvider(create: (context) => FetchFuelPricesCubit()),
+    BlocProvider(create: (context) => FetchNewsCubit()),
     BlocProvider(create: (context) => AuthenticationCubit()),
     BlocProvider(create: (context) => FetchHomeAllItemsCubit()),
     BlocProvider(create: (context) => DeleteItemCubit()),

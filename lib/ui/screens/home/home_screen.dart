@@ -9,10 +9,12 @@ import 'package:eClassify/data/cubits/chat/blocked_users_list_cubit.dart';
 import 'package:eClassify/data/cubits/chat/get_buyer_chat_users_cubit.dart';
 import 'package:eClassify/data/cubits/currency/fetch_currencies_cubit.dart';
 import 'package:eClassify/data/cubits/favorite/favorite_cubit.dart';
+import 'package:eClassify/data/cubits/fuel_prices/fetch_fuel_prices_cubit.dart';
 import 'package:eClassify/data/cubits/home/fetch_home_all_items_cubit.dart';
 import 'package:eClassify/data/cubits/home/fetch_home_screen_cubit.dart';
 import 'package:eClassify/data/cubits/item/job_application/fetch_job_application_cubit.dart';
 import 'package:eClassify/data/cubits/location/leaf_location_cubit.dart';
+import 'package:eClassify/data/cubits/news/fetch_news_cubit.dart';
 import 'package:eClassify/data/cubits/slider_cubit.dart';
 import 'package:eClassify/data/cubits/system/fetch_system_settings_cubit.dart';
 import 'package:eClassify/data/model/location/leaf_location.dart';
@@ -22,10 +24,12 @@ import 'package:eClassify/ui/screens/home/mixins/root_location_resolver_mixin.da
 import 'package:eClassify/ui/screens/home/slider_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/category_widget_home.dart';
 import 'package:eClassify/ui/screens/home/widgets/featured_section_widget.dart';
+import 'package:eClassify/ui/screens/home/widgets/fuel_prices_card.dart';
 import 'package:eClassify/ui/screens/home/widgets/home_services_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/home_search.dart';
 import 'package:eClassify/ui/screens/home/widgets/item_card_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/location_widget.dart';
+import 'package:eClassify/ui/screens/home/widgets/latest_news_section.dart';
 import 'package:eClassify/ui/screens/native_ads_screen.dart';
 import 'package:eClassify/ui/screens/widgets/errors/no_internet.dart';
 import 'package:eClassify/ui/screens/widgets/errors/something_went_wrong.dart';
@@ -124,6 +128,8 @@ class HomeScreenState extends State<HomeScreen>
       delay: force ? Duration.zero : const Duration(milliseconds: 350),
     );
     context.read<FetchCategoryCubit>().fetchCategories();
+    context.read<FetchFuelPricesCubit>().fetch();
+    context.read<FetchNewsCubit>().fetch();
   }
 
   void _fetchPrimaryHomeData({LeafLocation? location, bool force = false}) {
@@ -305,6 +311,8 @@ class HomeScreenState extends State<HomeScreen>
                             ),
                       ),
                       AllItemsWidget(onTapRetry: loadInitialInfo),
+                      const SliverToBoxAdapter(child: LatestNewsSection()),
+                      const SliverToBoxAdapter(child: FuelPricesSection()),
                       SliverToBoxAdapter(
                         child: const SizedBox(height: kToolbarHeight / 2),
                       ),

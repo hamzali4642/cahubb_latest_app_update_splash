@@ -1,5 +1,8 @@
 import 'package:eClassify/data/model/car_model_model.dart';
+import 'package:eClassify/data/model/service/vehicle_service_request_model.dart';
 import 'package:eClassify/data/repositories/service/service_lead_repository.dart';
+import 'package:eClassify/data/repositories/service/vehicle_service_request_repository.dart';
+import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/hive_utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -17,6 +20,8 @@ class VehicleServiceRequestState {
   final int? selectedModelYear;
   final String? feedbackMessage;
   final int feedbackToken;
+  final VehicleServiceRequestResult? submissionResult;
+  final int submissionToken;
 
   const VehicleServiceRequestState({
     required this.currentStepIndex,
@@ -32,6 +37,8 @@ class VehicleServiceRequestState {
     this.selectedModelYear,
     this.feedbackMessage,
     this.feedbackToken = 0,
+    this.submissionResult,
+    this.submissionToken = 0,
   });
 
   const VehicleServiceRequestState.initial()
@@ -47,7 +54,9 @@ class VehicleServiceRequestState {
       selectedCar = null,
       selectedModelYear = null,
       feedbackMessage = null,
-      feedbackToken = 0;
+      feedbackToken = 0,
+      submissionResult = null,
+      submissionToken = 0;
 
   VehicleServiceRequestState copyWith({
     int? currentStepIndex,
@@ -66,6 +75,8 @@ class VehicleServiceRequestState {
     bool clearSelectedModelYear = false,
     bool clearFeedbackMessage = false,
     int? feedbackToken,
+    VehicleServiceRequestResult? submissionResult,
+    int? submissionToken,
   }) {
     return VehicleServiceRequestState(
       currentStepIndex: currentStepIndex ?? this.currentStepIndex,
@@ -85,16 +96,26 @@ class VehicleServiceRequestState {
           ? null
           : (feedbackMessage ?? this.feedbackMessage),
       feedbackToken: feedbackToken ?? this.feedbackToken,
+      submissionResult: submissionResult ?? this.submissionResult,
+      submissionToken: submissionToken ?? this.submissionToken,
     );
   }
 }
 
 class VehicleServiceRequestCubit extends Cubit<VehicleServiceRequestState> {
-  VehicleServiceRequestCubit({ServiceLeadRepository? repository})
-    : _repository = repository ?? ServiceLeadRepository(),
-      super(const VehicleServiceRequestState.initial());
+  VehicleServiceRequestCubit({
+    required VehicleServiceRequestType requestType,
+    ServiceLeadRepository? repository,
+    VehicleServiceRequestRepository? requestRepository,
+  }) : _requestType = requestType,
+       _requestRepository =
+           requestRepository ?? const VehicleServiceRequestRepository(),
+       _repository = repository ?? ServiceLeadRepository(),
+       super(const VehicleServiceRequestState.initial());
 
   final ServiceLeadRepository _repository;
+  final VehicleServiceRequestRepository _requestRepository;
+  final VehicleServiceRequestType _requestType;
 
   static const List<String> registrationPlaces = [
     'Punjab',
@@ -135,11 +156,13 @@ class VehicleServiceRequestCubit extends Cubit<VehicleServiceRequestState> {
 
   void updateFullName(String value) => emit(state.copyWith(fullName: value));
 
-  void updatePhoneNumber(String value) => emit(state.copyWith(phoneNumber: value));
+  void updatePhoneNumber(String value) =>
+      emit(state.copyWith(phoneNumber: value));
 
   void updateFiler(bool value) => emit(state.copyWith(isFiler: value));
 
-  void updateCarVariant(String value) => emit(state.copyWith(carVariant: value));
+  void updateCarVariant(String value) =>
+      emit(state.copyWith(carVariant: value));
 
   void updateRegistrationPlace(String value) {
     emit(state.copyWith(registrationPlace: value));
@@ -156,7 +179,8 @@ class VehicleServiceRequestCubit extends Cubit<VehicleServiceRequestState> {
     );
   }
 
-  void selectModelYear(int year) => emit(state.copyWith(selectedModelYear: year));
+  void selectModelYear(int year) =>
+      emit(state.copyWith(selectedModelYear: year));
 
   void clearFeedback() => emit(state.copyWith(clearFeedbackMessage: true));
 
@@ -175,6 +199,7 @@ class VehicleServiceRequestCubit extends Cubit<VehicleServiceRequestState> {
   }
 
   Future<void> submit() async {
+    if (state.isSubmitting) return;
     final errorMessage = _validateBasicInfo() ?? _validateCarInfo();
     if (errorMessage != null) {
       _emitFeedback(errorMessage);
@@ -182,13 +207,48 @@ class VehicleServiceRequestCubit extends Cubit<VehicleServiceRequestState> {
     }
 
     emit(state.copyWith(isSubmitting: true));
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    emit(state.copyWith(isSubmitting: false, currentStepIndex: 2));
+    try {
+      final result = await _requestRepository.submit(
+        type: _requestType,
+        payload: VehicleServiceRequestPayload(
+          fullName: state.fullName,
+          phoneNumber: state.phoneNumber,
+          isFiler: state.isFiler!,
+          carModelId: state.selectedCar!.id,
+          modelYear: state.selectedModelYear!,
+          carVariant: state.carVariant,
+          registrationPlace: state.registrationPlace,
+        ),
+      );
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          currentStepIndex: 2,
+          submissionResult: result,
+          submissionToken: state.submissionToken + 1,
+        ),
+      );
+    } on ApiException catch (error) {
+      emit(state.copyWith(isSubmitting: false));
+      _emitFeedback(error.errorMessage.toString());
+    } catch (_) {
+      emit(state.copyWith(isSubmitting: false));
+      _emitFeedback('Unable to submit the request. Please try again.');
+    }
   }
 
   String? _validateBasicInfo() {
     if (state.fullName.trim().isEmpty) return 'Please enter full name.';
+    if (state.fullName.trim().length > 150) {
+      return 'Full name must not exceed 150 characters.';
+    }
     if (state.phoneNumber.trim().isEmpty) return 'Please enter phone number.';
+    if (state.phoneNumber.trim().length > 30) {
+      return 'Phone number must not exceed 30 characters.';
+    }
+    if (!RegExp(r'^\+?[0-9()\-\s]+$').hasMatch(state.phoneNumber.trim())) {
+      return 'Please enter a valid phone number.';
+    }
     if (state.isFiler == null) return 'Please select filer status.';
     return null;
   }
@@ -196,9 +256,19 @@ class VehicleServiceRequestCubit extends Cubit<VehicleServiceRequestState> {
   String? _validateCarInfo() {
     if (state.selectedCar == null) return 'Please select a car.';
     if (state.selectedModelYear == null) return 'Please select model year.';
+    if (state.selectedModelYear! < 1990 ||
+        state.selectedModelYear! > DateTime.now().year) {
+      return 'Please select a valid model year.';
+    }
     if (state.carVariant.trim().isEmpty) return 'Please enter the car variant.';
+    if (state.carVariant.trim().length > 150) {
+      return 'Car variant must not exceed 150 characters.';
+    }
     if (state.registrationPlace.isEmpty) {
       return 'Please select registration place.';
+    }
+    if (!registrationPlaces.contains(state.registrationPlace)) {
+      return 'Please select a valid registration place.';
     }
     return null;
   }

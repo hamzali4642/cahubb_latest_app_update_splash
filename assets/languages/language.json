@@ -1,4 +1,9 @@
 {
+  "news": "News",
+  "newsDetails": "News Details",
+  "latestNews": "Latest News",
+  "viewAll": "View all",
+  "retryLoadingMore": "Retry loading more",
   "aboutThisItemLbl": "About this ad",
   "aboutUs": "About us",
   "addressLbl": "Address",

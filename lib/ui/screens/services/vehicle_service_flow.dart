@@ -4,6 +4,7 @@ import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
+import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -166,6 +167,7 @@ class _VehicleServiceRequestScreenState
     return BlocConsumer<VehicleServiceRequestCubit, VehicleServiceRequestState>(
       listenWhen: (previous, current) =>
           previous.feedbackToken != current.feedbackToken ||
+          previous.submissionToken != current.submissionToken ||
           previous.fullName != current.fullName ||
           previous.phoneNumber != current.phoneNumber ||
           previous.carVariant != current.carVariant,
@@ -193,11 +195,22 @@ class _VehicleServiceRequestScreenState
             composing: TextRange.empty,
           );
         }
-        if (state.feedbackMessage == null) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(state.feedbackMessage!)));
-        context.read<VehicleServiceRequestCubit>().clearFeedback();
+        if (state.feedbackMessage != null) {
+          HelperUtils.showSnackBarMessage(
+            context,
+            state.feedbackMessage!,
+            type: MessageType.error,
+          );
+          context.read<VehicleServiceRequestCubit>().clearFeedback();
+        }
+        if (state.submissionResult != null && state.submissionToken > 0) {
+          HelperUtils.showSnackBarMessage(
+            context,
+            state.submissionResult!.message,
+            messageDuration: 4,
+            type: MessageType.success,
+          );
+        }
       },
       builder: (context, state) {
         final isSummary = state.currentStepIndex == 2;
@@ -806,6 +819,10 @@ class _SummaryStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (request.submissionResult != null) ...[
+          _SubmissionConfirmationCard(request: request),
+          18.vGap,
+        ],
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -988,6 +1005,68 @@ class _SummaryStep extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _SubmissionConfirmationCard extends StatelessWidget {
+  const _SubmissionConfirmationCard({required this.request});
+
+  final VehicleServiceRequestState request;
+
+  @override
+  Widget build(BuildContext context) {
+    final result = request.submissionResult!;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: successMessageColor.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: successMessageColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: const BoxDecoration(
+              color: successMessageColor,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_rounded, color: Colors.white),
+          ),
+          12.hGap,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CustomText(
+                  result.message,
+                  fontSize: context.font.normal,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                ),
+                8.vGap,
+                CustomText(
+                  'Request #${result.id}  •  ${_formatStatus(result.status)}',
+                  fontSize: context.font.small,
+                  color: context.color.textLightColor,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatStatus(String status) {
+    return status
+        .split('_')
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
   }
 }
 

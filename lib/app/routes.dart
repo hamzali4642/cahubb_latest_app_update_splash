@@ -30,6 +30,8 @@ import 'package:eClassify/ui/screens/location/location_screen.dart';
 import 'package:eClassify/ui/screens/location/widgets/location_map_picker.dart';
 import 'package:eClassify/ui/screens/main_activity.dart';
 import 'package:eClassify/ui/screens/my_review_screen.dart';
+import 'package:eClassify/ui/screens/news/news_details_screen.dart';
+import 'package:eClassify/ui/screens/news/news_screen.dart';
 import 'package:eClassify/ui/screens/onboarding/onboarding_screen.dart';
 import 'package:eClassify/ui/screens/services/auction_sheet_verification_screen.dart';
 import 'package:eClassify/ui/screens/services/car_finance_screen.dart';
@@ -111,6 +113,8 @@ class Routes {
   static const String maintenanceMode = '/maintenanceMode';
   static const String favoritesScreen = '/favoritescreen';
   static const String blogDetailsScreenRoute = '/blogDetailsScreenRoute';
+  static const String newsScreenRoute = '/newsScreenRoute';
+  static const String newsDetailsScreenRoute = '/newsDetailsScreenRoute';
   static const String myReviewsScreen = '/myReviewsScreenRoute';
 
   /// Location & Category Routes
@@ -280,6 +284,10 @@ class Routes {
         return JobApplicationListScreen.route(routeSettings);
       case blogDetailsScreenRoute:
         return BlogDetails.route(routeSettings);
+      case newsScreenRoute:
+        return NewsScreen.route(routeSettings);
+      case newsDetailsScreenRoute:
+        return NewsDetailsScreen.route(routeSettings);
       case subscriptionPackageListRoute:
         return SubscriptionPackageListScreen.route(routeSettings);
       case carInspectionServiceScreen:
