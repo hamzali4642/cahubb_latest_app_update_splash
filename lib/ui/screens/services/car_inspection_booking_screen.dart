@@ -3,6 +3,7 @@ import 'package:eClassify/data/cubits/service/service_booking_form_cubit.dart';
 import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/data/model/location/location_node.dart' show City;
 import 'package:eClassify/data/model/service/service_package_model.dart';
+import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
@@ -334,7 +335,7 @@ class _InspectionBookingHeader extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F9FE),
+                    color: serviceMutedSurface(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: context.color.borderColor),
                   ),
@@ -446,7 +447,7 @@ class _InspectionProgressStepper extends StatelessWidget {
               height: 2,
               color: isCompleted
                   ? context.color.territoryColor.withValues(alpha: 0.45)
-                  : Colors.grey.shade300,
+                  : context.color.borderColor,
             ),
           ),
         );
@@ -740,7 +741,7 @@ class _SelectedPackageBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FE),
+        color: serviceMutedSurface(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.color.borderColor),
       ),
@@ -750,7 +751,7 @@ class _SelectedPackageBanner extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF3FF),
+              color: serviceAccentSurface(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -935,7 +936,7 @@ class _CarTypeChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFEAF3FF)
+              ? serviceAccentSurface(context)
               : context.color.secondaryColor,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
@@ -981,7 +982,7 @@ class _DateSlotCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? context.color.territoryColor
-              : const Color(0xFFF7F9FE),
+              : serviceMutedSurface(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
@@ -1042,7 +1043,7 @@ class _TimeSlotChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? context.color.territoryColor
-              : const Color(0xFFF7F9FE),
+              : serviceMutedSurface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: isSelected
@@ -1128,8 +1129,8 @@ class _CarPickerSheet extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFFEAF3FF)
-                          : const Color(0xFFF7F9FE),
+                          ? serviceAccentSurface(context)
+                          : serviceMutedSurface(context),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
@@ -1233,8 +1234,8 @@ class _YearPickerSheet extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFFEAF3FF)
-                          : const Color(0xFFF7F9FE),
+                          ? serviceAccentSurface(context)
+                          : serviceMutedSurface(context),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
@@ -1361,7 +1362,7 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
                       color: context.color.textLightColor,
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF7F9FE),
+                    fillColor: serviceMutedSurface(context),
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1409,8 +1410,8 @@ class _CityPickerSheetState extends State<_CityPickerSheet> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFFEAF3FF)
-                              : const Color(0xFFF7F9FE),
+                              ? serviceAccentSurface(context)
+                              : serviceMutedSurface(context),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isSelected

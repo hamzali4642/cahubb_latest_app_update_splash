@@ -1,10 +1,13 @@
 import 'package:eClassify/data/cubits/service/car_finance_cubit.dart';
 import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/data/model/location/location_node.dart' show City;
+import 'package:eClassify/ui/screens/services/car_finance_applicant_screen.dart';
+import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
+import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,9 +23,11 @@ class CarFinanceLandingScreen extends StatelessWidget {
           previous.feedbackToken != current.feedbackToken,
       listener: (context, state) {
         if (state.feedbackMessage == null) return;
-        ScaffoldMessenger.of(
+        HelperUtils.showSnackBarMessage(
           context,
-        ).showSnackBar(SnackBar(content: Text(state.feedbackMessage!)));
+          state.feedbackMessage!,
+          type: MessageType.error,
+        );
         context.read<CarFinanceCubit>().clearFeedback();
       },
       builder: (context, state) {
@@ -53,6 +58,7 @@ class CarFinanceLandingScreen extends StatelessWidget {
                     );
                   },
                   buttonTitle: 'Apply Easily Now',
+                  disabled: state.isLoadingBanks || state.banks.isEmpty,
                   radius: 12,
                   height: 52,
                 ),
@@ -63,7 +69,22 @@ class CarFinanceLandingScreen extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
                 14.vGap,
-                _BankRatesTable(banks: state.banks),
+                if (state.isLoadingBanks)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (state.banks.isEmpty)
+                  _FinanceBanksUnavailable(
+                    message:
+                        state.banksErrorMessage ??
+                        'Finance plans are unavailable right now.',
+                    onRetry: () => context.read<CarFinanceCubit>().loadBanks(),
+                  )
+                else
+                  _BankRatesTable(banks: state.banks),
               ],
             ),
           ),
@@ -221,9 +242,12 @@ class _CarFinanceCalculatorScreenState
                                       labelBuilder: (car) =>
                                           '${car.brandName} ${car.name}',
                                       trailingBuilder: (car) => CustomText(
-                                        car.price == null
-                                            ? 'Price unavailable'
-                                            : _formatCurrency(car.price!),
+                                        _carSelectionPriceLabel(
+                                          car: car,
+                                          isUsedCar: isUsedCar,
+                                          fallbackPrice:
+                                              state.newCarFallbackPrice,
+                                        ),
                                         fontSize: context.font.small,
                                         color: context.color.textLightColor,
                                       ),
@@ -336,6 +360,7 @@ class _CarFinanceCalculatorScreenState
                     );
                   },
                   buttonTitle: 'Calculate',
+                  disabled: state.isLoadingBanks || state.banks.isEmpty,
                   radius: 12,
                   height: 54,
                 ),
@@ -412,16 +437,7 @@ class CarFinanceApplyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<CarFinanceCubit, CarFinanceState>(
-      listenWhen: (previous, current) =>
-          previous.feedbackToken != current.feedbackToken,
-      listener: (context, state) {
-        if (state.feedbackMessage == null) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(state.feedbackMessage!)));
-        context.read<CarFinanceCubit>().clearFeedback();
-      },
+    return BlocBuilder<CarFinanceCubit, CarFinanceState>(
       builder: (context, state) {
         final cubit = context.read<CarFinanceCubit>();
         final quote = cubit.selectedQuote;
@@ -444,6 +460,15 @@ class CarFinanceApplyScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (state.submissionResult != null) ...[
+                        _FinanceRequestConfirmation(
+                          requestId: state.submissionResult!.id,
+                          status: state.submissionResult!.status,
+                          priceSource: state.submissionResult!.priceSource,
+                          vehiclePrice: state.submissionResult!.vehiclePrice,
+                        ),
+                        18.vGap,
+                      ],
                       _PriceHighlightCard(quote: quote),
                       18.vGap,
                       _SelectedBankCard(bank: quote.bank),
@@ -531,25 +556,34 @@ class CarFinanceApplyScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            RichText(
-                              text: TextSpan(
-                                style: TextStyle(
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                CustomText(
+                                  'Please view ',
                                   fontSize: context.font.small,
                                   color: context.color.textLightColor,
-                                  height: 1.55,
                                 ),
-                                children: [
-                                  const TextSpan(text: 'Please view '),
-                                  TextSpan(
-                                    text:
-                                        'Eligibility Criteria, Required Documents',
-                                    style: TextStyle(
-                                      color: context.color.territoryColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                _FinanceInfoLink(
+                                  label: 'Eligibility Criteria',
+                                  onTap: () => _showFinanceInfoSheet(
+                                    context,
+                                    _eligibilityCriteriaSheet,
                                   ),
-                                ],
-                              ),
+                                ),
+                                CustomText(
+                                  ', ',
+                                  fontSize: context.font.small,
+                                  color: context.color.textLightColor,
+                                ),
+                                _FinanceInfoLink(
+                                  label: 'Required Documents',
+                                  onTap: () => _showFinanceInfoSheet(
+                                    context,
+                                    _requiredDocumentsSheet,
+                                  ),
+                                ),
+                              ],
                             ),
                             12.vGap,
                             CustomText(
@@ -567,7 +601,21 @@ class CarFinanceApplyScreen extends StatelessWidget {
               ),
               _StickyFinanceFooter(
                 totalAmount: quote.totalInitialDeposit,
-                onContinue: cubit.submitApplication,
+                onContinue: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => BlocProvider.value(
+                        value: cubit,
+                        child: const CarFinanceApplicantScreen(),
+                      ),
+                    ),
+                  );
+                },
+                isInProgress: false,
+                disabled: state.submissionResult != null,
+                buttonTitle: state.submissionResult == null
+                    ? 'Continue'
+                    : 'Application submitted',
               ),
             ],
           ),
@@ -586,11 +634,7 @@ class _CarFinanceHero extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEAF3FF), Color(0xFFF8FBFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: serviceHeroGradient(context),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,7 +671,7 @@ class _CarFinanceHero extends StatelessWidget {
             height: 108,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
+              color: serviceImageSurface(context),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Image.asset(
@@ -655,7 +699,7 @@ class _HeroBullet extends StatelessWidget {
           width: 22,
           height: 22,
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF3FF),
+            color: serviceAccentSurface(context),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Icon(
@@ -667,6 +711,112 @@ class _HeroBullet extends StatelessWidget {
         10.hGap,
         Expanded(child: CustomText(label, fontSize: context.font.normal)),
       ],
+    );
+  }
+}
+
+class _FinanceBanksUnavailable extends StatelessWidget {
+  const _FinanceBanksUnavailable({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.color.secondaryColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.color.borderColor),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.account_balance_outlined,
+            color: context.color.textLightColor,
+            size: 30,
+          ),
+          12.vGap,
+          CustomText(
+            message,
+            textAlign: TextAlign.center,
+            fontSize: context.font.normal,
+            color: context.color.textLightColor,
+          ),
+          14.vGap,
+          TextButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Try again'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FinanceRequestConfirmation extends StatelessWidget {
+  const _FinanceRequestConfirmation({
+    required this.requestId,
+    required this.status,
+    required this.priceSource,
+    required this.vehiclePrice,
+  });
+
+  final int requestId;
+  final String status;
+  final String priceSource;
+  final int vehiclePrice;
+
+  @override
+  Widget build(BuildContext context) {
+    final formattedStatus = status
+        .split('_')
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
+    final usedFallback = priceSource == 'temporary_fallback';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: successMessageColor.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: successMessageColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_rounded, color: successMessageColor),
+          12.hGap,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CustomText(
+                  'Finance request #$requestId · $formattedStatus',
+                  fontWeight: FontWeight.w700,
+                  fontSize: context.font.normal,
+                ),
+                if (usedFallback) ...[
+                  6.vGap,
+                  CustomText(
+                    'The ${_formatCurrency(vehiclePrice)} fallback vehicle price was used for this estimate.',
+                    fontSize: context.font.small,
+                    color: context.color.textLightColor,
+                    height: 1.4,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -995,12 +1145,15 @@ class _PriceHighlightCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3C9),
+        color: serviceWarningSurface(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFFC99700)),
+          Icon(
+            Icons.info_outline_rounded,
+            color: serviceWarningForeground(context),
+          ),
           12.hGap,
           Expanded(
             child: CustomText(
@@ -1092,7 +1245,7 @@ class _OptionSection<T> extends StatelessWidget {
               selected: isSelected,
               onSelected: (_) => onSelected(value),
               backgroundColor: context.color.secondaryColor,
-              selectedColor: const Color(0xFFEAF3FF),
+              selectedColor: serviceAccentSurface(context),
               side: BorderSide(
                 color: isSelected
                     ? context.color.territoryColor
@@ -1174,10 +1327,16 @@ class _StickyFinanceFooter extends StatelessWidget {
   const _StickyFinanceFooter({
     required this.totalAmount,
     required this.onContinue,
+    required this.isInProgress,
+    required this.disabled,
+    required this.buttonTitle,
   });
 
   final int totalAmount;
   final VoidCallback onContinue;
+  final bool isInProgress;
+  final bool disabled;
+  final String buttonTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -1187,7 +1346,7 @@ class _StickyFinanceFooter extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: serviceShadow(context, alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, -6),
           ),
@@ -1227,7 +1386,9 @@ class _StickyFinanceFooter extends StatelessWidget {
           UiUtils.buildButton(
             context,
             onPressed: onContinue,
-            buttonTitle: 'Continue',
+            buttonTitle: buttonTitle,
+            isInProgress: isInProgress,
+            disabled: disabled,
             radius: 12,
             height: 54,
           ),
@@ -1275,6 +1436,255 @@ class _DetailRowData {
   final String value;
 
   const _DetailRowData({required this.label, required this.value});
+}
+
+class _FinanceInfoLink extends StatelessWidget {
+  const _FinanceInfoLink({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: CustomText(
+          label,
+          fontSize: context.font.small,
+          fontWeight: FontWeight.w700,
+          color: context.color.territoryColor,
+          showUnderline: true,
+          underlineOrLineColor: context.color.territoryColor,
+        ),
+      ),
+    );
+  }
+}
+
+class _FinanceInfoSheetData {
+  const _FinanceInfoSheetData({required this.title, required this.sections});
+
+  final String title;
+  final List<_FinanceInfoSection> sections;
+}
+
+class _FinanceInfoSection {
+  const _FinanceInfoSection({this.heading, required this.points});
+
+  final String? heading;
+  final List<String> points;
+}
+
+const _eligibilityCriteriaSheet = _FinanceInfoSheetData(
+  title: 'Eligibility Criteria',
+  sections: [
+    _FinanceInfoSection(
+      points: [
+        'Pakistani Citizenship',
+        'Minimum Monthly Net Salary / Monthly Income Requirement: PKR 80,000 minimum',
+        'Age Requirement: Minimum 22 years. Maximum age at loan maturity: 65 years for salaried applicants and 70 years for self-employed applicants',
+        'Employment Length (Salaried): Minimum 6 months',
+        'Business Length (Self-Employed): Minimum 1 year',
+      ],
+    ),
+  ],
+);
+
+const _requiredDocumentsSheet = _FinanceInfoSheetData(
+  title: 'Required Documents',
+  sections: [
+    _FinanceInfoSection(
+      heading: 'SALARIED',
+      points: [
+        'Copy of CNIC / NICOP / POC',
+        'Recent passport size photographs',
+        'Latest pay slip / salary certificate from employer',
+        'Bank statement for the last 6 months',
+        'Duly filled loan application form',
+      ],
+    ),
+    _FinanceInfoSection(
+      heading: 'BUSINESSMAN AND SELF-EMPLOYED PROFESSIONAL',
+      points: [
+        'Copy of CNIC / NICOP / POC',
+        '2 recent passport size photographs',
+        'Bank statement for the last 6 months',
+        'Proof of profession or business proprietorship letter',
+        'NTN certificate',
+        'Tax Returns of 2 years',
+        'Professional Degree',
+        'Valid membership of applicable professional body (For SEP only)',
+        'Duly filled loan application form',
+        'Proprietorship declaration',
+        'Certified Partnership Deed',
+        'Memorandum & Articles of Association',
+        'Form A & Form 29',
+        'Company Profile',
+        'Bank statement for the last 6 months',
+        'Tax Returns and Assessment Order for the last 2 years',
+        'Copy of latest utility bill',
+      ],
+    ),
+  ],
+);
+
+Future<void> _showFinanceInfoSheet(
+  BuildContext context,
+  _FinanceInfoSheetData data,
+) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _FinanceInfoBottomSheet(data: data),
+  );
+}
+
+class _FinanceInfoBottomSheet extends StatelessWidget {
+  const _FinanceInfoBottomSheet({required this.data});
+
+  final _FinanceInfoSheetData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      heightFactor: 0.86,
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.color.secondaryColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 14, 14),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: context.color.borderColor,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                    14.vGap,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomText(
+                            data.title,
+                            fontSize: context.font.extraLarge,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          tooltip: 'Close',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: context.color.borderColor),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                  itemCount: data.sections.length,
+                  separatorBuilder: (_, _) => 26.vGap,
+                  itemBuilder: (context, index) {
+                    return _FinanceInfoSectionView(
+                      section: data.sections[index],
+                    );
+                  },
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  12,
+                  20,
+                  MediaQuery.of(context).padding.bottom + 14,
+                ),
+                decoration: BoxDecoration(
+                  color: context.color.secondaryColor,
+                  border: Border(
+                    top: BorderSide(color: context.color.borderColor),
+                  ),
+                ),
+                child: UiUtils.buildButton(
+                  context,
+                  onPressed: () => Navigator.of(context).pop(),
+                  buttonTitle: 'I Understand',
+                  radius: 14,
+                  height: 54,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FinanceInfoSectionView extends StatelessWidget {
+  const _FinanceInfoSectionView({required this.section});
+
+  final _FinanceInfoSection section;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (section.heading != null) ...[
+          CustomText(
+            section.heading!,
+            fontSize: context.font.large,
+            fontWeight: FontWeight.w800,
+            color: context.color.territoryColor,
+          ),
+          14.vGap,
+        ],
+        ...section.points.map(
+          (point) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  margin: const EdgeInsets.only(top: 7),
+                  decoration: BoxDecoration(
+                    color: context.color.territoryColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                12.hGap,
+                Expanded(
+                  child: CustomText(
+                    point,
+                    fontSize: context.font.normal,
+                    color: context.color.textDefaultColor,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 Future<T?> _showSelectionSheet<T>({
@@ -1332,6 +1742,21 @@ Future<T?> _showSelectionSheet<T>({
 
 String _formatCurrency(int value) {
   return 'PKR ${NumberFormat('#,##0').format(value)}';
+}
+
+String _carSelectionPriceLabel({
+  required CarModelModel car,
+  required bool isUsedCar,
+  required int fallbackPrice,
+}) {
+  if (isUsedCar) return 'Set price next';
+  if (car.price != null && car.price! > 0) {
+    return _formatCurrency(car.price!);
+  }
+  if (fallbackPrice > 0) {
+    return '${_formatCurrency(fallbackPrice)} fallback';
+  }
+  return 'Loading fallback price...';
 }
 
 String _formatPlainNumber(int value) {

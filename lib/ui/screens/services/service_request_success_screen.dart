@@ -1,5 +1,6 @@
 import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/data/model/service/service_request_model.dart';
+import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
@@ -176,7 +177,7 @@ class _RequestSummaryCard extends StatelessWidget {
         border: Border.all(color: context.color.borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: serviceShadow(context, alpha: 0.04),
             blurRadius: 22,
             offset: const Offset(0, 8),
           ),

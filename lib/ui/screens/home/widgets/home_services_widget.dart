@@ -1,5 +1,6 @@
 import 'package:eClassify/data/repositories/service_packages_repository.dart';
 import 'package:eClassify/app/routes.dart';
+import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
@@ -33,8 +34,9 @@ class _HomeServicesWidgetState extends State<HomeServicesWidget> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.fromLTRB(14, 18, 14, 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF3FF),
+        color: serviceSurface(context, lightAlpha: 0.08, darkAlpha: 0.18),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.color.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,11 +326,7 @@ class _AutostorePlaceholder extends StatelessWidget {
             height: height + 8,
             width: 48,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFD9E8FF), Color(0xFFF3F8FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: serviceHeroGradient(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(

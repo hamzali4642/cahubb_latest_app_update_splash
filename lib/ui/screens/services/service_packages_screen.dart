@@ -7,6 +7,7 @@ import 'package:eClassify/ui/screens/widgets/custom_image.dart';
 import 'package:eClassify/ui/screens/widgets/errors/no_data_found.dart';
 import 'package:eClassify/ui/screens/widgets/errors/no_internet.dart';
 import 'package:eClassify/ui/screens/widgets/errors/something_went_wrong.dart';
+import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
@@ -142,11 +143,7 @@ class _ServiceHeroSection extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEAF3FF), Color(0xFFF8FBFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: serviceHeroGradient(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +181,7 @@ class _ServiceHeroSection extends StatelessWidget {
                 height: 96,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.92),
+                  color: serviceImageSurface(context),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Image.asset(config.imageAssetPath, fit: BoxFit.contain),
@@ -379,7 +376,7 @@ class _ServicePackageCard extends StatelessWidget {
           border: Border.all(color: context.color.borderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: serviceShadow(context, alpha: 0.03),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -414,7 +411,7 @@ class _ServicePackageCard extends StatelessWidget {
                               vertical: 7,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEAF3FF),
+                              color: serviceAccentSurface(context),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: CustomText(
@@ -473,7 +470,7 @@ class _ServicePackageLeading extends StatelessWidget {
       height: 64,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F8FC),
+        color: serviceMutedSurface(context),
         borderRadius: BorderRadius.circular(16),
       ),
       child: package.icon?.isNotEmpty == true
@@ -539,7 +536,7 @@ class _ServiceProcessStepTile extends StatelessWidget {
             height: 34,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF3FF),
+              color: serviceAccentSurface(context),
               borderRadius: BorderRadius.circular(10),
             ),
             child: CustomText(
@@ -596,7 +593,7 @@ class _RefreshPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF3FF),
+        color: serviceAccentSurface(context),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(

@@ -1,4 +1,5 @@
 import 'package:eClassify/data/cubits/service/auction_sheet_verification_cubit.dart';
+import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
@@ -176,11 +177,7 @@ class _AuctionHeroSection extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEAF3FF), Color(0xFFF8FBFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: serviceHeroGradient(context),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +215,7 @@ class _AuctionHeroSection extends StatelessWidget {
             height: 110,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
+              color: serviceImageSurface(context),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Image.asset('assets/images/auctionSheet.png'),
@@ -243,7 +240,7 @@ class _HeroBullet extends StatelessWidget {
           width: 22,
           height: 22,
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF3FF),
+            color: serviceAccentSurface(context),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Icon(
@@ -544,7 +541,7 @@ class _InfoTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F9FE),
+              color: serviceMutedSurface(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: context.color.territoryColor),
@@ -699,32 +696,45 @@ class _AuctionSheetNotifySheetState extends State<_AuctionSheetNotifySheet> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 56),
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                gradient: LinearGradient(
-                  colors: [Color(0xFF2C4A8A), Color(0xFF2A67D7)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
+                  gradient: LinearGradient(
+                    colors: [
+                      serviceSurface(
+                        context,
+                        lightAlpha: 0.12,
+                        darkAlpha: 0.32,
+                      ),
+                      context.color.territoryColor.withValues(alpha: 0.85),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: CustomText(
-                      'Auction sheet update',
-                      textAlign: TextAlign.center,
-                      color: Colors.white,
-                      fontSize: context.font.extraLarge,
-                      fontWeight: FontWeight.w700,
-                    ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 56),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: CustomText(
+                          'Auction sheet update',
+                          textAlign: TextAlign.center,
+                          color: Colors.white,
+                          fontSize: context.font.extraLarge,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: const Icon(Icons.close, color: Colors.white),
+                      ),
+                    ],
                   ),
-                  InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.close, color: Colors.white),
-                  ),
-                ],
+                ),
               ),
             ),
             Transform.translate(
@@ -735,12 +745,15 @@ class _AuctionSheetNotifySheetState extends State<_AuctionSheetNotifySheet> {
                 decoration: BoxDecoration(
                   color: context.color.secondaryColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF2A67D7), width: 8),
+                  border: Border.all(
+                    color: context.color.territoryColor.withValues(alpha: 0.8),
+                    width: 8,
+                  ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.notifications_active_rounded,
                   size: 42,
-                  color: Color(0xFFF6B81A),
+                  color: serviceWarningForeground(context),
                 ),
               ),
             ),

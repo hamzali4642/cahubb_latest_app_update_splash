@@ -1,5 +1,6 @@
 import 'package:eClassify/data/cubits/service/vehicle_service_request_cubit.dart';
 import 'package:eClassify/data/model/car_model_model.dart';
+import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
@@ -333,11 +334,7 @@ class _VehicleServiceHero extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEAF3FF), Color(0xFFF8FBFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: serviceHeroGradient(context),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,7 +377,7 @@ class _VehicleServiceHero extends StatelessWidget {
             height: 104,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
+              color: serviceImageSurface(context),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Image.asset(config.imageAssetPath, fit: BoxFit.contain),
@@ -405,7 +402,7 @@ class _HeroBullet extends StatelessWidget {
           width: 22,
           height: 22,
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF3FF),
+            color: serviceAccentSurface(context),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Icon(
@@ -442,7 +439,7 @@ class _ProcessStepTile extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF3FF),
+            color: serviceAccentSurface(context),
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: context.color.borderColor),
           ),
@@ -506,7 +503,7 @@ class _RequestHeader extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F9FE),
+                    color: serviceMutedSurface(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: context.color.borderColor),
                   ),
@@ -532,7 +529,7 @@ class _RequestHeader extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F9FE),
+                    color: serviceMutedSurface(context),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: context.color.borderColor),
                   ),
@@ -840,7 +837,7 @@ class _SummaryStep extends StatelessWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF3FF),
+                      color: serviceAccentSurface(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -905,7 +902,7 @@ class _SummaryStep extends StatelessWidget {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF3FF),
+                      color: serviceAccentSurface(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -960,11 +957,7 @@ class _SummaryStep extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            gradient: const LinearGradient(
-              colors: [Color(0xFFEAF3FF), Color(0xFFF8FBFF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: serviceHeroGradient(context),
           ),
           child: Row(
             children: [
@@ -1241,7 +1234,7 @@ class _ChoiceChipButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFEAF3FF)
+              ? serviceAccentSurface(context)
               : context.color.secondaryColor,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
