@@ -2,6 +2,9 @@ import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/data/cubits/service/car_finance_cubit.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_form_fields.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_city_picker.dart';
+import 'package:eClassify/ui/screens/services/service_booking_navigator.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
 import 'package:eClassify/utils/helper_utils.dart';
@@ -107,13 +110,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
           Navigator.of(context).pushNamed(Routes.login);
         }
         if (state.submissionResult != null && state.submissionToken > 0) {
-          HelperUtils.showSnackBarMessage(
-            context,
-            state.submissionResult!.message,
-            messageDuration: 4,
-            type: MessageType.success,
-          );
-          Navigator.of(context).pop();
+          ServiceBookingNavigator.showSuccess(context, state.submissionResult!);
+          return;
         }
       },
       builder: (context, state) {
@@ -143,8 +141,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _ApplicantTextField(
-                              label: 'Name',
+                            ServiceTextField(
+                              title: 'Name',
                               icon: Icons.person_outline,
                               controller: _nameController,
                               hintText: 'Enter your name',
@@ -152,8 +150,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               onChanged: cubit.updateApplicantFullName,
                             ),
                             18.vGap,
-                            _ApplicantTextField(
-                              label: 'Phone number',
+                            ServiceTextField(
+                              title: 'Phone number',
                               icon: Icons.phone_outlined,
                               controller: _phoneController,
                               hintText: '03XX-XXXXXXX',
@@ -161,8 +159,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               onChanged: cubit.updateApplicantPhoneNumber,
                             ),
                             18.vGap,
-                            _ApplicantTextField(
-                              label: 'Email address',
+                            ServiceTextField(
+                              title: 'Email address',
                               icon: Icons.email_outlined,
                               controller: _emailController,
                               hintText: 'Enter email',
@@ -170,8 +168,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               onChanged: cubit.updateApplicantEmail,
                             ),
                             18.vGap,
-                            _ApplicantTextField(
-                              label: 'CNIC number',
+                            ServiceTextField(
+                              title: 'CNIC number',
                               icon: Icons.badge_outlined,
                               controller: _cnicController,
                               hintText: 'XXXXX-XXXXXXX-X',
@@ -179,8 +177,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               onChanged: cubit.updateApplicantCnic,
                             ),
                             18.vGap,
-                            _ApplicantSelectorField(
-                              label: 'Where do you live?',
+                            ServiceSelectionField(
+                              title: 'Where do you live?',
                               icon: Icons.location_on_outlined,
                               value: state.request.city?.name.localized,
                               hintText: state.isLoadingCities
@@ -189,12 +187,10 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               onTap: state.isLoadingCities
                                   ? null
                                   : () async {
-                                      final city = await _showApplicantChoices(
+                                      final city = await ServiceCityPicker.show(
                                         context: context,
-                                        title: 'Select city',
-                                        items: state.cities,
-                                        labelBuilder: (city) =>
-                                            city.name.localized,
+                                        cities: state.cities,
+                                        selectedCity: state.request.city,
                                       );
                                       if (city != null) cubit.updateCity(city);
                                     },
@@ -230,8 +226,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               ],
                             ),
                             18.vGap,
-                            _ApplicantSelectorField(
-                              label: 'What is your monthly income?',
+                            ServiceSelectionField(
+                              title: 'What is your monthly income?',
                               icon: Icons.payments_outlined,
                               value: _monthlyIncomeLabel(
                                 state.applicant.monthlyIncome,
@@ -251,8 +247,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               },
                             ),
                             18.vGap,
-                            _ApplicantTextField(
-                              label: 'Where do you bank?',
+                            ServiceTextField(
+                              title: 'Where do you bank?',
                               icon: Icons.account_balance_outlined,
                               controller: _bankController,
                               hintText: 'Your current bank',
@@ -287,8 +283,8 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               ],
                             ),
                             18.vGap,
-                            _ApplicantSelectorField(
-                              label: 'How soon do you want the loan?',
+                            ServiceSelectionField(
+                              title: 'How soon do you want the loan?',
                               icon: Icons.calendar_month_outlined,
                               value: _processingTimeLabel(
                                 state.applicant.processingTime,
@@ -374,108 +370,6 @@ class _ApplicantHero extends StatelessWidget {
   }
 }
 
-class _ApplicantTextField extends StatelessWidget {
-  const _ApplicantTextField({
-    required this.label,
-    required this.icon,
-    required this.controller,
-    required this.hintText,
-    required this.onChanged,
-    this.keyboardType,
-    this.textCapitalization = TextCapitalization.none,
-  });
-
-  final String label;
-  final IconData icon;
-  final TextEditingController controller;
-  final String hintText;
-  final ValueChanged<String> onChanged;
-  final TextInputType? keyboardType;
-  final TextCapitalization textCapitalization;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _ApplicantLabel(label: label, icon: icon),
-        9.vGap,
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          textCapitalization: textCapitalization,
-          onChanged: onChanged,
-          decoration: _fieldDecoration(context, hintText),
-        ),
-      ],
-    );
-  }
-}
-
-class _ApplicantSelectorField extends StatelessWidget {
-  const _ApplicantSelectorField({
-    required this.label,
-    required this.icon,
-    required this.value,
-    required this.hintText,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final String? value;
-  final String hintText;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final displayText = value ?? hintText;
-    final isPlaceholder = value == null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _ApplicantLabel(label: label, icon: icon),
-        9.vGap,
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-              decoration: BoxDecoration(
-                color: serviceMutedSurface(context),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: context.color.borderColor),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      displayText,
-                      style: TextStyle(
-                        fontSize: context.font.normal,
-                        color: isPlaceholder
-                            ? context.color.textLightColor
-                            : context.color.textDefaultColor,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: context.color.textLightColor,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ApplicantLabel extends StatelessWidget {
   const _ApplicantLabel({required this.label, required this.icon});
 
@@ -534,24 +428,6 @@ class _ApplicantChoicePill extends StatelessWidget {
       ),
     );
   }
-}
-
-InputDecoration _fieldDecoration(BuildContext context, String hintText) {
-  return InputDecoration(
-    hintText: hintText,
-    hintStyle: TextStyle(color: context.color.textLightColor),
-    filled: true,
-    fillColor: serviceMutedSurface(context),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: context.color.borderColor),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: context.color.territoryColor, width: 1.4),
-    ),
-  );
 }
 
 Future<T?> _showApplicantChoices<T>({

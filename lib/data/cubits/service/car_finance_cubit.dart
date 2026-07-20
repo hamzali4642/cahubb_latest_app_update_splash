@@ -196,16 +196,17 @@ class CarFinanceState {
   });
 
   factory CarFinanceState.initial() {
+    final cachedCities = ServiceLeadRepository.cachedCities;
     return CarFinanceState(
       banks: const [],
-      cities: const [],
+      cities: cachedCities,
       carModels: const [],
       modelYears: [
         for (int year = DateTime.now().year; year >= 1990; year--) year,
       ],
       tenureOptions: const [],
       downPaymentOptions: const [],
-      isLoadingCities: true,
+      isLoadingCities: cachedCities.isEmpty,
       isLoadingCars: true,
       isLoadingBanks: true,
       isSubmitting: false,
@@ -370,7 +371,7 @@ class CarFinanceCubit extends Cubit<CarFinanceState> {
   }
 
   Future<void> _loadCities() async {
-    emit(state.copyWith(isLoadingCities: true));
+    if (state.cities.isEmpty) emit(state.copyWith(isLoadingCities: true));
     try {
       final cities = await _repository.fetchCities();
       emit(state.copyWith(cities: cities, isLoadingCities: false));

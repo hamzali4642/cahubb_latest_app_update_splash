@@ -14,7 +14,7 @@ class VehicleServiceRequestRepository {
     );
 
     try {
-      return VehicleServiceRequestResult.fromResponse(response);
+      return VehicleServiceRequestResult.fromResponse(response, type);
     } on FormatException {
       throw ApiException(
         'The server returned an invalid vehicle service request ID.',

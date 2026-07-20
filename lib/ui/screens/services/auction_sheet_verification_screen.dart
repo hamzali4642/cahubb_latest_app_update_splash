@@ -1,6 +1,7 @@
 import 'package:eClassify/data/cubits/service/auction_sheet_verification_cubit.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_form_fields.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
@@ -287,32 +288,11 @@ class _AuctionInputCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CustomText(
-            'Enter chassis number',
-            fontSize: context.font.larger,
-            fontWeight: FontWeight.w700,
-          ),
-          10.vGap,
-          TextField(
+          ServiceTextField(
+            title: 'Enter chassis number',
             controller: controller,
             textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              hintText: 'e.g. NCP165-1234567',
-              filled: true,
-              fillColor: context.color.secondaryColor,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 16,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: context.color.borderColor),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: context.color.territoryColor),
-              ),
-            ),
+            hintText: 'e.g. NCP165-1234567',
           ),
           14.vGap,
           UiUtils.buildButton(
@@ -775,36 +755,11 @@ class _AuctionSheetNotifySheetState extends State<_AuctionSheetNotifySheet> {
                     height: 1.45,
                   ),
                   22.vGap,
-                  CustomText(
-                    'Phone number',
-                    fontSize: context.font.larger,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  10.vGap,
-                  TextField(
+                  ServiceTextField(
+                    title: 'Phone number',
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.done,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: context.color.secondaryColor,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 16,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: context.color.borderColor,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: context.color.territoryColor,
-                        ),
-                      ),
-                    ),
                   ),
                   20.vGap,
                   UiUtils.buildButton(

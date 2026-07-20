@@ -82,6 +82,7 @@ class ServiceBookingFormState {
     required bool showSelectedPackage,
   }) {
     final now = DateTime.now();
+    final cachedCities = ServiceLeadRepository.cachedCities;
     return ServiceBookingFormState(
       package: package,
       flowType: flowType,
@@ -92,7 +93,7 @@ class ServiceBookingFormState {
       isLoadingCities: false,
       isSubmitting: false,
       carModels: const [],
-      cities: const [],
+      cities: cachedCities,
       fullName: '',
       phoneNumber: '',
       carVariant: '',
@@ -255,7 +256,12 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
   }
 
   Future<void> _loadCities() async {
-    emit(state.copyWith(isLoadingCities: true, clearCitiesErrorMessage: true));
+    final hasCachedCities = state.cities.isNotEmpty;
+    if (!hasCachedCities) {
+      emit(
+        state.copyWith(isLoadingCities: true, clearCitiesErrorMessage: true),
+      );
+    }
     try {
       final cities = await _repository.fetchCities();
       emit(

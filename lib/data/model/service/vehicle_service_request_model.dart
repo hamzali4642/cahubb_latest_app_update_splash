@@ -5,6 +5,11 @@ extension VehicleServiceRequestTypeX on VehicleServiceRequestType {
     VehicleServiceRequestType.registration => 'car-registration-requests',
     VehicleServiceRequestType.ownership => 'car-ownership-requests',
   };
+
+  String get displayName => switch (this) {
+    VehicleServiceRequestType.registration => 'Car registration',
+    VehicleServiceRequestType.ownership => 'Ownership transfer',
+  };
 }
 
 class VehicleServiceRequestPayload {
@@ -42,12 +47,14 @@ class VehicleServiceRequestPayload {
 class VehicleServiceRequestResult {
   const VehicleServiceRequestResult({
     required this.id,
+    required this.type,
     required this.status,
     required this.message,
   });
 
   factory VehicleServiceRequestResult.fromResponse(
     Map<String, dynamic> response,
+    VehicleServiceRequestType fallbackType,
   ) {
     final rawData = response['data'];
     final data = rawData is Map
@@ -61,6 +68,7 @@ class VehicleServiceRequestResult {
 
     return VehicleServiceRequestResult(
       id: id,
+      type: fallbackType,
       status: data['status']?.toString() ?? 'pending',
       message:
           response['message']?.toString() ??
@@ -69,6 +77,7 @@ class VehicleServiceRequestResult {
   }
 
   final int id;
+  final VehicleServiceRequestType type;
   final String status;
   final String message;
 }

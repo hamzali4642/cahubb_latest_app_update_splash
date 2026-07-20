@@ -1,10 +1,12 @@
-import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/data/cubits/service/service_booking_form_cubit.dart';
 import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/data/model/location/location_node.dart' show City;
 import 'package:eClassify/data/model/service/service_package_model.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_form_fields.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_city_picker.dart';
+import 'package:eClassify/ui/screens/services/service_booking_navigator.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
@@ -103,17 +105,10 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
       return;
     }
 
-    final result = await showModalBottomSheet<City>(
+    final result = await ServiceCityPicker.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return _CityPickerSheet(
-          title: 'Select city',
-          selectedCity: state.selectedLivingCity,
-          cities: state.cities,
-        );
-      },
+      selectedCity: state.selectedLivingCity,
+      cities: state.cities,
     );
 
     if (result == null) return;
@@ -169,10 +164,7 @@ class _SellItForMeBookingScreenState extends State<SellItForMeBookingScreen> {
         _syncController(_visitAreaController, state.visitArea);
 
         if (state.submissionResult != null && state.submissionToken > 0) {
-          Navigator.of(context).pushNamed(
-            Routes.serviceRequestSuccessScreen,
-            arguments: state.submissionResult,
-          );
+          ServiceBookingNavigator.showSuccess(context, state.submissionResult!);
           return;
         }
 
@@ -454,7 +446,7 @@ class _InspectionProgressStepper extends StatelessWidget {
             child: Container(
               height: 2,
               color: isCompleted
-                  ? context.color.territoryColor.withValues(alpha: 0.45)
+                  ? serviceSelectionColor(context).withValues(alpha: 0.55)
                   : context.color.borderColor,
             ),
           ),
@@ -479,7 +471,7 @@ class _StepCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = context.color.territoryColor;
+    final accentColor = serviceSelectionColor(context);
     final isActive = isCompleted || isCurrent;
 
     return Column(
@@ -499,11 +491,15 @@ class _StepCircle extends StatelessWidget {
           ),
           child: Center(
             child: isCompleted
-                ? const Icon(Icons.check, color: Colors.white, size: 18)
+                ? Icon(
+                    Icons.check,
+                    color: serviceSelectionForeground(context),
+                    size: 18,
+                  )
                 : CustomText(
                     '${index + 1}',
                     color: isCurrent
-                        ? Colors.white
+                        ? serviceSelectionForeground(context)
                         : context.color.textLightColor,
                     fontWeight: FontWeight.w700,
                   ),
@@ -573,41 +569,41 @@ class _InspectionBasicInfoStep extends StatelessWidget {
           _SelectedPackageBanner(package: package),
           24.vGap,
         ],
-        _InspectionTextField(
+        ServiceTextField(
           title: 'Full name',
           controller: fullNameController,
           textInputAction: TextInputAction.next,
         ),
         18.vGap,
-        _InspectionTextField(
+        ServiceTextField(
           title: 'Phone number',
           controller: phoneController,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
         ),
         18.vGap,
-        _InspectionSelectionField(
+        ServiceSelectionField(
           title: 'Where do you live?',
           value: selectedLivingCity?.name.localized,
-          placeholder: 'Select city',
+          hintText: 'Select city',
           onTap: onSelectLivingCity,
         ),
         18.vGap,
-        _InspectionSelectionField(
+        ServiceSelectionField(
           title: 'Tell us about your car',
           value: selectedCar == null
               ? null
               : '${selectedCar!.brandName} ${selectedCar!.name}',
-          placeholder: isLoadingCars ? 'Loading cars...' : 'Select car',
+          hintText: isLoadingCars ? 'Loading cars...' : 'Select car',
           onTap: isLoadingCars ? null : onSelectCar,
           isLoading: isLoadingCars,
         ),
         if (selectedCar != null) ...[
           18.vGap,
-          _InspectionSelectionField(
+          ServiceSelectionField(
             title: 'Model',
             value: selectedModelYear?.toString(),
-            placeholder: 'Select model year',
+            hintText: 'Select model year',
             onTap: () async {
               final year = await _showYearPickerSheet(
                 context,
@@ -617,7 +613,7 @@ class _InspectionBasicInfoStep extends StatelessWidget {
             },
           ),
           18.vGap,
-          _InspectionTextField(
+          ServiceTextField(
             title: 'Car variant',
             controller: carVariantController,
             textInputAction: TextInputAction.done,
@@ -708,7 +704,7 @@ class _InspectionVisitStep extends StatelessWidget {
           _SelectedPackageBanner(package: package),
           24.vGap,
         ],
-        _InspectionTextField(
+        ServiceTextField(
           title: 'Area',
           controller: visitAreaController,
           textInputAction: TextInputAction.next,
@@ -816,138 +812,6 @@ class _SelectedPackageBanner extends StatelessWidget {
   }
 }
 
-class _InspectionTextField extends StatelessWidget {
-  const _InspectionTextField({
-    required this.title,
-    required this.controller,
-    this.keyboardType,
-    this.textInputAction,
-    this.onChanged,
-  });
-
-  final String title;
-  final TextEditingController controller;
-  final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
-  final ValueChanged<String>? onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomText(
-          title,
-          fontSize: context.font.larger,
-          fontWeight: FontWeight.w600,
-        ),
-        10.vGap,
-        TextField(
-          controller: controller,
-          onChanged: onChanged,
-          keyboardType: keyboardType,
-          textInputAction: textInputAction,
-          style: TextStyle(
-            fontSize: context.font.large,
-            color: context.color.textDefaultColor,
-          ),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: context.color.secondaryColor,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 16,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.color.borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.color.territoryColor),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InspectionSelectionField extends StatelessWidget {
-  const _InspectionSelectionField({
-    required this.title,
-    required this.placeholder,
-    this.value,
-    this.onTap,
-    this.isLoading = false,
-  });
-
-  final String title;
-  final String placeholder;
-  final String? value;
-  final VoidCallback? onTap;
-  final bool isLoading;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = value?.isNotEmpty == true ? value! : placeholder;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomText(
-          title,
-          fontSize: context.font.larger,
-          fontWeight: FontWeight.w600,
-        ),
-        10.vGap,
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            decoration: BoxDecoration(
-              color: onTap == null
-                  ? context.color.primaryColor
-                  : context.color.secondaryColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: context.color.borderColor),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: CustomText(
-                    label,
-                    fontSize: context.font.large,
-                    color: value?.isNotEmpty == true
-                        ? context.color.textDefaultColor
-                        : context.color.textLightColor,
-                  ),
-                ),
-                if (isLoading)
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: context.color.territoryColor,
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.keyboard_arrow_right,
-                    color: context.color.textLightColor,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _CarTypeChip extends StatelessWidget {
   const _CarTypeChip({
     required this.label,
@@ -1026,7 +890,7 @@ class _RegistrationAreaChip extends StatelessWidget {
           fontSize: context.font.normal,
           fontWeight: FontWeight.w600,
           color: isSelected
-              ? context.color.territoryColor
+              ? serviceSelectionColor(context)
               : context.color.textDefaultColor,
         ),
       ),
@@ -1055,12 +919,12 @@ class _DateSlotCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? context.color.territoryColor
+              ? serviceSelectionColor(context)
               : serviceMutedSurface(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? context.color.territoryColor
+                ? serviceSelectionColor(context)
                 : context.color.borderColor,
           ),
         ),
@@ -1071,14 +935,18 @@ class _DateSlotCard extends StatelessWidget {
               _weekdayLabel(date),
               fontSize: context.font.small,
               fontWeight: FontWeight.w700,
-              color: isSelected ? Colors.white : context.color.textLightColor,
+              color: isSelected
+                  ? serviceSelectionForeground(context)
+                  : context.color.textLightColor,
             ),
             8.vGap,
             CustomText(
               '${date.day}',
               fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: isSelected ? Colors.white : context.color.textDefaultColor,
+              color: isSelected
+                  ? serviceSelectionForeground(context)
+                  : context.color.textDefaultColor,
             ),
             4.vGap,
             CustomText(
@@ -1087,7 +955,9 @@ class _DateSlotCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              color: isSelected ? Colors.white : context.color.textLightColor,
+              color: isSelected
+                  ? serviceSelectionForeground(context)
+                  : context.color.textLightColor,
             ),
           ],
         ),
@@ -1116,12 +986,12 @@ class _TimeSlotChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? context.color.territoryColor
+              ? serviceSelectionColor(context)
               : serviceMutedSurface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: isSelected
-                ? context.color.territoryColor
+                ? serviceSelectionColor(context)
                 : context.color.borderColor,
           ),
         ),
@@ -1129,7 +999,9 @@ class _TimeSlotChip extends StatelessWidget {
           slot.label,
           fontSize: context.font.normal,
           fontWeight: FontWeight.w600,
-          color: isSelected ? Colors.white : context.color.textDefaultColor,
+          color: isSelected
+              ? serviceSelectionForeground(context)
+              : context.color.textDefaultColor,
         ),
       ),
     );
@@ -1333,184 +1205,6 @@ class _YearPickerSheet extends StatelessWidget {
                       ],
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CityPickerSheet extends StatefulWidget {
-  const _CityPickerSheet({
-    required this.title,
-    required this.cities,
-    this.selectedCity,
-  });
-
-  final String title;
-  final City? selectedCity;
-  final List<City> cities;
-
-  @override
-  State<_CityPickerSheet> createState() => _CityPickerSheetState();
-}
-
-class _CityPickerSheetState extends State<_CityPickerSheet> {
-  final TextEditingController _searchController = TextEditingController();
-  List<City> _filteredCities = const [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredCities = widget.cities;
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _onSearchChanged(String value) {
-    final normalizedQuery = value.trim().toLowerCase();
-    setState(() {
-      if (normalizedQuery.isEmpty) {
-        _filteredCities = widget.cities;
-        return;
-      }
-
-      _filteredCities = widget.cities.where((city) {
-        final localizedName = city.name.localized.toLowerCase();
-        return localizedName.contains(normalizedQuery);
-      }).toList();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.78,
-      decoration: BoxDecoration(
-        color: context.color.secondaryColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          12.vGap,
-          Container(
-            width: 54,
-            height: 5,
-            decoration: BoxDecoration(
-              color: context.color.borderColor,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-          18.vGap,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: CustomText(
-                        widget.title,
-                        fontSize: context.font.extraLarge,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                14.vGap,
-                TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  decoration: InputDecoration(
-                    hintText: 'Search city',
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: context.color.textLightColor,
-                    ),
-                    filled: true,
-                    fillColor: serviceMutedSurface(context),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: context.color.borderColor),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: context.color.territoryColor,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          12.vGap,
-          Expanded(
-            child: Builder(
-              builder: (context) {
-                if (_filteredCities.isEmpty) {
-                  return Center(
-                    child: CustomText(
-                      'No cities found.',
-                      color: context.color.textLightColor,
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-                  itemCount: _filteredCities.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final city = _filteredCities[index];
-                    final isSelected = widget.selectedCity?.id == city.id;
-
-                    return InkWell(
-                      onTap: () => Navigator.of(context).pop(city),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? serviceAccentSurface(context)
-                              : serviceMutedSurface(context),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isSelected
-                                ? context.color.territoryColor
-                                : context.color.borderColor,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: CustomText(
-                                city.name.localized,
-                                fontSize: context.font.large,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (isSelected)
-                              Icon(
-                                Icons.check_circle,
-                                color: context.color.territoryColor,
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
                 );
               },
             ),

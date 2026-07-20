@@ -2,6 +2,8 @@ import 'package:eClassify/data/cubits/service/vehicle_service_request_cubit.dart
 import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_form_fields.dart';
+import 'package:eClassify/ui/screens/services/service_booking_navigator.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
@@ -205,12 +207,8 @@ class _VehicleServiceRequestScreenState
           context.read<VehicleServiceRequestCubit>().clearFeedback();
         }
         if (state.submissionResult != null && state.submissionToken > 0) {
-          HelperUtils.showSnackBarMessage(
-            context,
-            state.submissionResult!.message,
-            messageDuration: 4,
-            type: MessageType.success,
-          );
+          ServiceBookingNavigator.showSuccess(context, state.submissionResult!);
+          return;
         }
       },
       builder: (context, state) {
@@ -683,13 +681,13 @@ class _BasicInfoStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _LabeledTextField(
+        ServiceTextField(
           title: 'Full name',
           controller: fullNameController,
           textInputAction: TextInputAction.next,
         ),
         18.vGap,
-        _LabeledTextField(
+        ServiceTextField(
           title: 'Phone number',
           controller: phoneController,
           keyboardType: TextInputType.phone,
@@ -748,7 +746,7 @@ class _CarInfoStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SelectionField(
+        ServiceSelectionField(
           title: 'Select car',
           value: request.selectedCar == null
               ? null
@@ -758,7 +756,7 @@ class _CarInfoStep extends StatelessWidget {
         ),
         if (request.selectedCar != null) ...[
           18.vGap,
-          _SelectionField(
+          ServiceSelectionField(
             title: 'Model',
             value: request.selectedModelYear?.toString(),
             hintText: 'Select model year',
@@ -775,7 +773,7 @@ class _CarInfoStep extends StatelessWidget {
             },
           ),
           18.vGap,
-          _LabeledTextField(
+          ServiceTextField(
             title: 'Variant',
             controller: carVariantController,
             hintText: 'Enter variant',
@@ -1088,125 +1086,6 @@ class _SummaryRow extends StatelessWidget {
             textAlign: TextAlign.end,
             fontSize: context.font.large,
             fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LabeledTextField extends StatelessWidget {
-  const _LabeledTextField({
-    required this.title,
-    required this.controller,
-    this.keyboardType,
-    this.textInputAction,
-    this.hintText,
-  });
-
-  final String title;
-  final TextEditingController controller;
-  final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
-  final String? hintText;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomText(
-          title,
-          fontSize: context.font.larger,
-          fontWeight: FontWeight.w600,
-        ),
-        10.vGap,
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          textInputAction: textInputAction,
-          style: TextStyle(
-            fontSize: context.font.large,
-            color: context.color.textDefaultColor,
-          ),
-          decoration: InputDecoration(
-            hintText: hintText,
-            filled: true,
-            fillColor: context.color.secondaryColor,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 16,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.color.borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.color.territoryColor),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SelectionField extends StatelessWidget {
-  const _SelectionField({
-    required this.title,
-    required this.hintText,
-    required this.onTap,
-    this.value,
-  });
-
-  final String title;
-  final String hintText;
-  final String? value;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasValue = value?.trim().isNotEmpty == true;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomText(
-          title,
-          fontSize: context.font.larger,
-          fontWeight: FontWeight.w600,
-        ),
-        10.vGap,
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            decoration: BoxDecoration(
-              color: context.color.secondaryColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: context.color.borderColor),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: CustomText(
-                    hasValue ? value! : hintText,
-                    color: hasValue
-                        ? context.color.textDefaultColor
-                        : context.color.textLightColor,
-                    maxLines: 2,
-                  ),
-                ),
-                12.hGap,
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: context.color.textLightColor,
-                ),
-              ],
-            ),
           ),
         ),
       ],

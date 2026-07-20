@@ -16,7 +16,6 @@ import 'package:eClassify/ui/screens/widgets/bottom_navigation_bar/custom_bottom
 import 'package:eClassify/ui/screens/widgets/bottom_navigation_bar/diamond_fab.dart';
 import 'package:eClassify/ui/screens/widgets/maintenance_mode.dart';
 import 'package:eClassify/ui/screens/widgets/version_update_dialog.dart';
-import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/constant.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/helper_utils.dart';
@@ -50,6 +49,7 @@ class MainActivity extends StatefulWidget {
   static Route route(RouteSettings routeSettings) {
     Map arguments = routeSettings.arguments as Map;
     return MaterialPageRoute(
+      settings: routeSettings,
       builder: (_) => NotificationProvider(
         child: BlocProvider(
           create: (context) => AppUpdateCubit(),
@@ -143,6 +143,10 @@ class MainActivityState extends State<MainActivity> {
       if (!mounted || !_pageController.hasClients) return;
       _pageController.jumpToPage(targetPage);
     });
+  }
+
+  void showDashboard() {
+    _bottomNavigationController.changeIndex(0);
   }
 
   void _scheduleVersionCheck(FetchSystemSettingsCubit settings) {

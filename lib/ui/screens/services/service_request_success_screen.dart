@@ -1,5 +1,6 @@
-import 'package:eClassify/app/routes.dart';
+import 'package:eClassify/data/model/service/car_finance_api_model.dart';
 import 'package:eClassify/data/model/service/service_request_model.dart';
+import 'package:eClassify/data/model/service/vehicle_service_request_model.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
@@ -9,122 +10,116 @@ import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 
 class ServiceRequestSuccessScreen extends StatelessWidget {
-  const ServiceRequestSuccessScreen({required this.request, super.key});
+  const ServiceRequestSuccessScreen({required this.result, super.key});
 
-  final ServiceRequestResult request;
+  final Object result;
 
   static Route route(RouteSettings settings) {
     return MaterialPageRoute(
       settings: settings,
-      builder: (_) => ServiceRequestSuccessScreen(
-        request: settings.arguments! as ServiceRequestResult,
-      ),
-    );
-  }
-
-  void _goToHome(BuildContext context) {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      Routes.main,
-      (_) => false,
-      arguments: const {'from': 'service-request'},
+      builder: (_) => ServiceRequestSuccessScreen(result: settings.arguments!),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _goToHome(context);
-      },
-      child: Scaffold(
-        backgroundColor: context.color.primaryColor,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        28.vGap,
-                        _SuccessMark(color: context.color.territoryColor),
-                        28.vGap,
-                        CustomText(
-                          'Request received!',
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
+    final selectionColor = serviceSelectionColor(context);
+    return Scaffold(
+      backgroundColor: context.color.primaryColor,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      28.vGap,
+                      _SuccessMark(color: selectionColor),
+                      28.vGap,
+                      CustomText(
+                        'Request received!',
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        textAlign: TextAlign.center,
+                        color: context.color.textDefaultColor,
+                      ),
+                      12.vGap,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: CustomText(
+                          _message(result),
+                          fontSize: context.font.large,
+                          height: 1.5,
                           textAlign: TextAlign.center,
-                          color: context.color.textDefaultColor,
+                          color: context.color.textLightColor,
                         ),
-                        12.vGap,
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: CustomText(
-                            request.message,
-                            fontSize: context.font.large,
-                            height: 1.5,
-                            textAlign: TextAlign.center,
-                            color: context.color.textLightColor,
+                      ),
+                      30.vGap,
+                      _RequestSummaryCard(result: result),
+                      18.vGap,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: selectionColor.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: selectionColor.withValues(alpha: 0.14),
                           ),
                         ),
-                        30.vGap,
-                        _RequestSummaryCard(request: request),
-                        18.vGap,
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: context.color.territoryColor.withValues(
-                              alpha: 0.07,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.support_agent_rounded,
+                              color: selectionColor,
                             ),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: context.color.territoryColor.withValues(
-                                alpha: 0.14,
+                            12.hGap,
+                            Expanded(
+                              child: CustomText(
+                                _supportMessage(result),
+                                fontSize: context.font.normal,
+                                height: 1.45,
+                                color: context.color.textDefaultColor,
                               ),
                             ),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.support_agent_rounded,
-                                color: context.color.territoryColor,
-                              ),
-                              12.hGap,
-                              Expanded(
-                                child: CustomText(
-                                  'Our team will contact you to confirm the visit details.',
-                                  fontSize: context.font.normal,
-                                  height: 1.45,
-                                  color: context.color.textDefaultColor,
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-                16.vGap,
-                UiUtils.buildButton(
-                  context,
-                  onPressed: () => _goToHome(context),
-                  buttonTitle: 'Back to home',
-                  radius: 28,
-                  height: 58,
-                  buttonColor: context.color.territoryColor,
-                ),
-              ],
-            ),
+              ),
+              16.vGap,
+              UiUtils.buildButton(
+                context,
+                onPressed: () => Navigator.of(context).pop(),
+                buttonTitle: 'Back to home',
+                radius: 28,
+                height: 58,
+                buttonColor: selectionColor,
+                textColor: serviceSelectionForeground(context),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  static String _message(Object result) => switch (result) {
+    ServiceRequestResult(:final message) => message,
+    VehicleServiceRequestResult(:final message) => message,
+    CarFinanceApplicationResult(:final message) => message,
+    _ => 'Your request was submitted successfully.',
+  };
+
+  static String _supportMessage(Object result) =>
+      result is CarFinanceApplicationResult
+      ? 'Our finance team or selected banking partner will contact you about the next steps.'
+      : 'Our team will contact you to confirm the request details.';
 }
 
 class _SuccessMark extends StatelessWidget {
@@ -154,20 +149,24 @@ class _SuccessMark extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(Icons.check_rounded, color: Colors.white, size: 52),
+        child: Icon(
+          Icons.check_rounded,
+          color: serviceSelectionForeground(context),
+          size: 52,
+        ),
       ),
     );
   }
 }
 
 class _RequestSummaryCard extends StatelessWidget {
-  const _RequestSummaryCard({required this.request});
+  const _RequestSummaryCard({required this.result});
 
-  final ServiceRequestResult request;
+  final Object result;
 
   @override
   Widget build(BuildContext context) {
-    final appointment = _appointmentLabel(request);
+    final rows = _rows(result);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -184,38 +183,94 @@ class _RequestSummaryCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        children: [
-          _SummaryRow(
-            icon: Icons.directions_car_filled_rounded,
-            label: 'Service',
-            value: request.type.displayName,
-          ),
-          if (request.id > 0) ...[
-            const _SummaryDivider(),
-            _SummaryRow(
-              icon: Icons.confirmation_number_outlined,
-              label: 'Request ID',
-              value: '#${request.id}',
-            ),
-          ],
-          const _SummaryDivider(),
-          _SummaryRow(
-            icon: Icons.pending_actions_rounded,
-            label: 'Status',
-            value: _titleCase(request.status),
-          ),
-          if (appointment != null) ...[
-            const _SummaryDivider(),
-            _SummaryRow(
-              icon: Icons.calendar_month_rounded,
-              label: 'Preferred visit',
-              value: appointment,
-            ),
-          ],
-        ],
+        children: List.generate(rows.length, (index) {
+          final row = rows[index];
+          return Column(
+            children: [
+              if (index > 0) const _SummaryDivider(),
+              _SummaryRow(icon: row.icon, label: row.label, value: row.value),
+            ],
+          );
+        }),
       ),
     );
   }
+
+  static List<_SummaryEntry> _rows(Object result) {
+    final rows = <_SummaryEntry>[
+      _SummaryEntry(
+        icon: Icons.directions_car_filled_rounded,
+        label: 'Service',
+        value: _serviceName(result),
+      ),
+    ];
+    final id = _requestId(result);
+    if (id > 0) {
+      rows.add(
+        _SummaryEntry(
+          icon: Icons.confirmation_number_outlined,
+          label: 'Request ID',
+          value: '#$id',
+        ),
+      );
+    }
+    rows.add(
+      _SummaryEntry(
+        icon: Icons.pending_actions_rounded,
+        label: 'Status',
+        value: _titleCase(_status(result)),
+      ),
+    );
+
+    if (result case ServiceRequestResult request) {
+      final appointment = _appointmentLabel(request);
+      if (appointment != null) {
+        rows.add(
+          _SummaryEntry(
+            icon: Icons.calendar_month_rounded,
+            label: 'Preferred visit',
+            value: appointment,
+          ),
+        );
+      }
+    } else if (result case CarFinanceApplicationResult finance) {
+      rows.addAll([
+        _SummaryEntry(
+          icon: Icons.account_balance_outlined,
+          label: 'Preferred bank',
+          value: finance.bank.name,
+        ),
+        _SummaryEntry(
+          icon: Icons.calendar_month_rounded,
+          label: 'Tenure',
+          value:
+              '${finance.tenureYears} year${finance.tenureYears == 1 ? '' : 's'}',
+        ),
+      ]);
+    }
+    return rows;
+  }
+
+  static String _serviceName(Object result) => switch (result) {
+    ServiceRequestResult(:final type) => type.displayName,
+    VehicleServiceRequestResult(:final type) => type.displayName,
+    CarFinanceApplicationResult() => 'Car finance',
+    _ => 'Vehicle service',
+  };
+
+  static int _requestId(Object result) => switch (result) {
+    ServiceRequestResult(:final id) => id,
+    VehicleServiceRequestResult(:final id) => id,
+    CarFinanceApplicationResult(:final id) => id,
+    _ => 0,
+  };
+
+  static String _status(Object result) => switch (result) {
+    ServiceRequestResult(:final status) => status,
+    VehicleServiceRequestResult(:final status) => status,
+    CarFinanceApplicationResult(:final status) => status,
+    _ => 'pending',
+  };
 
   static String? _appointmentLabel(ServiceRequestResult request) {
     final date = request.visitDate;
@@ -240,6 +295,18 @@ class _RequestSummaryCard extends StatelessWidget {
         .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
         .join(' ');
   }
+}
+
+class _SummaryEntry {
+  const _SummaryEntry({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
 }
 
 class _SummaryDivider extends StatelessWidget {
@@ -277,7 +344,7 @@ class _SummaryRow extends StatelessWidget {
             color: context.color.primaryColor,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, size: 20, color: context.color.territoryColor),
+          child: Icon(icon, size: 20, color: serviceSelectionColor(context)),
         ),
         12.hGap,
         Expanded(

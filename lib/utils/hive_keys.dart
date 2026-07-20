@@ -5,6 +5,9 @@ class HiveKeys {
   static const String jwtToken = "token";
 
   static const String historyBox = "historyBox";
+  static const String serviceCacheBox = 'serviceCacheBox';
+  static const String serviceCitiesCache = 'serviceCitiesCache';
+  static const String serviceCitiesCachedAt = 'serviceCitiesCachedAt';
 
   //Box
   static const String authBox = "authBox";

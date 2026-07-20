@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:eClassify/data/repositories/service/service_lead_repository.dart';
 import 'package:eClassify/firebase_options.dart';
 import 'package:eClassify/main.dart';
 import 'package:eClassify/ui/screens/widgets/errors/something_went_wrong.dart';
@@ -24,6 +27,7 @@ final List<String> _hiveBoxes = [
   HiveKeys.themeBox,
   HiveKeys.jwtToken,
   HiveKeys.historyBox,
+  HiveKeys.serviceCacheBox,
 ];
 
 /// Initializes the application with all necessary configurations
@@ -63,6 +67,8 @@ Future<void> initApp() async {
     await _initializeHive();
 
     AppSession.create();
+
+    unawaited(ServiceLeadRepository().preloadCities());
 
     runApp(const EntryPoint());
   } catch (e, stackTrace) {

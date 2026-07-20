@@ -32,6 +32,59 @@ Color serviceMutedSurface(
   );
 }
 
+Color serviceFieldSurface(BuildContext context, {bool enabled = true}) {
+  if (!enabled) return serviceMutedSurface(context);
+  return serviceSurface(context, lightAlpha: 0.055, darkAlpha: 0.2);
+}
+
+Color serviceFieldBorder(BuildContext context) {
+  if (isDarkTheme(context)) return context.color.borderColor;
+  return Color.alphaBlend(
+    context.color.territoryColor.withValues(alpha: 0.32),
+    context.color.borderColor,
+  );
+}
+
+InputDecoration serviceFieldDecoration(
+  BuildContext context, {
+  String? hintText,
+  Widget? prefixIcon,
+  bool enabled = true,
+}) {
+  final radius = BorderRadius.circular(12);
+  return InputDecoration(
+    hintText: hintText,
+    hintStyle: TextStyle(color: context.color.textLightColor),
+    prefixIcon: prefixIcon,
+    filled: true,
+    fillColor: serviceFieldSurface(context, enabled: enabled),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: serviceFieldBorder(context), width: 1.2),
+    ),
+    disabledBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: serviceFieldBorder(context)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: context.color.territoryColor, width: 1.6),
+    ),
+  );
+}
+
+BoxDecoration serviceFieldBoxDecoration(
+  BuildContext context, {
+  bool enabled = true,
+}) {
+  return BoxDecoration(
+    color: serviceFieldSurface(context, enabled: enabled),
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(color: serviceFieldBorder(context), width: 1.2),
+  );
+}
+
 Color serviceImageSurface(BuildContext context) {
   return serviceSurface(context, lightAlpha: 0.02, darkAlpha: 0.26);
 }
@@ -43,6 +96,18 @@ Color serviceAccentSurface(
 }) {
   return serviceSurface(context, lightAlpha: lightAlpha, darkAlpha: darkAlpha);
 }
+
+/// A high-contrast selected-control color that remains readable in dark mode.
+///
+/// The standard territory color is white in the current dark theme, which is
+/// unsuitable as a filled control background when paired with white labels.
+Color serviceSelectionColor(BuildContext context) {
+  return isDarkTheme(context)
+      ? const Color(0xFF405E86)
+      : context.color.territoryColor;
+}
+
+Color serviceSelectionForeground(BuildContext context) => Colors.white;
 
 Color serviceWarningSurface(BuildContext context) {
   final overlay = warningMessageColor.withValues(

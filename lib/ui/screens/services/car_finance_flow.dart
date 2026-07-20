@@ -1,7 +1,8 @@
 import 'package:eClassify/data/cubits/service/car_finance_cubit.dart';
 import 'package:eClassify/data/model/car_model_model.dart';
-import 'package:eClassify/data/model/location/location_node.dart' show City;
 import 'package:eClassify/ui/screens/services/car_finance_applicant_screen.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_form_fields.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_city_picker.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
@@ -198,8 +199,8 @@ class _CarFinanceCalculatorScreenState
                         onChanged: cubit.updateType,
                       ),
                       22.vGap,
-                      _SelectorField(
-                        label: 'City',
+                      ServiceSelectionField(
+                        title: 'City',
                         value: state.request.city?.name.localized,
                         hintText: state.isLoadingCities
                             ? 'Loading cities...'
@@ -209,12 +210,10 @@ class _CarFinanceCalculatorScreenState
                             ? null
                             : () async {
                                 final selectedCity =
-                                    await _showSelectionSheet<City>(
+                                    await ServiceCityPicker.show(
                                       context: context,
-                                      title: 'Select city',
-                                      items: state.cities,
-                                      labelBuilder: (city) =>
-                                          city.name.localized,
+                                      cities: state.cities,
+                                      selectedCity: state.request.city,
                                     );
                                 if (selectedCity != null) {
                                   cubit.updateCity(selectedCity);
@@ -222,8 +221,8 @@ class _CarFinanceCalculatorScreenState
                               },
                       ),
                       18.vGap,
-                      _SelectorField(
-                        label: 'Car Details',
+                      ServiceSelectionField(
+                        title: 'Car Details',
                         value: state.request.selectedCar == null
                             ? null
                             : '${state.request.selectedCar!.brandName} ${state.request.selectedCar!.name}',
@@ -259,8 +258,8 @@ class _CarFinanceCalculatorScreenState
                       ),
                       if (isUsedCar) ...[
                         18.vGap,
-                        _SelectorField(
-                          label: 'Model',
+                        ServiceSelectionField(
+                          title: 'Model',
                           value: state.request.selectedModelYear?.toString(),
                           hintText: 'Select model year',
                           icon: Icons.calendar_month_outlined,
@@ -277,15 +276,15 @@ class _CarFinanceCalculatorScreenState
                           },
                         ),
                         18.vGap,
-                        _InputField(
-                          label: 'Variant',
+                        ServiceTextField(
+                          title: 'Variant',
                           hintText: 'Enter variant',
                           icon: Icons.alt_route_outlined,
                           controller: _carVariantController,
                         ),
                         18.vGap,
-                        _InputField(
-                          label: 'Price (PKR)',
+                        ServiceTextField(
+                          title: 'Price (PKR)',
                           hintText: 'Set a price',
                           icon: Icons.sell_outlined,
                           controller: _usedCarPriceController,
@@ -293,8 +292,8 @@ class _CarFinanceCalculatorScreenState
                         ),
                       ],
                       18.vGap,
-                      _SelectorField(
-                        label: 'Tenure',
+                      ServiceSelectionField(
+                        title: 'Tenure',
                         value: state.request.tenureYears == null
                             ? null
                             : '${state.request.tenureYears} year${state.request.tenureYears == 1 ? '' : 's'}',
@@ -314,8 +313,8 @@ class _CarFinanceCalculatorScreenState
                         },
                       ),
                       18.vGap,
-                      _SelectorField(
-                        label: 'Down Payment',
+                      ServiceSelectionField(
+                        title: 'Down Payment',
                         value: state.request.downPaymentPercent == null
                             ? null
                             : '${state.request.downPaymentPercent}%',
@@ -901,6 +900,10 @@ class _FinanceTypeTabs extends StatelessWidget {
       child: Row(
         children: CarFinanceType.values.map((type) {
           final isSelected = type == selectedType;
+          final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+          final selectedBackground = isDarkMode
+              ? const Color(0xFF405E86)
+              : context.color.territoryColor;
           return Expanded(
             child: GestureDetector(
               onTap: () => onChanged(type),
@@ -909,9 +912,7 @@ class _FinanceTypeTabs extends StatelessWidget {
                 curve: Curves.easeOut,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? context.color.territoryColor
-                      : Colors.transparent,
+                  color: isSelected ? selectedBackground : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
@@ -928,112 +929,6 @@ class _FinanceTypeTabs extends StatelessWidget {
           );
         }).toList(),
       ),
-    );
-  }
-}
-
-class _SelectorField extends StatelessWidget {
-  const _SelectorField({
-    required this.label,
-    required this.hintText,
-    required this.icon,
-    required this.onTap,
-    this.value,
-  });
-
-  final String label;
-  final String hintText;
-  final IconData icon;
-  final String? value;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _FieldLabel(label: label, icon: icon),
-        10.vGap,
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            decoration: BoxDecoration(
-              color: context.color.secondaryColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: context.color.borderColor),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: CustomText(
-                    value?.isNotEmpty == true ? value! : hintText,
-                    color: value?.isNotEmpty == true
-                        ? context.color.textDefaultColor
-                        : context.color.textLightColor,
-                    maxLines: 2,
-                  ),
-                ),
-                10.hGap,
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: context.color.textLightColor,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InputField extends StatelessWidget {
-  const _InputField({
-    required this.label,
-    required this.hintText,
-    required this.icon,
-    required this.controller,
-    this.keyboardType,
-  });
-
-  final String label;
-  final String hintText;
-  final IconData icon;
-  final TextEditingController controller;
-  final TextInputType? keyboardType;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _FieldLabel(label: label, icon: icon),
-        10.vGap,
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            hintText: hintText,
-            filled: true,
-            fillColor: context.color.secondaryColor,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 16,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.color.borderColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: context.color.territoryColor),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

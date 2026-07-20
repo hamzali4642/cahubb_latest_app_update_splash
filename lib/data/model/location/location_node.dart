@@ -16,6 +16,14 @@ base class LocationNode {
       latitude = json['latitude'] as String? ?? '0.0',
       longitude = json['longitude'] as String? ?? '0.0';
 
+  LocationNode.fromCache(Map<String, dynamic> json)
+    : id = json['id'] as int,
+      name = LocalizedString.fromJson(
+        Map<String, dynamic>.from(json['name'] as Map),
+      ),
+      latitude = json['latitude'] as String? ?? '0.0',
+      longitude = json['longitude'] as String? ?? '0.0';
+
   final int id;
   final LocalizedString name;
   final String latitude;
@@ -45,6 +53,20 @@ final class City extends LocationNode {
       super.fromJson();
   final int stateId;
   final int countryId;
+
+  City.fromCache(Map<String, dynamic> json)
+    : stateId = json['state_id'] as int,
+      countryId = json['country_id'] as int,
+      super.fromCache(json);
+
+  Map<String, dynamic> toCacheJson() => {
+    'id': id,
+    'name': name.toJson(),
+    'latitude': latitude,
+    'longitude': longitude,
+    'state_id': stateId,
+    'country_id': countryId,
+  };
 }
 
 /// Area class have a reference to its hierarchical parents, i.e., city, state and country
