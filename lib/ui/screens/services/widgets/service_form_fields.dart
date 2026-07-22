@@ -3,7 +3,9 @@ import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
+import 'package:eClassify/utils/pakistan_phone_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Shared visual contract for inputs used by every vehicle service flow.
 class ServiceTextField extends StatelessWidget {
@@ -18,6 +20,7 @@ class ServiceTextField extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.onChanged,
     this.prefixIcon,
+    this.inputFormatters,
     this.enabled = true,
   });
 
@@ -30,6 +33,7 @@ class ServiceTextField extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final ValueChanged<String>? onChanged;
   final Widget? prefixIcon;
+  final List<TextInputFormatter>? inputFormatters;
   final bool enabled;
 
   @override
@@ -47,6 +51,7 @@ class ServiceTextField extends StatelessWidget {
           keyboardType: keyboardType,
           textInputAction: textInputAction,
           textCapitalization: textCapitalization,
+          inputFormatters: inputFormatters,
           onChanged: onChanged,
           style: TextStyle(
             fontSize: context.font.large,
@@ -60,6 +65,69 @@ class ServiceTextField extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class PakistanPhoneField extends StatelessWidget {
+  const PakistanPhoneField({
+    required this.controller,
+    super.key,
+    this.title = 'Phone number',
+    this.icon,
+    this.hintText = '3XX-XXXXXXX',
+    this.textInputAction,
+    this.onChanged,
+    this.enabled = true,
+  });
+
+  final TextEditingController controller;
+  final String title;
+  final IconData? icon;
+  final String hintText;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onChanged;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return ServiceTextField(
+      title: title,
+      icon: icon,
+      controller: controller,
+      hintText: hintText,
+      keyboardType: TextInputType.phone,
+      textInputAction: textInputAction,
+      onChanged: onChanged,
+      enabled: enabled,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(10),
+      ],
+      prefixIcon: const _PakistanPhonePrefix(),
+    );
+  }
+}
+
+class _PakistanPhonePrefix extends StatelessWidget {
+  const _PakistanPhonePrefix();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 14, right: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomText(
+            PakistanPhoneUtils.countryCode,
+            fontSize: context.font.large,
+            fontWeight: FontWeight.w600,
+          ),
+          10.hGap,
+          Container(width: 1, height: 24, color: context.color.borderColor),
+        ],
+      ),
     );
   }
 }

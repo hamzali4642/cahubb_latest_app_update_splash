@@ -34,6 +34,7 @@ import 'package:eClassify/ui/screens/native_ads_screen.dart';
 import 'package:eClassify/ui/screens/widgets/errors/no_internet.dart';
 import 'package:eClassify/ui/screens/widgets/errors/something_went_wrong.dart';
 import 'package:eClassify/ui/screens/widgets/shimmer_loading_container.dart';
+import 'package:eClassify/ui/screens/widgets/startup_ad_dialog.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/app_session.dart';
 import 'package:eClassify/utils/constant.dart';
@@ -81,6 +82,7 @@ class HomeScreenState extends State<HomeScreen>
     initializeSettings();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      _showStartupAd();
       loadInitialInfo();
       _scheduleSecondaryApiCalls();
     });
@@ -94,6 +96,11 @@ class HomeScreenState extends State<HomeScreen>
         }
       }
     });
+  }
+
+  void _showStartupAd() {
+    if (!AppSession.claimStartupAdRequest()) return;
+    StartupAdPlacement.fetchAndShow(context);
   }
 
   void _scheduleSecondaryApiCalls() {

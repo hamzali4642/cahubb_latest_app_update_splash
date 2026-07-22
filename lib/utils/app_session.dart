@@ -24,6 +24,16 @@ abstract class AppSession {
     _currentLocation = AppConfig.defaultLocation;
   }
 
+  /// Returns true only for the first dashboard ad request in this app session.
+  static bool claimStartupAdRequest() {
+    if (_hasRequestedStartupAd) return false;
+
+    _hasRequestedStartupAd = true;
+    return true;
+  }
+
+  static bool _hasRequestedStartupAd = false;
+
   /// Current selected location
   static LeafLocation? _currentLocation;
 

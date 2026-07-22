@@ -4,6 +4,7 @@ import 'package:eClassify/data/repositories/service/service_lead_repository.dart
 import 'package:eClassify/data/repositories/service/vehicle_service_request_repository.dart';
 import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/hive_utils.dart';
+import 'package:eClassify/utils/pakistan_phone_utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class VehicleServiceRequestState {
@@ -135,7 +136,7 @@ class VehicleServiceRequestCubit extends Cubit<VehicleServiceRequestState> {
       emit(
         state.copyWith(
           fullName: user.name ?? '',
-          phoneNumber: user.mobile ?? '',
+          phoneNumber: PakistanPhoneUtils.localNumber(user.mobile ?? ''),
         ),
       );
     }
@@ -243,11 +244,8 @@ class VehicleServiceRequestCubit extends Cubit<VehicleServiceRequestState> {
       return 'Full name must not exceed 150 characters.';
     }
     if (state.phoneNumber.trim().isEmpty) return 'Please enter phone number.';
-    if (state.phoneNumber.trim().length > 30) {
-      return 'Phone number must not exceed 30 characters.';
-    }
-    if (!RegExp(r'^\+?[0-9()\-\s]+$').hasMatch(state.phoneNumber.trim())) {
-      return 'Please enter a valid phone number.';
+    if (!PakistanPhoneUtils.isValid(state.phoneNumber)) {
+      return 'Please enter a valid 10-digit phone number.';
     }
     if (state.isFiler == null) return 'Please select filer status.';
     return null;

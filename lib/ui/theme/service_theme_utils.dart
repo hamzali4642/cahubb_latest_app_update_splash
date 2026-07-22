@@ -109,6 +109,19 @@ Color serviceSelectionColor(BuildContext context) {
 
 Color serviceSelectionForeground(BuildContext context) => Colors.white;
 
+/// Surface and border for selectable controls before the user selects them.
+Color serviceUnselectedControlSurface(BuildContext context) {
+  return isDarkTheme(context)
+      ? const Color(0xFF292929)
+      : context.color.secondaryColor;
+}
+
+Color serviceUnselectedControlBorder(BuildContext context) {
+  return isDarkTheme(context)
+      ? const Color(0xFF505050)
+      : context.color.borderColor;
+}
+
 Color serviceWarningSurface(BuildContext context) {
   final overlay = warningMessageColor.withValues(
     alpha: isDarkTheme(context) ? 0.22 : 0.12,

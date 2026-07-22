@@ -1,8 +1,8 @@
 import 'package:eClassify/data/cubits/service/vehicle_service_request_cubit.dart';
-import 'package:eClassify/data/model/car_model_model.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/ui/screens/services/widgets/service_form_fields.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_car_picker_sheet.dart';
 import 'package:eClassify/ui/screens/services/service_booking_navigator.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
@@ -146,11 +146,10 @@ class _VehicleServiceRequestScreenState
 
   Future<void> _selectCar() async {
     final cubit = context.read<VehicleServiceRequestCubit>();
-    final selectedCar = await _showSelectionSheet<CarModelModel>(
+    final selectedCar = await ServiceCarPickerSheet.show(
       context: context,
-      title: 'Select car',
-      items: cubit.state.carModels,
-      labelBuilder: (car) => '${car.brandName} ${car.name}',
+      cars: cubit.state.carModels,
+      selectedCar: cubit.state.selectedCar,
     );
     if (selectedCar != null) {
       cubit.selectCar(selectedCar);
@@ -309,7 +308,8 @@ class _VehicleServiceRequestScreenState
                       disabled: state.isSubmitting,
                       radius: 28,
                       height: 58,
-                      buttonColor: context.color.territoryColor,
+                      buttonColor: serviceSelectionColor(context),
+                      textColor: serviceSelectionForeground(context),
                     ),
                   ),
               ],
@@ -583,7 +583,7 @@ class _FlowStepper extends StatelessWidget {
             child: Container(
               height: 2,
               color: stepOneDone
-                  ? context.color.territoryColor.withValues(alpha: 0.45)
+                  ? serviceSelectionColor(context).withValues(alpha: 0.55)
                   : context.color.borderColor,
             ),
           ),
@@ -617,6 +617,7 @@ class _StepIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = isDone || isCurrent;
+    final activeColor = serviceSelectionColor(context);
 
     return Column(
       children: [
@@ -625,23 +626,27 @@ class _StepIndicator extends StatelessWidget {
           height: 34,
           decoration: BoxDecoration(
             color: isActive
-                ? context.color.territoryColor
-                : context.color.secondaryColor,
+                ? activeColor
+                : serviceUnselectedControlSurface(context),
             shape: BoxShape.circle,
             border: Border.all(
               color: isActive
-                  ? context.color.territoryColor
-                  : context.color.borderColor,
+                  ? activeColor
+                  : serviceUnselectedControlBorder(context),
               width: 1.5,
             ),
           ),
           child: Center(
             child: isDone
-                ? const Icon(Icons.check, color: Colors.white, size: 18)
+                ? Icon(
+                    Icons.check,
+                    color: serviceSelectionForeground(context),
+                    size: 18,
+                  )
                 : CustomText(
                     '$number',
                     color: isCurrent
-                        ? Colors.white
+                        ? serviceSelectionForeground(context)
                         : context.color.textLightColor,
                     fontWeight: FontWeight.w700,
                   ),
@@ -687,10 +692,8 @@ class _BasicInfoStep extends StatelessWidget {
           textInputAction: TextInputAction.next,
         ),
         18.vGap,
-        ServiceTextField(
-          title: 'Phone number',
+        PakistanPhoneField(
           controller: phoneController,
-          keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
         ),
         18.vGap,
@@ -1113,13 +1116,14 @@ class _ChoiceChipButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? serviceAccentSurface(context)
-              : context.color.secondaryColor,
+              ? serviceSelectionColor(context)
+              : serviceUnselectedControlSurface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: isSelected
-                ? context.color.territoryColor
-                : context.color.borderColor,
+                ? serviceSelectionColor(context)
+                : serviceUnselectedControlBorder(context),
+            width: 1.2,
           ),
         ),
         child: CustomText(
@@ -1127,7 +1131,7 @@ class _ChoiceChipButton extends StatelessWidget {
           fontSize: context.font.normal,
           fontWeight: FontWeight.w600,
           color: isSelected
-              ? context.color.territoryColor
+              ? serviceSelectionForeground(context)
               : context.color.textDefaultColor,
         ),
       ),

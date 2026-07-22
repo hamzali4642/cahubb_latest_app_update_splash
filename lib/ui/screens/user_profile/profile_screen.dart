@@ -993,6 +993,14 @@ class _ProfileScreenState extends State<ProfileScreen>
         profileMenuWidget("subscription", AppIcons.subscription, () async {
           Navigator.pushNamed(context, Routes.subscriptionPackageListRoute);
         }),
+        profileMenuWidget("myBookings", AppIcons.transaction, () {
+          UiUtils.checkUser(
+            context: context,
+            onNotGuest: () {
+              Navigator.pushNamed(context, Routes.myBookingsScreen);
+            },
+          );
+        }),
         if (HiveUtils.isUserAuthenticated())
           profileMenuWidget("transactionHistory", AppIcons.transaction, () {
             UiUtils.checkUser(

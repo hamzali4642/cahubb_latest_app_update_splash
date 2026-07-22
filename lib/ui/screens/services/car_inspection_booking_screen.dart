@@ -5,6 +5,7 @@ import 'package:eClassify/data/model/service/service_package_model.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/ui/screens/services/widgets/service_form_fields.dart';
+import 'package:eClassify/ui/screens/services/widgets/service_car_picker_sheet.dart';
 import 'package:eClassify/ui/screens/services/widgets/service_city_picker.dart';
 import 'package:eClassify/ui/screens/services/service_booking_navigator.dart';
 import 'package:eClassify/utils/custom_text.dart';
@@ -119,33 +120,14 @@ class _CarInspectionBookingScreenState
   Future<void> _selectCar() async {
     final cubit = context.read<ServiceBookingFormCubit>();
     final state = cubit.state;
-    final car = await _showCarPickerSheet(
-      title: 'Select car',
+    final car = await ServiceCarPickerSheet.show(
+      context: context,
       cars: state.carModels,
       selectedCar: state.selectedCar,
     );
 
     if (car == null) return;
     cubit.selectCar(car);
-  }
-
-  Future<CarModelModel?> _showCarPickerSheet({
-    required String title,
-    required List<CarModelModel> cars,
-    CarModelModel? selectedCar,
-  }) {
-    return showModalBottomSheet<CarModelModel>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return _CarPickerSheet(
-          title: title,
-          cars: cars,
-          selectedCar: selectedCar,
-        );
-      },
-    );
   }
 
   @override
@@ -561,10 +543,8 @@ class _InspectionBasicInfoStep extends StatelessWidget {
           textInputAction: TextInputAction.next,
         ),
         18.vGap,
-        ServiceTextField(
-          title: 'Phone number',
+        PakistanPhoneField(
           controller: phoneController,
-          keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
         ),
         18.vGap,
@@ -929,109 +909,6 @@ class _TimeSlotChip extends StatelessWidget {
               ? serviceSelectionForeground(context)
               : context.color.textDefaultColor,
         ),
-      ),
-    );
-  }
-}
-
-class _CarPickerSheet extends StatelessWidget {
-  const _CarPickerSheet({
-    required this.title,
-    required this.cars,
-    required this.selectedCar,
-  });
-
-  final String title;
-  final List<CarModelModel> cars;
-  final CarModelModel? selectedCar;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.72,
-      decoration: BoxDecoration(
-        color: context.color.secondaryColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          12.vGap,
-          Container(
-            width: 54,
-            height: 5,
-            decoration: BoxDecoration(
-              color: context.color.borderColor,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-          18.vGap,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Row(
-              children: [
-                Expanded(
-                  child: CustomText(
-                    title,
-                    fontSize: context.font.extraLarge,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          12.vGap,
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-              itemCount: cars.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final car = cars[index];
-                final isSelected = selectedCar?.id == car.id;
-
-                return InkWell(
-                  onTap: () {
-                    Navigator.of(context).pop(car);
-                  },
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? serviceAccentSurface(context)
-                          : serviceMutedSurface(context),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected
-                            ? context.color.territoryColor
-                            : context.color.borderColor,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: CustomText(
-                            '${car.brandName} ${car.name}',
-                            fontSize: context.font.large,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (isSelected)
-                          Icon(
-                            Icons.check_circle,
-                            color: context.color.territoryColor,
-                          ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
       ),
     );
   }

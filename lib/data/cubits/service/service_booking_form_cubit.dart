@@ -6,6 +6,7 @@ import 'package:eClassify/data/repositories/service/service_lead_repository.dart
 import 'package:eClassify/data/repositories/service/service_request_repository.dart';
 import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/hive_utils.dart';
+import 'package:eClassify/utils/pakistan_phone_utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 enum ServiceBookingFlowType { inspection, sellItForMe }
@@ -236,7 +237,7 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
       emit(
         state.copyWith(
           fullName: user.name ?? '',
-          phoneNumber: user.mobile ?? '',
+          phoneNumber: PakistanPhoneUtils.localNumber(user.mobile ?? ''),
         ),
       );
     }
@@ -380,8 +381,8 @@ class ServiceBookingFormCubit extends Cubit<ServiceBookingFormState> {
       return 'Full name must not exceed 150 characters.';
     }
     if (state.phoneNumber.trim().isEmpty) return 'Phone number is required.';
-    if (state.phoneNumber.trim().length > 30) {
-      return 'Phone number must not exceed 30 characters.';
+    if (!PakistanPhoneUtils.isValid(state.phoneNumber)) {
+      return 'Please enter a valid 10-digit phone number.';
     }
     if (state.selectedLivingCity == null) return 'Please select your city.';
     if (state.selectedCar == null) return 'Please select a car.';

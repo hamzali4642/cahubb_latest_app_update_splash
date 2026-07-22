@@ -1,3 +1,5 @@
+import 'package:eClassify/utils/pakistan_phone_utils.dart';
+
 class CarFinanceBankData {
   const CarFinanceBankData({
     required this.id,
@@ -179,7 +181,7 @@ class CarFinanceApplicantDetails {
   Map<String, dynamic> toApiMap() {
     return {
       'full_name': fullName.trim(),
-      'phone_number': phoneNumber.trim(),
+      'phone_number': PakistanPhoneUtils.normalize(phoneNumber),
       'email': email.trim(),
       'cnic': cnic.trim(),
       'income_source': incomeSource,

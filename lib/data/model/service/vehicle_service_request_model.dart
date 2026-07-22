@@ -1,3 +1,5 @@
+import 'package:eClassify/utils/pakistan_phone_utils.dart';
+
 enum VehicleServiceRequestType { registration, ownership }
 
 extension VehicleServiceRequestTypeX on VehicleServiceRequestType {
@@ -34,7 +36,7 @@ class VehicleServiceRequestPayload {
   Map<String, dynamic> toApiMap() {
     return {
       'full_name': fullName.trim(),
-      'phone_number': phoneNumber.trim(),
+      'phone_number': PakistanPhoneUtils.normalize(phoneNumber),
       'is_filer': isFiler ? 1 : 0,
       'car_model_id': carModelId,
       'model_year': modelYear,

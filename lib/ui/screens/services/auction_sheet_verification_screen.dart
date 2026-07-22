@@ -125,8 +125,6 @@ class _AuctionSheetVerificationScreenState
                       .read<AuctionSheetVerificationCubit>()
                       .fetchPrice(),
                 ),
-                20.vGap,
-                const _AuctionStatsRow(),
                 28.vGap,
                 const _InfoSection(
                   title: 'Three things sellers often hide',
@@ -375,88 +373,6 @@ class _AuctionPriceLabel extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _AuctionStatsRow extends StatelessWidget {
-  const _AuctionStatsRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      decoration: BoxDecoration(
-        color: context.color.secondaryColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: context.color.borderColor),
-      ),
-      child: Row(
-        children: const [
-          Expanded(
-            child: _StatTile(
-              icon: Icons.verified_user_outlined,
-              title: '9+ years',
-              subtitle: 'in service',
-            ),
-          ),
-          _StatDivider(),
-          Expanded(
-            child: _StatTile(
-              icon: Icons.description_outlined,
-              title: '100k+',
-              subtitle: 'sheets reviewed',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: context.color.territoryColor, size: 22),
-        10.hGap,
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CustomText(
-              title,
-              fontSize: context.font.normal,
-              fontWeight: FontWeight.w700,
-            ),
-            CustomText(
-              subtitle,
-              fontSize: context.font.small,
-              color: context.color.textLightColor,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _StatDivider extends StatelessWidget {
-  const _StatDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(width: 1, height: 44, color: context.color.borderColor);
   }
 }
 
@@ -755,10 +671,8 @@ class _AuctionSheetNotifySheetState extends State<_AuctionSheetNotifySheet> {
                     height: 1.45,
                   ),
                   22.vGap,
-                  ServiceTextField(
-                    title: 'Phone number',
+                  PakistanPhoneField(
                     controller: _phoneController,
-                    keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.done,
                   ),
                   20.vGap,

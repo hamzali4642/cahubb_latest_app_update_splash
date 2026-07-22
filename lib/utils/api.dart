@@ -151,6 +151,7 @@ class Api {
   static String manageFavouriteApi = "manage-favourite";
   static String getPackageApi = "get-package";
   static String getServicePackagesApi = "get-service-packages";
+  static String myServiceBookingsApi = "my-service-bookings";
   static String getLanguageApi = "get-languages";
   static String getPaymentSettingsApi = "get-payment-settings";
   static String getSystemSettingsApi = "get-system-settings";
@@ -176,6 +177,7 @@ class Api {
   static String getAreasApi = "areas";
   static String getBlogApi = "blogs";
   static String latestFuelPricesApi = "fuel-prices/latest";
+  static String startupAdsApi = "startup-ads";
   static String newsApi = "news";
   static String getFaqApi = "faq";
   static String getItemBuyerListApi = "item-buyer-list";

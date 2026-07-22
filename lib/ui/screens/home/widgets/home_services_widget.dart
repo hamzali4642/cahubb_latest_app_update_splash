@@ -5,6 +5,7 @@ import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
+import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 
 class HomeServicesWidget extends StatefulWidget {
@@ -100,7 +101,7 @@ class _HomeServicesWidgetState extends State<HomeServicesWidget> {
       routeName: Routes.carRegistrationScreen,
     ),
     HomeServiceItem(
-      title: 'Car Ownership',
+      title: 'Ownership Transfer',
       imagePath: 'assets/images/ownershipTransfer.png',
       routeName: Routes.carOwnershipScreen,
     ),
@@ -128,6 +129,15 @@ class HomeServiceItem {
     this.layout = HomeServiceLayout.regular,
     this.routeName,
   });
+}
+
+void _openService(BuildContext context, HomeServiceItem item) {
+  final routeName = item.routeName;
+  if (routeName == null) return;
+  UiUtils.checkUser(
+    context: context,
+    onNotGuest: () => Navigator.pushNamed(context, routeName),
+  );
 }
 
 class _FeaturedServicesGrid extends StatelessWidget {
@@ -207,11 +217,7 @@ class _FeaturedServiceCard extends StatelessWidget {
     final isPlaceholder = item.layout == HomeServiceLayout.placeholder;
 
     return InkWell(
-      onTap: item.routeName == null
-          ? null
-          : () {
-              Navigator.pushNamed(context, item.routeName!);
-            },
+      onTap: item.routeName == null ? null : () => _openService(context, item),
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -271,11 +277,7 @@ class _CompactServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: item.routeName == null
-          ? null
-          : () {
-              Navigator.pushNamed(context, item.routeName!);
-            },
+      onTap: item.routeName == null ? null : () => _openService(context, item),
       borderRadius: BorderRadius.circular(10),
       child: Container(
         width: 122,

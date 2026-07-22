@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 const _carOwnershipConfig = VehicleServiceFlowConfig(
-  serviceTitle: 'Car Ownership',
-  appBarTitle: 'Car Ownership',
+  serviceTitle: 'Ownership Transfer',
+  appBarTitle: 'Ownership Transfer',
   heroTitle: 'Transfer ownership with less back and forth',
   heroSubtitle:
       'Move the car into your name through a guided service flow built to keep things organized.',

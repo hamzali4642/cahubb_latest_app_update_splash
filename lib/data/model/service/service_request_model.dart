@@ -1,3 +1,5 @@
+import 'package:eClassify/utils/pakistan_phone_utils.dart';
+
 enum ServiceRequestType { carInspection, sellForMe }
 
 extension ServiceRequestTypeX on ServiceRequestType {
@@ -54,7 +56,7 @@ class ServiceRequestPayload {
     return {
       if (servicePackageId != null) 'service_package_id': servicePackageId,
       'full_name': fullName.trim(),
-      'phone_number': phoneNumber.trim(),
+      'phone_number': PakistanPhoneUtils.normalize(phoneNumber),
       'city_id': cityId,
       'car_model_id': carModelId,
       'model_year': modelYear,

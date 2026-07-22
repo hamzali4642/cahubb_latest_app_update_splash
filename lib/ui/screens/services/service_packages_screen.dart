@@ -7,6 +7,7 @@ import 'package:eClassify/ui/screens/widgets/custom_image.dart';
 import 'package:eClassify/ui/screens/widgets/errors/no_data_found.dart';
 import 'package:eClassify/ui/screens/widgets/errors/no_internet.dart';
 import 'package:eClassify/ui/screens/widgets/errors/something_went_wrong.dart';
+import 'package:eClassify/ui/screens/widgets/startup_ad_dialog.dart';
 import 'package:eClassify/ui/theme/service_theme_utils.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
@@ -54,6 +55,17 @@ class ServicePackagesScreen extends StatefulWidget {
 
 class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
   final GlobalKey _packagesSectionKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.config.apiType != 'car_inspection') return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      StartupAdPlacement.fetchAndShow(context, type: 'inspection');
+    });
+  }
 
   Future<void> _refreshPackages() {
     return context.read<FetchServicePackagesCubit>().fetchPackages(

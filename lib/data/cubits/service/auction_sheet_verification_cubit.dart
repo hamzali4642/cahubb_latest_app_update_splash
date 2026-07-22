@@ -2,6 +2,7 @@ import 'package:eClassify/data/model/service/auction_sheet_verification_model.da
 import 'package:eClassify/data/repositories/service/auction_sheet_verification_repository.dart';
 import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/hive_utils.dart';
+import 'package:eClassify/utils/pakistan_phone_utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AuctionSheetVerificationState {
@@ -81,7 +82,11 @@ class AuctionSheetVerificationCubit
   Future<void> initialize() async {
     if (HiveUtils.isUserAuthenticated()) {
       emit(
-        state.copyWith(phoneNumber: HiveUtils.getUserDetails().mobile ?? ''),
+        state.copyWith(
+          phoneNumber: PakistanPhoneUtils.localNumber(
+            HiveUtils.getUserDetails().mobile ?? '',
+          ),
+        ),
       );
     }
     await fetchPrice();
@@ -146,7 +151,7 @@ class AuctionSheetVerificationCubit
     }
 
     final normalizedChassis = _normalizeChassisNumber(state.chassisNumber);
-    final phoneNumber = state.phoneNumber.trim();
+    final phoneNumber = PakistanPhoneUtils.normalize(state.phoneNumber);
     emit(
       state.copyWith(
         chassisNumber: normalizedChassis,
@@ -159,7 +164,14 @@ class AuctionSheetVerificationCubit
         chassisNumber: normalizedChassis,
         phoneNumber: phoneNumber,
       );
-      emit(state.copyWith(isSubmitting: false, result: result));
+      emit(
+        state.copyWith(
+          chassisNumber: '',
+          phoneNumber: '',
+          isSubmitting: false,
+          result: result,
+        ),
+      );
       return true;
     } on ApiException catch (error) {
       emit(state.copyWith(isSubmitting: false));
@@ -191,11 +203,8 @@ class AuctionSheetVerificationCubit
   String? _validatePhoneNumber() {
     final phoneNumber = state.phoneNumber.trim();
     if (phoneNumber.isEmpty) return 'Please enter phone number.';
-    if (phoneNumber.length > 30) {
-      return 'Phone number must not exceed 30 characters.';
-    }
-    if (!RegExp(r'^\+?[0-9()\-\s]+$').hasMatch(phoneNumber)) {
-      return 'Please enter a valid phone number.';
+    if (!PakistanPhoneUtils.isValid(phoneNumber)) {
+      return 'Please enter a valid 10-digit phone number.';
     }
     return null;
   }

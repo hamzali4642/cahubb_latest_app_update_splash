@@ -150,12 +150,9 @@ class _CarFinanceApplicantScreenState extends State<CarFinanceApplicantScreen> {
                               onChanged: cubit.updateApplicantFullName,
                             ),
                             18.vGap,
-                            ServiceTextField(
-                              title: 'Phone number',
+                            PakistanPhoneField(
                               icon: Icons.phone_outlined,
                               controller: _phoneController,
-                              hintText: '03XX-XXXXXXX',
-                              keyboardType: TextInputType.phone,
                               onChanged: cubit.updateApplicantPhoneNumber,
                             ),
                             18.vGap,

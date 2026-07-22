@@ -7,6 +7,7 @@ import 'package:eClassify/data/repositories/service/service_lead_repository.dart
 import 'package:eClassify/data/repositories/service/car_finance_repository.dart';
 import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/hive_utils.dart';
+import 'package:eClassify/utils/pakistan_phone_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -305,7 +306,7 @@ class CarFinanceCubit extends Cubit<CarFinanceState> {
         state.copyWith(
           applicant: state.applicant.copyWith(
             fullName: user.name ?? '',
-            phoneNumber: user.mobile ?? '',
+            phoneNumber: PakistanPhoneUtils.localNumber(user.mobile ?? ''),
             email: user.email ?? '',
           ),
         ),
@@ -685,9 +686,8 @@ class CarFinanceCubit extends Cubit<CarFinanceState> {
       _emitFeedback('Please enter your phone number.');
       return false;
     }
-    if (applicant.phoneNumber.trim().length > 30 ||
-        !RegExp(r'^\+?[0-9()\-\s]+$').hasMatch(applicant.phoneNumber.trim())) {
-      _emitFeedback('Please enter a valid phone number.');
+    if (!PakistanPhoneUtils.isValid(applicant.phoneNumber)) {
+      _emitFeedback('Please enter a valid 10-digit phone number.');
       return false;
     }
     if (applicant.email.trim().isEmpty ||
