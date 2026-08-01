@@ -34,7 +34,6 @@ import 'package:eClassify/data/model/item/job_application.dart'
 import 'package:eClassify/data/model/location/leaf_location.dart';
 import 'package:eClassify/data/model/safety_tips_model.dart';
 import 'package:eClassify/data/model/system_settings_model.dart';
-import 'package:eClassify/ui/screens/ad_banner_screen.dart';
 import 'package:eClassify/ui/screens/advertisement/details/widgets/report_ads/repord_ad_card.dart';
 import 'package:eClassify/ui/screens/advertisement/details/widgets/seller_profile/seller_profile_card.dart';
 import 'package:eClassify/ui/screens/chat/chat_screen.dart';
@@ -648,9 +647,6 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  if (Constant.isGoogleBannerAdsEnabled == "1") ...[
-                    AdBannerWidget(),
-                  ],
                   const SizedBox(height: 10),
                   if (isAddedByMe)
                     if (!model.isFeature!) createFeaturesAds(),
@@ -674,15 +670,6 @@ class AdDetailsScreenState extends CloudState<AdDetailsScreen> {
                     SellerProfileCard(user: model.user!, item: model),
                   //Dynamic Ads here
                   setLocation(),
-                  if (Constant.isGoogleBannerAdsEnabled == "1") ...[
-                    Divider(
-                      thickness: 1,
-                      color: context.color.textDefaultColor.withValues(
-                        alpha: 0.1,
-                      ),
-                    ),
-                    AdBannerWidget(margin: const EdgeInsets.only(top: 10)),
-                  ],
                   10.vGap,
                   if (!isAddedByMe && !isAlreadyReported)
                     ReportAdCard(

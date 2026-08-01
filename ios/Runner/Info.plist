@@ -53,8 +53,6 @@
 	<string>1</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
 	<key>GIDClientID</key>
 	<string>124116953140-j45eoqgu6hr847v2n8hp7invmiiodtdu.apps.googleusercontent.com</string>
 	<key>LSApplicationQueriesSchemes</key>

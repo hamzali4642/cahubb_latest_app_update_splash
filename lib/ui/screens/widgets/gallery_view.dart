@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/app_icon.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
-import 'package:eClassify/utils/interstitial_ad_on_exit_mixin.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -20,8 +19,7 @@ class GalleryViewWidget extends StatefulWidget {
   State<GalleryViewWidget> createState() => _GalleryViewWidgetState();
 }
 
-class _GalleryViewWidgetState extends State<GalleryViewWidget>
-     {
+class _GalleryViewWidgetState extends State<GalleryViewWidget> {
   late PageController controller = PageController(
     initialPage: widget.initalIndex,
   );

@@ -119,9 +119,6 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
       SystemSetting.maintenanceMode,
     );
 
-    // Ad settings
-    _updateAdSettings(settings);
-
     // Location settings
     if (AppConfig.defaultLatitude == 0.0) {
       final latitude = double.tryParse(
@@ -170,47 +167,6 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
         HiveUtils.setLocation(location: updatedLocation);
       }
     }
-  }
-
-  /// Updates ad-related settings
-  void _updateAdSettings(Map settings) {
-    Constant.isGoogleBannerAdsEnabled = _getSettingAsString(
-      settings,
-      SystemSetting.bannerAdStatus,
-    );
-    Constant.isGoogleInterstitialAdsEnabled = _getSettingAsString(
-      settings,
-      SystemSetting.interstitialAdStatus,
-    );
-    Constant.isGoogleNativeAdsEnabled = _getSettingAsString(
-      settings,
-      SystemSetting.nativeAdStatus,
-    );
-
-    Constant.bannerAdIdAndroid = _getSettingAsString(
-      settings,
-      SystemSetting.bannerAdAndroidAd,
-    );
-    Constant.bannerAdIdIOS = _getSettingAsString(
-      settings,
-      SystemSetting.bannerAdiOSAd,
-    );
-    Constant.interstitialAdIdAndroid = _getSettingAsString(
-      settings,
-      SystemSetting.interstitialAdAndroidAd,
-    );
-    Constant.interstitialAdIdIOS = _getSettingAsString(
-      settings,
-      SystemSetting.interstitialAdiOSAd,
-    );
-    Constant.nativeAdIdAndroid = _getSettingAsString(
-      settings,
-      SystemSetting.nativeAndroidAd,
-    );
-    Constant.nativeAdIdIOS = _getSettingAsString(
-      settings,
-      SystemSetting.nativeAdiOSAd,
-    );
   }
 
   /// Updates store URLs and iOS app ID

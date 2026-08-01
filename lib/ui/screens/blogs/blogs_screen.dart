@@ -8,7 +8,6 @@ import 'package:eClassify/ui/screens/widgets/shimmer_loading_container.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
-import 'package:eClassify/utils/interstitial_ad_on_exit_mixin.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,8 +27,7 @@ class BlogsScreen extends StatefulWidget {
   State<BlogsScreen> createState() => _BlogsScreenState();
 }
 
-class _BlogsScreenState extends State<BlogsScreen>
-    with InterstitialAdOnExitMixin {
+class _BlogsScreenState extends State<BlogsScreen> {
   final ScrollController _pageScrollController = ScrollController();
 
   @override

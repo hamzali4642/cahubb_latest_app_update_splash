@@ -8,7 +8,6 @@ import 'package:eClassify/ui/screens/widgets/errors/something_went_wrong.dart';
 import 'package:eClassify/ui/screens/widgets/shimmer_loading_container.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
-import 'package:eClassify/utils/interstitial_ad_on_exit_mixin.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,8 +27,7 @@ class FavoriteScreen extends StatefulWidget {
   FavoriteScreenState createState() => FavoriteScreenState();
 }
 
-class FavoriteScreenState extends State<FavoriteScreen>
-    with InterstitialAdOnExitMixin {
+class FavoriteScreenState extends State<FavoriteScreen> {
   late final ScrollController _controller = ScrollController()
     ..addListener(() {
       if (_controller.offset >= _controller.position.maxScrollExtent) {

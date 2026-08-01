@@ -11,7 +11,6 @@ import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/currency_formatter.dart';
 import 'package:eClassify/utils/helper_utils.dart';
-import 'package:eClassify/utils/interstitial_ad_on_exit_mixin.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:eClassify/utils/widgets.dart';
 import 'package:flutter/material.dart';
@@ -34,8 +33,7 @@ class TransactionHistory extends StatefulWidget {
   State<TransactionHistory> createState() => _TransactionHistoryState();
 }
 
-class _TransactionHistoryState extends State<TransactionHistory>
-    with InterstitialAdOnExitMixin {
+class _TransactionHistoryState extends State<TransactionHistory> {
   late final ScrollController _controller = ScrollController()
     ..addListener(() {
       if (_controller.offset >= _controller.position.maxScrollExtent) {

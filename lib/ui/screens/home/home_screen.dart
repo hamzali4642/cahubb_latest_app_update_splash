@@ -19,7 +19,6 @@ import 'package:eClassify/data/cubits/slider_cubit.dart';
 import 'package:eClassify/data/cubits/system/fetch_system_settings_cubit.dart';
 import 'package:eClassify/data/model/location/leaf_location.dart';
 import 'package:eClassify/data/model/system_settings_model.dart';
-import 'package:eClassify/ui/screens/ad_banner_screen.dart';
 import 'package:eClassify/ui/screens/home/mixins/root_location_resolver_mixin.dart';
 import 'package:eClassify/ui/screens/home/slider_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/category_widget_home.dart';
@@ -30,7 +29,6 @@ import 'package:eClassify/ui/screens/home/widgets/home_search.dart';
 import 'package:eClassify/ui/screens/home/widgets/item_card_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/location_widget.dart';
 import 'package:eClassify/ui/screens/home/widgets/latest_news_section.dart';
-import 'package:eClassify/ui/screens/native_ads_screen.dart';
 import 'package:eClassify/ui/screens/widgets/errors/no_internet.dart';
 import 'package:eClassify/ui/screens/widgets/errors/something_went_wrong.dart';
 import 'package:eClassify/ui/screens/widgets/shimmer_loading_container.dart';
@@ -46,7 +44,6 @@ import 'package:eClassify/utils/hive_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:staggered_grid_view/flutter_staggered_grid_view.dart';
 
 const double sidePadding = 10;
@@ -282,14 +279,6 @@ class HomeScreenState extends State<HomeScreen>
                         },
                       ),
                       SliverToBoxAdapter(
-                        child: Constant.isGoogleBannerAdsEnabled == "1"
-                            ? AdBannerWidget(
-                                key: ValueKey('home_banner'),
-                                margin: EdgeInsets.symmetric(vertical: 10),
-                              )
-                            : 10.vGap,
-                      ),
-                      SliverToBoxAdapter(
                         child:
                             BlocBuilder<
                               FetchHomeAllItemsCubit,
@@ -394,14 +383,8 @@ class AllItemsWidget extends StatelessWidget {
       builder: (context, state) {
         if (state is FetchHomeAllItemsSuccess) {
           final items = state.items;
-          final intervalItems = Constant.nativeAdsAfterItemNumber;
-          final adCount = items.length ~/ intervalItems;
           final showLoader = state.hasMore;
-          final totalCount = items.length + adCount + (showLoader ? 1 : 0);
-
-          int adsBeforeIndex(int index) {
-            return (index + 1) ~/ (intervalItems + 1);
-          }
+          final totalCount = items.length + (showLoader ? 1 : 0);
 
           return SliverStaggeredGrid.countBuilder(
             crossAxisCount: 2,
@@ -414,13 +397,7 @@ class AllItemsWidget extends StatelessWidget {
                 return Center(child: UiUtils.progress());
               }
 
-              final isAd = index != 0 && (index + 1) % (intervalItems + 1) == 0;
-              if (isAd) {
-                return const NativeAdWidget(type: TemplateType.medium);
-              }
-
-              final itemIndex = index - adsBeforeIndex(index);
-              final item = items[itemIndex];
+              final item = items[index];
               return ItemCard(key: ValueKey(item.id!), item: item);
             },
             staggeredTileBuilder: (index) {
@@ -431,10 +408,7 @@ class AllItemsWidget extends StatelessWidget {
                     : const StaggeredTile.count(1, 1.5);
               }
 
-              final isAd = index != 0 && (index + 1) % (intervalItems + 1) == 0;
-              return isAd
-                  ? const StaggeredTile.fit(2)
-                  : const StaggeredTile.count(1, 1.5);
+              return const StaggeredTile.count(1, 1.5);
             },
           );
         }

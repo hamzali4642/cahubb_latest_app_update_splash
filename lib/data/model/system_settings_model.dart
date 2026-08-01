@@ -14,15 +14,6 @@ enum SystemSetting {
   numberWithSuffix,
   iosVersion,
   demoMode,
-  bannerAdStatus,
-  bannerAdAndroidAd,
-  bannerAdiOSAd,
-  interstitialAdStatus,
-  interstitialAdAndroidAd,
-  interstitialAdiOSAd,
-  nativeAdStatus,
-  nativeAndroidAd,
-  nativeAdiOSAd,
   playStoreLink,
   appStoreLink,
   defaultLatitude,
@@ -35,5 +26,5 @@ enum SystemSetting {
   maxRadius,
   autoApproveEditedItem,
   otpServiceProvider,
-  mapProvider
+  mapProvider,
 }

@@ -12,7 +12,6 @@ import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/helper_utils.dart';
-import 'package:eClassify/utils/interstitial_ad_on_exit_mixin.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,8 +32,7 @@ class Notifications extends StatefulWidget {
   }
 }
 
-class NotificationsState extends State<Notifications>
-    with InterstitialAdOnExitMixin {
+class NotificationsState extends State<Notifications> {
   late final ScrollController _pageScrollController = ScrollController();
 
   List<ItemModel> itemData = [];

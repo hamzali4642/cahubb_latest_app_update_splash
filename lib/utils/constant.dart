@@ -13,10 +13,6 @@ class Constant {
     horizontal: horizontalPadding,
   );
 
-  // Interval for showing native ads in home screen's infinite scrolling
-  // ONLY ADD EVEN NUMBERS
-  static int nativeAdsAfterItemNumber = 12;
-
   // This is only to show the actual google map in ad_details_screen.dart
   // It can be set to false in case there are any lags in loading the screen
   static bool showGoogleMap = false;
@@ -90,15 +86,6 @@ class Constant {
     SystemSetting.androidVersion: "android_version",
     SystemSetting.numberWithSuffix: "number_with_suffix",
     SystemSetting.iosVersion: "ios_version",
-    SystemSetting.bannerAdStatus: "banner_ad_status",
-    SystemSetting.bannerAdAndroidAd: "banner_ad_id_android",
-    SystemSetting.bannerAdiOSAd: "banner_ad_id_ios",
-    SystemSetting.interstitialAdStatus: "interstitial_ad_status",
-    SystemSetting.interstitialAdAndroidAd: "interstitial_ad_id_android",
-    SystemSetting.interstitialAdiOSAd: "interstitial_ad_id_ios",
-    SystemSetting.nativeAdStatus: "native_ad_status",
-    SystemSetting.nativeAndroidAd: "native_app_id_android",
-    SystemSetting.nativeAdiOSAd: "native_app_id_android",
     SystemSetting.playStoreLink: "play_store_link",
     SystemSetting.appStoreLink: "app_store_link",
     SystemSetting.defaultLatitude: "default_latitude",
@@ -125,20 +112,6 @@ class Constant {
 
   // Storage path for media downloads
   static String savePath = '';
-
-  // Google AdMob IDs and Switches
-  // Todo(I): Use booleans for switches instead of String based comparison
-  static String isGoogleBannerAdsEnabled = "";
-  static String bannerAdIdAndroid = '';
-  static String bannerAdIdIOS = "";
-
-  static String isGoogleInterstitialAdsEnabled = "";
-  static String interstitialAdIdAndroid = '';
-  static String interstitialAdIdIOS = '';
-
-  static String isGoogleNativeAdsEnabled = "1";
-  static String nativeAdIdAndroid = '';
-  static String nativeAdIdIOS = '';
 
   static String currencySymbol = "";
   static bool currencyPositionIsLeft = true;

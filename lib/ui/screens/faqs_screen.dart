@@ -6,7 +6,6 @@ import 'package:eClassify/ui/screens/widgets/shimmer_loading_container.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
-import 'package:eClassify/utils/interstitial_ad_on_exit_mixin.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,8 +25,7 @@ class FaqsScreen extends StatefulWidget {
   State<FaqsScreen> createState() => _FaqsScreenState();
 }
 
-class _FaqsScreenState extends State<FaqsScreen>
-    with InterstitialAdOnExitMixin {
+class _FaqsScreenState extends State<FaqsScreen> {
   int _expandedItem = -1;
 
   @override

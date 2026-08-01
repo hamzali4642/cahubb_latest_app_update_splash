@@ -10,7 +10,6 @@ import 'package:eClassify/ui/screens/widgets/errors/something_went_wrong.dart';
 import 'package:eClassify/ui/screens/widgets/shimmer_common_widget.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
-import 'package:eClassify/utils/interstitial_ad_on_exit_mixin.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -33,8 +32,7 @@ class MyAdvertisementScreen extends StatefulWidget {
   State<MyAdvertisementScreen> createState() => _MyAdvertisementScreenState();
 }
 
-class _MyAdvertisementScreenState extends State<MyAdvertisementScreen>
-    with InterstitialAdOnExitMixin {
+class _MyAdvertisementScreenState extends State<MyAdvertisementScreen> {
   final ScrollController _pageScrollController = ScrollController();
 
   @override
