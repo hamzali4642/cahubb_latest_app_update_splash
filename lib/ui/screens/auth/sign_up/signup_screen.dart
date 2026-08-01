@@ -15,6 +15,7 @@ import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/cloud_state/cloud_state.dart';
 import 'package:eClassify/utils/constant.dart';
 import 'package:eClassify/utils/custom_text.dart';
+import 'package:eClassify/utils/error_filter.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/hive_utils.dart';
@@ -92,14 +93,11 @@ class _SignupScreenState extends CloudState<SignupScreen> {
         if (mounted) {
           LoadingWidgets.hideLoader(context);
           if (state.error case FirebaseAuthException e) {
-            final message = switch (e.code) {
-              'session-expired' => e.message,
-              'invalid-verification-code' => e.message,
-              _ => 'defaultErrorMsg'.translate(context),
-            };
             HelperUtils.showSnackBarMessage(
               context,
-              message ?? 'defaultErrorMsg'.translate(context),
+              ErrorFilter.getErrorKeyFromFirebaseAuthException(
+                e,
+              ).translate(context),
             );
           } else {
             HelperUtils.showSnackBarMessage(context, state.error.toString());
@@ -395,7 +393,7 @@ class _SignupScreenState extends CloudState<SignupScreen> {
               CustomTextFormField(
                 hintText: "${"password".translate(context)}",
                 controller: _phonePasswordController,
-                validator: CustomTextFieldValidator.nullCheck,
+                validator: CustomTextFieldValidator.password,
                 obscureText: isPhonePasswordObscure,
                 fillColor: context.color.secondaryColor,
                 borderColor: context.color.textLightColor.withValues(

@@ -86,6 +86,8 @@ class _HomeServicesWidgetState extends State<HomeServicesWidget> {
       title: 'Autostore',
       subtitle: 'Products For You',
       layout: HomeServiceLayout.placeholder,
+      routeName: Routes.comingSoonScreen,
+      requiresAuthentication: false,
     ),
   ];
 
@@ -121,6 +123,7 @@ class HomeServiceItem {
   final String? imagePath;
   final HomeServiceLayout layout;
   final String? routeName;
+  final bool requiresAuthentication;
 
   const HomeServiceItem({
     required this.title,
@@ -128,12 +131,17 @@ class HomeServiceItem {
     this.imagePath,
     this.layout = HomeServiceLayout.regular,
     this.routeName,
+    this.requiresAuthentication = true,
   });
 }
 
 void _openService(BuildContext context, HomeServiceItem item) {
   final routeName = item.routeName;
   if (routeName == null) return;
+  if (!item.requiresAuthentication) {
+    Navigator.pushNamed(context, routeName, arguments: {'title': item.title});
+    return;
+  }
   UiUtils.checkUser(
     context: context,
     onNotGuest: () => Navigator.pushNamed(context, routeName),

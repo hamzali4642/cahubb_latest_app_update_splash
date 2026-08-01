@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/constant.dart';
 import 'package:eClassify/utils/login/lib/login_status.dart';
@@ -8,6 +10,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 class PhoneLogin extends LoginSystem {
   String? verificationId;
   String? phoneNumber;
+  int? _resendingToken;
+  String? _verificationPhoneNumber;
 
   @override
   Future<UserCredential?> login() async {
@@ -51,22 +55,33 @@ class PhoneLogin extends LoginSystem {
       return;
     }
 
+    final requestedPhoneNumber =
+        "+${(payload as PhoneLoginPayload).phoneCode}${(payload as PhoneLoginPayload).phoneNumber}";
+    if (_verificationPhoneNumber != requestedPhoneNumber) {
+      _verificationPhoneNumber = requestedPhoneNumber;
+      verificationId = null;
+      _resendingToken = null;
+    }
+
     await FirebaseAuth.instance
         .verifyPhoneNumber(
           timeout: Duration(seconds: Constant.otpTimeOutSecond),
-          phoneNumber:
-              "+${(payload as PhoneLoginPayload).phoneCode}${(payload as PhoneLoginPayload).phoneNumber}",
+          phoneNumber: requestedPhoneNumber,
           verificationCompleted: (PhoneAuthCredential credential) {},
           verificationFailed: (FirebaseAuthException e) {
+            // A stale resend/reCAPTCHA session must not leak into the next try.
+            _resendingToken = null;
             emit(MFail(e));
           },
           codeSent: (String verificationId, int? resendToken) {
             super.requestVerification();
-            forceResendingToken = resendToken;
+            _resendingToken = resendToken;
             this.verificationId = verificationId;
           },
           codeAutoRetrievalTimeout: (String verificationId) {},
-          forceResendingToken: forceResendingToken,
+          // Firebase resend tokens are Android-only. Supplying stale state to
+          // the iOS reCAPTCHA flow can invalidate a subsequent attempt.
+          forceResendingToken: Platform.isAndroid ? _resendingToken : null,
         )
         .then((value) {});
   }

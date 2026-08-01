@@ -111,13 +111,14 @@ class Validator {
     String? secondFieldValue,
     required BuildContext context,
   }) {
-    if (password!.isEmpty) {
+    final normalizedPassword = password?.trim() ?? '';
+    if (normalizedPassword.isEmpty) {
       return "fieldMustNotBeEmpty".translate(context);
-    } else if (password.length < 6) {
+    } else if (normalizedPassword.length < 8) {
       return "passwordWarning".translate(context);
     }
     if (secondFieldValue != null) {
-      if (password != secondFieldValue) {
+      if (normalizedPassword != secondFieldValue.trim()) {
         return "fieldSameWarning".translate(context);
       }
     }

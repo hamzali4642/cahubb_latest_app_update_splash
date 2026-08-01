@@ -21,7 +21,7 @@ class GalleryViewWidget extends StatefulWidget {
 }
 
 class _GalleryViewWidgetState extends State<GalleryViewWidget>
-    with InterstitialAdOnExitMixin {
+     {
   late PageController controller = PageController(
     initialPage: widget.initalIndex,
   );

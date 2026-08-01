@@ -119,8 +119,9 @@ class Constant {
 
   // App Information
   static String playStoreUrl = "";
-  static String appStoreUrl = "";
-  static String iOSAppId = '';
+  static String appStoreUrl =
+      "https://apps.apple.com/pk/app/ca-hubb/id6774878754";
+  static String iOSAppId = '6774878754';
 
   // Storage path for media downloads
   static String savePath = '';

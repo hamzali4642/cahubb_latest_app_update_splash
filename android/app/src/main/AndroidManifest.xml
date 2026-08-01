@@ -48,7 +48,7 @@
         android:allowBackup="false"
         android:fullBackupOnly="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="CA Hub"
+        android:label="CA HUBB"
         android:largeHeap="true"
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true">

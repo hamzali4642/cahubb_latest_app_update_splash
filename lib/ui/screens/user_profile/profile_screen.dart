@@ -632,29 +632,34 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   void shareApp() {
     try {
-      if (Platform.isAndroid) {
-        SharePlus.instance.share(
-          ShareParams(
-            text:
-                '${AppConfig.applicationName}\n${Constant.playStoreUrl}\n${"shareApp".translate(context)}',
-            subject: AppConfig.applicationName,
-          ),
-        );
-      } else {
-        SharePlus.instance.share(
-          ShareParams(
-            text:
-                '${AppConfig.applicationName}\n${Constant.appStoreUrl}\n${"shareApp".translate(context)}',
-            subject: AppConfig.applicationName,
-            sharePositionOrigin: Rect.fromLTWH(
-              0,
-              0,
-              MediaQuery.of(context).size.width,
-              MediaQuery.of(context).size.height / 2,
-            ),
-          ),
-        );
-      }
+      final configuredUrl = Platform.isAndroid
+          ? Constant.playStoreUrl.trim()
+          : Constant.appStoreUrl.trim();
+      final iosStoreUrl = Constant.iOSAppId.trim().isNotEmpty
+          ? 'https://apps.apple.com/app/id${Constant.iOSAppId.trim()}'
+          : AppConfig.shareDomain;
+      final downloadUrl = configuredUrl.isNotEmpty
+          ? configuredUrl
+          : Platform.isAndroid
+          ? 'https://play.google.com/store/apps/details?id=com.cahubb.pakistan'
+          : iosStoreUrl;
+      final shareText =
+          '${"shareApp".translate(context)} ${AppConfig.applicationName}\n$downloadUrl';
+
+      SharePlus.instance.share(
+        ShareParams(
+          text: shareText,
+          subject: AppConfig.applicationName,
+          sharePositionOrigin: Platform.isIOS
+              ? Rect.fromLTWH(
+                  0,
+                  0,
+                  MediaQuery.of(context).size.width,
+                  MediaQuery.of(context).size.height / 2,
+                )
+              : null,
+        ),
+      );
     } catch (e) {
       HelperUtils.showSnackBarMessage(context, e.toString());
     }

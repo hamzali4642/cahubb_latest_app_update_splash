@@ -222,11 +222,16 @@ class FetchSystemSettingsCubit extends Cubit<FetchSystemSettingsState> {
     Constant.appStoreUrl = _getSettingAsString(
       settings,
       SystemSetting.appStoreLink,
+      fallback: 'https://apps.apple.com/pk/app/ca-hubb/id6774878754',
     );
-    Constant.iOSAppId = _getSettingAsString(
-      settings,
-      SystemSetting.appStoreLink,
-    ).split('/').last;
+    final appStorePath = Uri.tryParse(Constant.appStoreUrl)?.pathSegments;
+    final appStoreIdSegment = appStorePath?.isNotEmpty == true
+        ? appStorePath!.last
+        : '';
+    Constant.iOSAppId = appStoreIdSegment.replaceFirst(RegExp(r'^id'), '');
+    if (Constant.iOSAppId.isEmpty) {
+      Constant.iOSAppId = '6774878754';
+    }
   }
 
   /// Updates authentication-related settings

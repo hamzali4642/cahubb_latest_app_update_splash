@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 class AuthRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   static int? forceResendingToken;
+  static String? _verificationPhoneNumber;
 
   Future<Map<String, dynamic>> numberLoginWithApi({
     String? phone,
@@ -89,11 +90,16 @@ class AuthRepository {
     required Function(String verificationId) onCodeSent,
     Function(dynamic e)? onError,
   }) async {
+    if (_verificationPhoneNumber != phoneNumber) {
+      _verificationPhoneNumber = phoneNumber;
+      forceResendingToken = null;
+    }
     await FirebaseAuth.instance.verifyPhoneNumber(
       timeout: Duration(seconds: Constant.otpTimeOutSecond),
       phoneNumber: phoneNumber,
       verificationCompleted: (PhoneAuthCredential credential) {},
       verificationFailed: (FirebaseAuthException e) {
+        forceResendingToken = null;
         onError?.call(ApiException(e.code));
       },
       codeSent: (String verificationId, int? resendToken) {
@@ -101,7 +107,7 @@ class AuthRepository {
         onCodeSent.call(verificationId);
       },
       codeAutoRetrievalTimeout: (String verificationId) {},
-      forceResendingToken: forceResendingToken,
+      forceResendingToken: Platform.isAndroid ? forceResendingToken : null,
     );
   }
 

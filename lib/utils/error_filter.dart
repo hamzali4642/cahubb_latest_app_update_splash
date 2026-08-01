@@ -24,6 +24,10 @@ class ErrorFilter {
     "too-many-requests": "tooManyRequests",
     "user-disabled": "userDisabled",
     "operation-not-allowed": "operationNotAllowed",
+    "missing-initial-state": "recaptchaSessionFailed",
+    "captcha-check-failed": "recaptchaSessionFailed",
+    "invalid-app-credential": "recaptchaSessionFailed",
+    "quota-exceeded": "tooManyRequests",
   };
 
   /// Returns the translated message based on FirebaseAuthException

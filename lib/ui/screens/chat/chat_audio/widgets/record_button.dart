@@ -17,11 +17,12 @@ import 'package:record/record.dart';
 import 'package:vibration/vibration.dart';
 
 class RecordButton extends StatefulWidget {
-  const RecordButton(
-      {super.key,
-      required this.controller,
-      required this.callback,
-      required this.isSending});
+  const RecordButton({
+    super.key,
+    required this.controller,
+    required this.callback,
+    required this.isSending,
+  });
 
   final AnimationController controller;
   final Function(dynamic path)? callback;
@@ -34,7 +35,7 @@ class RecordButton extends StatefulWidget {
 class _RecordButtonState extends State<RecordButton> {
   static const double size = 43;
 
-  final double lockerHeight = 200;
+  final double lockerHeight = 150;
   double timerWidth = 0;
 
   late Animation<double> buttonScaleAnimation;
@@ -72,21 +73,22 @@ class _RecordButtonState extends State<RecordButton> {
     timerWidth =
         MediaQuery.of(context).size.width - 2 * ChatGlobals.defaultPadding - 4;
     timerAnimation =
-        Tween<double>(begin: timerWidth + ChatGlobals.defaultPadding, end: 0)
-            .animate(
-      CurvedAnimation(
-        parent: widget.controller,
-        curve: const Interval(0.2, 1, curve: Curves.easeIn),
-      ),
-    );
-    lockerAnimation =
-        Tween<double>(begin: lockerHeight + ChatGlobals.defaultPadding, end: 0)
-            .animate(
-      CurvedAnimation(
-        parent: widget.controller,
-        curve: const Interval(0.2, 1, curve: Curves.easeIn),
-      ),
-    );
+        Tween<double>(
+          begin: timerWidth + ChatGlobals.defaultPadding,
+          end: 0,
+        ).animate(
+          CurvedAnimation(
+            parent: widget.controller,
+            curve: const Interval(0.2, 1, curve: Curves.easeIn),
+          ),
+        );
+    lockerAnimation = Tween<double>(begin: -lockerHeight, end: size + 8)
+        .animate(
+          CurvedAnimation(
+            parent: widget.controller,
+            curve: const Interval(0.2, 1, curve: Curves.easeIn),
+          ),
+        );
   }
 
   @override
@@ -113,7 +115,7 @@ class _RecordButtonState extends State<RecordButton> {
   Widget lockSlider() {
     return Positioned.directional(
       textDirection: Directionality.of(context),
-      bottom: -lockerAnimation.value,
+      bottom: lockerAnimation.value,
       child: Container(
         height: lockerHeight,
         width: size,
@@ -168,18 +170,13 @@ class _RecordButtonState extends State<RecordButton> {
                 duration: const Duration(seconds: 3),
                 flowColors: [
                   context.color.territoryColor,
-                  const Color(0xFF9E9E9E)
+                  const Color(0xFF9E9E9E),
                 ],
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.arrow_back_ios_new_sharp,
-                      size: 14,
-                    ),
+                    Icon(Icons.arrow_back_ios_new_sharp, size: 14),
                     CustomText("slidetocancel".translate(context)),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                   ],
                 ),
                 //flowColors: const [Colors.white, Colors.grey],
@@ -205,38 +202,33 @@ class _RecordButtonState extends State<RecordButton> {
           //color: Colors.black,
         ),
         child: Padding(
-          padding: EdgeInsetsDirectional.only(start: 15, end: 25),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () async {
-              saveFile();
-              setState(() {
-                isLocked = false;
-              });
-            },
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CustomText(recordDuration),
-                const SizedBox(
-                  width: 5,
+          padding: const EdgeInsetsDirectional.only(start: 6, end: 6),
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: 'Discard recording',
+                onPressed: _discardRecording,
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+              ),
+              Expanded(
+                child: CustomText(
+                  recordDuration,
+                  textAlign: TextAlign.center,
+                  fontWeight: FontWeight.w600,
                 ),
-                FlowShader(
-                  duration: const Duration(seconds: 3),
-                  flowColors: [context.color.territoryColor, Colors.grey],
-                  child: CustomText("taploacktostop".translate(context)),
-                  //flowColors: const [Colors.white, Colors.grey],
+              ),
+              IconButton(
+                tooltip: 'Send recording',
+                onPressed: () async {
+                  await saveFile();
+                  if (mounted) setState(() => isLocked = false);
+                },
+                icon: Icon(
+                  Icons.send_rounded,
+                  color: context.color.territoryColor,
                 ),
-                const Center(
-                  child: Icon(
-                    Icons.lock,
-                    size: 18,
-                    color: Colors.green,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -268,10 +260,7 @@ class _RecordButtonState extends State<RecordButton> {
           ),
           child: widget.isSending
               ? CircularProgressIndicator()
-              : Icon(
-                  Icons.mic,
-                  color: Colors.white,
-                ),
+              : Icon(Icons.mic, color: Colors.white),
         ),
       ),
       onLongPressDown: (_) {
@@ -345,8 +334,9 @@ class _RecordButtonState extends State<RecordButton> {
   Future<void> startRecording() async {
     if (await record.hasPermission()) {
       try {
-        String filePath = await getApplicationDocumentsDirectory()
-            .then((value) => '${value.path}/${_generateRandomId()}.wav');
+        String filePath = await getApplicationDocumentsDirectory().then(
+          (value) => '${value.path}/${_generateRandomId()}.wav',
+        );
 
         await record.start(
           const RecordConfig(
@@ -390,28 +380,53 @@ class _RecordButtonState extends State<RecordButton> {
 
     AudioState.files.add(filePath!);
     if (ChatGlobals.audioListKey.currentState != null) {
-      ChatGlobals.audioListKey.currentState!
-          .insertItem(AudioState.files.length - 1);
+      ChatGlobals.audioListKey.currentState!.insertItem(
+        AudioState.files.length - 1,
+      );
     }
 
     final fileAudio = File(filePath);
     widget.callback!(fileAudio.path);
   }
 
+  Future<void> _discardRecording() async {
+    Vibration.vibrate();
+    timer?.cancel();
+    timer = null;
+    startTime = null;
+    recordDuration = "00:00";
+
+    final filePath = await record.stop();
+    if (filePath != null) {
+      final file = File(filePath);
+      if (await file.exists()) await file.delete();
+    }
+    record = AudioRecorder();
+    widget.controller.reverse();
+    if (mounted) {
+      setState(() {
+        isLocked = false;
+        showLottie = false;
+      });
+    }
+  }
+
   void showPermissionDeniedSnackbar() {
     HelperUtils.showSnackBarMessage(
-        context, 'microphonePermissionIsDeniedEnableIt'.translate(context),
-        snackBarAction: SnackBarAction(
-          textColor: context.color.secondaryColor,
-          label: 'settingsLbl'.translate(context),
-          onPressed: () {
-            openAppSettings();
-          },
-        ));
+      context,
+      'microphonePermissionIsDeniedEnableIt'.translate(context),
+      snackBarAction: SnackBarAction(
+        textColor: context.color.secondaryColor,
+        label: 'settingsLbl'.translate(context),
+        onPressed: () {
+          openAppSettings();
+        },
+      ),
+    );
   }
 
   bool checkIsLocked(Offset offset) {
-    return (offset.dy < -35);
+    return offset.dy < -70 && offset.dx.abs() < size;
   }
 
   bool isCancelled(Offset offset, BuildContext context) {

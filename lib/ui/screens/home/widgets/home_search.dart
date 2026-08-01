@@ -1,15 +1,13 @@
-import 'dart:convert';
-
 import 'package:eClassify/app/routes.dart';
+import 'package:eClassify/data/cubits/category/fetch_category_cubit.dart';
+import 'package:eClassify/data/model/category_model.dart';
+import 'package:eClassify/data/model/item/item_filter.dart';
 import 'package:eClassify/data/model/item/item_list.dart';
-import 'package:eClassify/data/model/item/item_model.dart';
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
-import 'package:eClassify/utils/hive_keys.dart' show HiveKeys;
-import 'package:eClassify/utils/json_helper.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeSearchField extends StatefulWidget {
   const HomeSearchField({super.key});
@@ -119,32 +117,98 @@ class _HomeSearchFieldState extends State<HomeSearchField> {
 
   void _openSearch(
     BuildContext context, {
-    String? title,
-    String? searchKeyword,
+    _HomeQuickFilter? filter,
+    _QuickCardData? card,
   }) {
-    final history = Hive.box(HiveKeys.historyBox).values.map((jsonString) {
-      final json = (jsonDecode(jsonString) as Map).cast<String, dynamic>();
-      return JsonHelper.parseObject(json, ItemModel.fromJson);
-    }).toList();
-    final selectedFilter = _quickFilters[_selectedIndex];
+    final selectedFilter = filter ?? _quickFilters[_selectedIndex];
+    final categoryState = context.read<FetchCategoryCubit>().state;
+    if (categoryState is! FetchCategorySuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Categories are still loading. Try again.'),
+        ),
+      );
+      return;
+    }
+
+    final parentMatch = _findCategory(categoryState.categories, {
+      selectedFilter.title,
+      ?selectedFilter.searchKeyword,
+    }, rootOnly: true);
+    if (parentMatch == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${selectedFilter.title} is unavailable.')),
+      );
+      return;
+    }
+
+    final childMatch = card == null
+        ? null
+        : _findCategory(parentMatch.category.children ?? const [], {
+            card.title,
+            card.label,
+            card.searchKeyword,
+          }, prefixPath: parentMatch.path);
+    final selectedMatch = childMatch ?? parentMatch;
 
     Navigator.pushNamed(
       context,
       Routes.itemsList,
-      arguments: SearchMetaData(
-        title: title ?? selectedFilter.title,
-        searchHistory: history,
-        search: searchKeyword ?? selectedFilter.searchKeyword,
+      arguments: CategoryMetaData(
+        title: card?.title ?? selectedFilter.title,
+        categoryId: selectedMatch.category.id.toString(),
+        categoryIds: selectedMatch.path
+            .map((category) => category.id.toString())
+            .toList(),
+        filter: ItemFilter(category: selectedMatch.category),
+        // If a matching child is not configured by the API, retain the
+        // selected parent category while applying the card keyword.
+        search: card != null && childMatch == null ? card.searchKeyword : null,
       ),
     );
   }
+
+  _CategoryMatch? _findCategory(
+    List<CategoryModel> categories,
+    Set<String> candidates, {
+    bool rootOnly = false,
+    List<CategoryModel> prefixPath = const [],
+  }) {
+    final normalizedCandidates = candidates.map(_normalize).toSet();
+    for (final category in categories) {
+      final name = _normalize(category.name ?? '');
+      if (normalizedCandidates.contains(name)) {
+        return _CategoryMatch(category, [...prefixPath, category]);
+      }
+    }
+
+    if (rootOnly) return null;
+    for (final category in categories) {
+      final match = _findCategory(
+        category.children ?? const [],
+        normalizedCandidates,
+        prefixPath: [...prefixPath, category],
+      );
+      if (match != null) return match;
+    }
+    return null;
+  }
+
+  String _normalize(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
 
   @override
   Widget build(BuildContext context) {
     final selectedFilter = _quickFilters[_selectedIndex];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: context.color.secondaryColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.color.borderColor),
+      ),
       child: Column(
         children: [
           TweenAnimationBuilder<double>(
@@ -172,8 +236,8 @@ class _HomeSearchFieldState extends State<HomeSearchField> {
                       title: _quickFilters[index].title,
                       isSelected: index == _selectedIndex,
                       onTap: () {
-                        if (_selectedIndex == index) return;
                         setState(() => _selectedIndex = index);
+                        _openSearch(context, filter: _quickFilters[index]);
                       },
                     ),
                   ),
@@ -263,11 +327,7 @@ class _HomeSearchFieldState extends State<HomeSearchField> {
                   final card = selectedFilter.cards[index];
                   return _QuickProductCard(
                     card: card,
-                    onTap: () => _openSearch(
-                      context,
-                      title: card.title,
-                      searchKeyword: card.searchKeyword,
-                    ),
+                    onTap: () => _openSearch(context, card: card),
                   );
                 },
               ),
@@ -277,6 +337,13 @@ class _HomeSearchFieldState extends State<HomeSearchField> {
       ),
     );
   }
+}
+
+class _CategoryMatch {
+  const _CategoryMatch(this.category, this.path);
+
+  final CategoryModel category;
+  final List<CategoryModel> path;
 }
 
 class _FilterButton extends StatelessWidget {

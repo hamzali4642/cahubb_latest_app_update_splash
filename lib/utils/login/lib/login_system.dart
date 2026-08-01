@@ -2,8 +2,6 @@ import 'package:eClassify/utils/login/lib/login_status.dart';
 import 'package:eClassify/utils/login/lib/payloads.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-int? forceResendingToken;
-
 abstract class LoginSystem {
   List<Function(MLoginState fn)> listeners = [];
   FirebaseAuth firebaseAuth = FirebaseAuth.instance;
@@ -66,10 +64,7 @@ class MMultiAuthentication {
   Map<String, LoginSystem> systems;
   String? _selectedLoginSystem;
 
-  MMultiAuthentication(
-    this.systems, {
-    this.payload,
-  });
+  MMultiAuthentication(this.systems, {this.payload});
 
   ///This init will call all login system's init method by loop
   void init() {

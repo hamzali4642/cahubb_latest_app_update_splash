@@ -300,7 +300,7 @@ class _InspectionBookingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 22),
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 12),
       decoration: BoxDecoration(
         color: context.color.secondaryColor,
         border: Border(bottom: BorderSide(color: context.color.borderColor)),
@@ -314,8 +314,8 @@ class _InspectionBookingHeader extends StatelessWidget {
                 onTap: onBack,
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
-                  width: 42,
-                  height: 42,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: serviceMutedSurface(context),
                     borderRadius: BorderRadius.circular(16),
@@ -339,16 +339,16 @@ class _InspectionBookingHeader extends StatelessWidget {
               ),
             ],
           ),
-          20.vGap,
+          8.vGap,
           CustomText(
             'Sell it for me service',
             fontSize: context.font.small,
             fontWeight: FontWeight.w700,
             color: context.color.territoryColor,
           ),
-          10.vGap,
+          6.vGap,
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: context.color.primaryColor,
               borderRadius: BorderRadius.circular(20),
@@ -358,28 +358,21 @@ class _InspectionBookingHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CustomText(
-                  'Sell it for me booking',
-                  fontSize: context.font.small,
-                  fontWeight: FontWeight.w700,
-                  color: context.color.territoryColor,
-                ),
-                10.vGap,
-                CustomText(
                   headline,
-                  fontSize: 30,
+                  fontSize: context.font.extraLarge,
                   fontWeight: FontWeight.w800,
                   color: context.color.textDefaultColor,
                 ),
-                8.vGap,
+                4.vGap,
                 CustomText(
                   currentStepIndex == 0
                       ? 'Share your basic details to start the selling request.'
                       : 'Choose the area, date, and preferred time slot for our team visit.',
                   fontSize: context.font.normal,
                   color: context.color.textLightColor,
-                  height: 1.45,
+                  height: 1.25,
                 ),
-                18.vGap,
+                10.vGap,
                 _InspectionProgressStepper(
                   steps: steps,
                   currentStepIndex: currentStepIndex,

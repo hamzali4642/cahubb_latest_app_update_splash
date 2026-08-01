@@ -37,6 +37,7 @@ import 'package:eClassify/ui/screens/services/auction_sheet_verification_screen.
 import 'package:eClassify/ui/screens/services/car_finance_screen.dart';
 import 'package:eClassify/ui/screens/services/car_ownership_screen.dart';
 import 'package:eClassify/ui/screens/services/car_registration_screen.dart';
+import 'package:eClassify/ui/screens/services/coming_soon_screen.dart';
 import 'package:eClassify/ui/screens/services/my_bookings_screen.dart';
 import 'package:eClassify/ui/screens/services/car_inspection_booking_screen.dart';
 import 'package:eClassify/ui/screens/services/sell_it_for_me_booking_screen.dart';
@@ -118,6 +119,7 @@ class Routes {
   static const String newsDetailsScreenRoute = '/newsDetailsScreenRoute';
   static const String myReviewsScreen = '/myReviewsScreenRoute';
   static const String myBookingsScreen = '/myBookingsScreen';
+  static const String comingSoonScreen = '/comingSoonScreen';
 
   /// Location & Category Routes
   static const String languageListScreenRoute = '/languageListScreenRoute';
@@ -366,6 +368,8 @@ class Routes {
         return MyReviewScreen.route(routeSettings);
       case myBookingsScreen:
         return MyBookingsScreen.route(routeSettings);
+      case comingSoonScreen:
+        return ComingSoonScreen.route(routeSettings);
       default:
         return _defaultRoute();
     }
