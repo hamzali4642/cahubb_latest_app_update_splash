@@ -1,6 +1,7 @@
 import 'package:eClassify/ui/theme/theme.dart';
 import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
+import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 
 class ComingSoonScreen extends StatelessWidget {
@@ -22,29 +23,20 @@ class ComingSoonScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.color.primaryColor,
-      appBar: AppBar(
-        backgroundColor: context.color.secondaryColor,
-        foregroundColor: context.color.textDefaultColor,
-        elevation: 0,
-        title: Text(title),
-      ),
+      appBar: UiUtils.buildAppBar(context, showBackButton: true, title: title),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 112,
-                height: 112,
-                decoration: BoxDecoration(
-                  color: context.color.territoryColor.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 52,
-                  color: context.color.territoryColor,
+              SizedBox(
+                width: 220,
+                height: 220,
+                child: Image.asset(
+                  'assets/images/autoStore .png',
+                  fit: BoxFit.contain,
+                  semanticLabel: 'Auto Store products',
                 ),
               ),
               const SizedBox(height: 28),

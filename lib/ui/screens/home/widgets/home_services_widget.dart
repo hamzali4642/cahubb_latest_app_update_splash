@@ -85,6 +85,7 @@ class _HomeServicesWidgetState extends State<HomeServicesWidget> {
     HomeServiceItem(
       title: 'Autostore',
       subtitle: 'Products For You',
+      imagePath: 'assets/images/autoStore .png',
       layout: HomeServiceLayout.placeholder,
       routeName: Routes.comingSoonScreen,
       requiresAuthentication: false,
@@ -326,26 +327,13 @@ class _AutostorePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: height + 8,
-
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        children: [
-          Container(
-            height: height + 8,
-            width: 48,
-            decoration: BoxDecoration(
-              gradient: serviceHeroGradient(context),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.shopping_bag_outlined,
-              size: 18,
-              color: context.color.territoryColor,
-            ),
-          ),
-        ],
+      width: 62,
+      child: Image.asset(
+        'assets/images/autoStore .png',
+        fit: BoxFit.contain,
+        semanticLabel: 'Auto Store products',
       ),
     );
   }

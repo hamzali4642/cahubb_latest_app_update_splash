@@ -483,10 +483,8 @@
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/wakelock/wakelock.framework/Headers\"",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/webview_flutter_wkwebview/webview_flutter_wkwebview.framework/Headers\"",
 					"\"${PODS_ROOT}/Headers/Public\"",
-					"\"${PODS_ROOT}/Headers/Public/Firebase\"",
 					"\"${PODS_ROOT}/Headers/Public/GoogleMaps\"",
 					"$(inherited)",
-					"${PODS_ROOT}/Firebase/CoreOnly/Sources",
 					"\"$(SRCROOT)/../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/GTMAppAuth/GTMAppAuth/Sources/Public/GTMAppAuth\"",
 					"\"$(SRCROOT)/../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/gtm-session-fetcher/Sources/Core/Public\"",
 				);
@@ -718,10 +716,8 @@
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/wakelock/wakelock.framework/Headers\"",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/webview_flutter_wkwebview/webview_flutter_wkwebview.framework/Headers\"",
 					"\"${PODS_ROOT}/Headers/Public\"",
-					"\"${PODS_ROOT}/Headers/Public/Firebase\"",
 					"\"${PODS_ROOT}/Headers/Public/GoogleMaps\"",
 					"$(inherited)",
-					"${PODS_ROOT}/Firebase/CoreOnly/Sources",
 					"\"$(SRCROOT)/../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/GTMAppAuth/GTMAppAuth/Sources/Public/GTMAppAuth\"",
 					"\"$(SRCROOT)/../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/gtm-session-fetcher/Sources/Core/Public\"",
 				);
@@ -835,10 +831,8 @@
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/wakelock/wakelock.framework/Headers\"",
 					"\"${PODS_CONFIGURATION_BUILD_DIR}/webview_flutter_wkwebview/webview_flutter_wkwebview.framework/Headers\"",
 					"\"${PODS_ROOT}/Headers/Public\"",
-					"\"${PODS_ROOT}/Headers/Public/Firebase\"",
 					"\"${PODS_ROOT}/Headers/Public/GoogleMaps\"",
 					"$(inherited)",
-					"${PODS_ROOT}/Firebase/CoreOnly/Sources",
 					"\"$(SRCROOT)/../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/GTMAppAuth/GTMAppAuth/Sources/Public/GTMAppAuth\"",
 					"\"$(SRCROOT)/../../Tuist/Dependencies/SwiftPackageManager/.build/checkouts/gtm-session-fetcher/Sources/Core/Public\"",
 				);
