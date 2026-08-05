@@ -13,6 +13,7 @@ import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/hive_utils.dart';
 import 'package:eClassify/utils/login/lib/login_status.dart';
 import 'package:eClassify/utils/login/lib/payloads.dart';
+import 'package:eClassify/utils/password_reset_cooldown.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:eClassify/utils/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -56,7 +57,7 @@ class _ForgotPasswordOtpVerificationScreenState
   final TextEditingController _otpController = TextEditingController();
   String? otp;
   bool isResendEnabled = false;
-  int _start = 60;
+  int _start = PasswordResetCooldown.duration.inSeconds;
   Timer? _resendTimer;
   String? signature;
   SmsAutoFill smsAutoFill = SmsAutoFill();
@@ -76,6 +77,14 @@ class _ForgotPasswordOtpVerificationScreenState
 
       if (state is MVerificationPending) {
         if (mounted) {
+          unawaited(
+            PasswordResetCooldown.start(
+              PasswordResetCooldown.phoneIdentifier(
+                widget.phoneCode,
+                widget.phoneNumber,
+              ),
+            ),
+          );
           LoadingWidgets.hideLoader(context);
           isOtpSent = true;
           setState(() {});
@@ -136,11 +145,19 @@ class _ForgotPasswordOtpVerificationScreenState
   }
 
   void startResendOtpTimer() {
+    final identifier = PasswordResetCooldown.phoneIdentifier(
+      widget.phoneCode,
+      widget.phoneNumber,
+    );
+    final remaining = PasswordResetCooldown.remainingFor(identifier);
     setState(() {
       isResendEnabled = false;
-      _start = 60;
+      _start = remaining == Duration.zero
+          ? PasswordResetCooldown.duration.inSeconds
+          : remaining.inSeconds;
     });
 
+    _resendTimer?.cancel();
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_start == 0) {
         setState(() {
@@ -327,7 +344,7 @@ class _ForgotPasswordOtpVerificationScreenState
                           ),
                         )
                       : CustomText(
-                          "${"resendOtpIn".translate(context)} 0:${_start.toString().padLeft(2, '0')}",
+                          "${"resendOtpIn".translate(context)} ${PasswordResetCooldown.format(Duration(seconds: _start))}",
                           color: context.color.textColorDark.withValues(
                             alpha: 0.7,
                           ),

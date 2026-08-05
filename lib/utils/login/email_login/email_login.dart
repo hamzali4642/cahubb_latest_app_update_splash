@@ -11,22 +11,17 @@ class EmailLogin extends LoginSystem {
       var payloadData = (payload as EmailLoginPayload);
 
       if (payloadData.type == EmailLoginType.signup) {
-        userCredential =
-            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: payloadData.email,
+              password: payloadData.password,
+            );
+        emit(MSuccess());
+      } else {
+        userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: payloadData.email,
           password: payloadData.password,
         );
-        emit(MSuccess());
-      } else {
-        try {
-          userCredential =
-              await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: payloadData.email,
-            password: payloadData.password,
-          );
-        } on Exception catch (e) {
-          emit(MFail(e));
-        }
       }
     }
     return userCredential;

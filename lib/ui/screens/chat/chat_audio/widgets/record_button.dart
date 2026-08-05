@@ -35,6 +35,8 @@ class RecordButton extends StatefulWidget {
 class _RecordButtonState extends State<RecordButton> {
   static const double size = 43;
 
+  final LayerLink _buttonLayerLink = LayerLink();
+  final OverlayPortalController _overlayController = OverlayPortalController();
   final double lockerHeight = 150;
   double timerWidth = 0;
 
@@ -64,6 +66,9 @@ class _RecordButtonState extends State<RecordButton> {
     );
     widget.controller.addListener(() {
       setState(() {});
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _overlayController.show();
     });
   }
 
@@ -101,135 +106,161 @@ class _RecordButtonState extends State<RecordButton> {
 
   @override
   Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _overlayController,
+      overlayChildBuilder: _buildRecordingOverlay,
+      child: CompositedTransformTarget(
+        link: _buttonLayerLink,
+        child: audioButton(),
+      ),
+    );
+  }
+
+  Widget _buildRecordingOverlay(BuildContext overlayContext) {
+    final isRecording = timer?.isActive ?? false;
+    final textDirection = Directionality.of(context);
+    final topEnd = AlignmentDirectional.topEnd.resolve(textDirection);
+    final centerEnd = AlignmentDirectional.centerEnd.resolve(textDirection);
+    final horizontalDirection = textDirection == TextDirection.ltr ? 1.0 : -1.0;
+
     return Stack(
-      clipBehavior: Clip.none,
       children: [
-        (timer?.isActive ?? false) ? lockSlider() : const SizedBox.shrink(),
-        (timer?.isActive ?? false) ? cancelSlider() : const SizedBox.shrink(),
-        audioButton(),
-        if (isLocked) timerLocked(),
+        if (isRecording && !isLocked) ...[
+          CompositedTransformFollower(
+            link: _buttonLayerLink,
+            showWhenUnlinked: false,
+            targetAnchor: topEnd,
+            followerAnchor: AlignmentDirectional.bottomEnd.resolve(
+              textDirection,
+            ),
+            offset: Offset(0, size - lockerAnimation.value),
+            child: IgnorePointer(child: lockSlider()),
+          ),
+          CompositedTransformFollower(
+            link: _buttonLayerLink,
+            showWhenUnlinked: false,
+            targetAnchor: topEnd,
+            followerAnchor: topEnd,
+            offset: Offset(timerAnimation.value * horizontalDirection, 0),
+            child: IgnorePointer(child: cancelSlider()),
+          ),
+        ],
+        if (isLocked)
+          CompositedTransformFollower(
+            link: _buttonLayerLink,
+            showWhenUnlinked: false,
+            targetAnchor: centerEnd,
+            followerAnchor: centerEnd,
+            child: Material(
+              type: MaterialType.transparency,
+              child: timerLocked(),
+            ),
+          ),
       ],
     );
   }
 
   Widget lockSlider() {
-    return Positioned.directional(
-      textDirection: Directionality.of(context),
-      bottom: lockerAnimation.value,
-      child: Container(
-        height: lockerHeight,
-        width: size,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(ChatGlobals.borderRadius),
-          color: context.color.secondaryColor,
-          //color: Colors.black,
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+    return Container(
+      height: lockerHeight,
+      width: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(ChatGlobals.borderRadius),
+        color: context.color.secondaryColor,
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const Icon(Icons.lock, size: 20),
+          const SizedBox(height: 8),
+          FlowShader(
+            direction: Axis.vertical,
+            child: const Column(
+              children: [
+                Icon(Icons.keyboard_arrow_up),
+                Icon(Icons.keyboard_arrow_up),
+                Icon(Icons.keyboard_arrow_up),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget cancelSlider() {
+    return Container(
+      height: size,
+      width: timerWidth,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(ChatGlobals.borderRadius),
+        color: context.color.primaryColor,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            //const FaIcon(FontAwesomeIcons.lock, size: 20),
-            const Icon(Icons.lock, size: 20),
-            const SizedBox(height: 8),
+            showLottie ? const LottieAnimation() : CustomText(recordDuration),
             FlowShader(
-              direction: Axis.vertical,
-              child: const Column(
+              duration: const Duration(seconds: 3),
+              flowColors: [
+                context.color.territoryColor,
+                const Color(0xFF9E9E9E),
+              ],
+              child: Row(
                 children: [
-                  Icon(Icons.keyboard_arrow_up),
-                  Icon(Icons.keyboard_arrow_up),
-                  Icon(Icons.keyboard_arrow_up),
+                  Icon(Icons.arrow_back_ios_new_sharp, size: 14),
+                  CustomText("slidetocancel".translate(context)),
+                  const SizedBox(width: 10),
                 ],
               ),
             ),
+            const SizedBox(width: size),
           ],
         ),
       ),
     );
   }
 
-  Widget cancelSlider() {
-    return Positioned.directional(
-      textDirection: Directionality.of(context),
-      end: -timerAnimation.value,
-      child: Container(
-        height: size,
-        width: timerWidth,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(ChatGlobals.borderRadius),
-          color: context.color.primaryColor,
-          //color: Colors.black,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              showLottie ? const LottieAnimation() : CustomText(recordDuration),
-              FlowShader(
-                duration: const Duration(seconds: 3),
-                flowColors: [
-                  context.color.territoryColor,
-                  const Color(0xFF9E9E9E),
-                ],
-                child: Row(
-                  children: [
-                    Icon(Icons.arrow_back_ios_new_sharp, size: 14),
-                    CustomText("slidetocancel".translate(context)),
-                    const SizedBox(width: 10),
-                  ],
-                ),
-                //flowColors: const [Colors.white, Colors.grey],
-              ),
-              const SizedBox(width: size),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget timerLocked() {
-    return Positioned.directional(
-      textDirection: Directionality.of(context),
-      end: 0,
-      child: Container(
-        height: size,
-        width: timerWidth,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(ChatGlobals.borderRadius),
-          color: context.color.secondaryColor,
-          //color: Colors.black,
-        ),
-        child: Padding(
-          padding: const EdgeInsetsDirectional.only(start: 6, end: 6),
-          child: Row(
-            children: [
-              IconButton(
-                tooltip: 'Discard recording',
-                onPressed: _discardRecording,
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
+    return Container(
+      height: size,
+      width: timerWidth,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(ChatGlobals.borderRadius),
+        color: context.color.secondaryColor,
+      ),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.only(start: 6, end: 6),
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: 'Discard recording',
+              onPressed: _discardRecording,
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+            ),
+            Expanded(
+              child: CustomText(
+                recordDuration,
+                textAlign: TextAlign.center,
+                fontWeight: FontWeight.w600,
               ),
-              Expanded(
-                child: CustomText(
-                  recordDuration,
-                  textAlign: TextAlign.center,
-                  fontWeight: FontWeight.w600,
-                ),
+            ),
+            IconButton(
+              tooltip: 'Send recording',
+              onPressed: () async {
+                await saveFile();
+                if (mounted) setState(() => isLocked = false);
+              },
+              icon: Icon(
+                Icons.send_rounded,
+                color: context.color.territoryColor,
               ),
-              IconButton(
-                tooltip: 'Send recording',
-                onPressed: () async {
-                  await saveFile();
-                  if (mounted) setState(() => isLocked = false);
-                },
-                icon: Icon(
-                  Icons.send_rounded,
-                  color: context.color.territoryColor,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

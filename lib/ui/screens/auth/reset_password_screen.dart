@@ -6,6 +6,7 @@ import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/ui_utils.dart';
+import 'package:eClassify/utils/validator.dart';
 import 'package:eClassify/utils/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -56,13 +57,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
+    return Validator.validateStrongPassword(value, context: context);
   }
 
   String? _validateConfirmPassword(String? value) {

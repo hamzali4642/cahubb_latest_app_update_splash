@@ -15,6 +15,8 @@ class ErrorFilter {
     "app-not-authorized": "appNotAuthorized",
     "no-internet": "checkNetwork",
     "email-already-in-use": "emailAlreadyInUse",
+    "invalid-credential": "youHaveEnteredInvalidUserNameOrPassword",
+    "invalid-login-credentials": "youHaveEnteredInvalidUserNameOrPassword",
     "wrong-password": "wrongPassword",
     "user-not-found": "emailNotRegistered",
     "invalid-email": "invalidEmail",
@@ -44,6 +46,7 @@ class ErrorFilter {
     FirebaseAuthException error,
   ) {
     log('${error.code} ${error.message}');
-    return _errorKeyMap[error.code] ?? error.message ?? error.code;
+    final normalizedCode = error.code.trim().toLowerCase().replaceAll('_', '-');
+    return _errorKeyMap[normalizedCode] ?? error.message ?? error.code;
   }
 }

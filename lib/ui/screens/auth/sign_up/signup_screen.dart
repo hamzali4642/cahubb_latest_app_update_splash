@@ -22,6 +22,7 @@ import 'package:eClassify/utils/hive_utils.dart';
 import 'package:eClassify/utils/login/lib/login_status.dart';
 import 'package:eClassify/utils/login/lib/payloads.dart';
 import 'package:eClassify/utils/ui_utils.dart';
+import 'package:eClassify/utils/validator.dart';
 import 'package:eClassify/utils/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -184,7 +185,7 @@ class _SignupScreenState extends CloudState<SignupScreen> {
         context.read<AuthenticationCubit>().setData(
           payload: EmailLoginPayload(
             email: _emailController.text,
-            password: _passwordController.text,
+            password: _passwordController.text.trim(),
             type: EmailLoginType.signup,
           ),
           type: AuthenticationType.email,
@@ -393,7 +394,8 @@ class _SignupScreenState extends CloudState<SignupScreen> {
               CustomTextFormField(
                 hintText: "${"password".translate(context)}",
                 controller: _phonePasswordController,
-                validator: CustomTextFieldValidator.password,
+                validator: CustomTextFieldValidator.strongPassword,
+                onChange: (_) => setState(() {}),
                 obscureText: isPhonePasswordObscure,
                 fillColor: context.color.secondaryColor,
                 borderColor: context.color.textLightColor.withValues(
@@ -412,6 +414,7 @@ class _SignupScreenState extends CloudState<SignupScreen> {
                   ),
                 ),
               ),
+              _PasswordRequirements(password: _phonePasswordController.text),
             ] else ...[
               // Email signup
               CustomTextFormField(
@@ -439,11 +442,13 @@ class _SignupScreenState extends CloudState<SignupScreen> {
                   ),
                 ),
                 hintText: "password".translate(context),
-                validator: CustomTextFieldValidator.password,
+                validator: CustomTextFieldValidator.strongPassword,
+                onChange: (_) => setState(() {}),
                 borderColor: context.color.textLightColor.withValues(
                   alpha: 0.3,
                 ),
               ),
+              _PasswordRequirements(password: _passwordController.text),
             ],
             const SizedBox(height: 36),
             UiUtils.buildButton(
@@ -672,6 +677,78 @@ class _SignupScreenState extends CloudState<SignupScreen> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PasswordRequirements extends StatelessWidget {
+  const _PasswordRequirements({required this.password});
+
+  final String password;
+
+  @override
+  Widget build(BuildContext context) {
+    final requirements = <(String, bool)>[
+      (
+        'passwordRequirementLength'.translate(context),
+        Validator.hasMinimumPasswordLength(password),
+      ),
+      (
+        'passwordRequirementLowercase'.translate(context),
+        Validator.hasLowercase(password),
+      ),
+      (
+        'passwordRequirementUppercase'.translate(context),
+        Validator.hasUppercase(password),
+      ),
+      (
+        'passwordRequirementNumber'.translate(context),
+        Validator.hasNumber(password),
+      ),
+      (
+        'passwordRequirementSpecial'.translate(context),
+        Validator.hasSpecialCharacter(password),
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CustomText(
+            'passwordMustContain'.translate(context),
+            fontSize: context.font.small,
+            fontWeight: FontWeight.w600,
+          ),
+          const SizedBox(height: 4),
+          ...requirements.map((requirement) {
+            final isMet = requirement.$2;
+            return Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Row(
+                children: [
+                  Icon(
+                    isMet ? Icons.check_circle : Icons.circle_outlined,
+                    size: 15,
+                    color: isMet ? Colors.green : context.color.textLightColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: CustomText(
+                      requirement.$1,
+                      fontSize: context.font.small,
+                      color: isMet
+                          ? Colors.green
+                          : context.color.textLightColor,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

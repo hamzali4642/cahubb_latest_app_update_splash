@@ -10,6 +10,7 @@ import 'package:eClassify/utils/custom_text.dart';
 import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/login/lib/payloads.dart';
+import 'package:eClassify/utils/password_reset_cooldown.dart';
 import 'package:eClassify/utils/ui_utils.dart';
 import 'package:eClassify/utils/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -68,9 +69,15 @@ class _ForgotPasswordBottomSheetState extends State<ForgotPasswordBottomSheet> {
   Future<void> _handleEmailReset() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final identifier = PasswordResetCooldown.emailIdentifier(
+      _emailController.text,
+    );
+    if (_showCooldownIfActive(identifier)) return;
+
     try {
       LoadingWidgets.showLoader(context);
       await _auth.sendPasswordResetEmail(email: _emailController.text.trim());
+      await PasswordResetCooldown.start(identifier);
       LoadingWidgets.hideLoader(context);
 
       if (!mounted) return;
@@ -105,6 +112,12 @@ class _ForgotPasswordBottomSheetState extends State<ForgotPasswordBottomSheet> {
 
   Future<void> _handlePhoneReset() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final identifier = PasswordResetCooldown.phoneIdentifier(
+      _phoneInputController.phoneCode,
+      _phoneInputController.phoneNumber,
+    );
+    if (_showCooldownIfActive(identifier)) return;
 
     try {
       LoadingWidgets.showLoader(context);
@@ -162,6 +175,17 @@ class _ForgotPasswordBottomSheetState extends State<ForgotPasswordBottomSheet> {
         type: MessageType.error,
       );
     }
+  }
+
+  bool _showCooldownIfActive(String identifier) {
+    final remaining = PasswordResetCooldown.remainingFor(identifier);
+    if (remaining == Duration.zero) return false;
+
+    final message = 'passwordResetCooldown'
+        .translate(context)
+        .replaceFirst('{time}', PasswordResetCooldown.format(remaining));
+    HelperUtils.showSnackBarMessage(context, message, type: MessageType.error);
+    return true;
   }
 
   @override

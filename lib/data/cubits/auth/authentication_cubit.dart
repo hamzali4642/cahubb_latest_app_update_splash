@@ -5,7 +5,6 @@ import 'package:eClassify/data/repositories/auth_repository.dart';
 import 'package:eClassify/utils/api.dart';
 import 'package:eClassify/utils/constant.dart';
 import 'package:eClassify/utils/error_filter.dart';
-import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/login/apple_login/apple_login.dart';
 import 'package:eClassify/utils/login/email_login/email_login.dart';
 import 'package:eClassify/utils/login/google_login/google_login.dart';
@@ -193,13 +192,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
 
   /// Handles unverified email case
   void _handleUnverifiedEmail() {
-    emit(
-      AuthenticationFail(
-        "pleaseVerifyYourEmail".translate(
-          Constant.navigatorKey.currentContext!,
-        ),
-      ),
-    );
+    emit(const AuthenticationFail("pleaseVerifyYourEmail"));
   }
 
   /// Handles Firebase authentication errors
@@ -248,7 +241,7 @@ class AuthenticationCubit extends Cubit<AuthenticationState> {
     return await _authRep.checkUserExists(
       phoneNumber: phonePayload.phoneNumber,
       countryCode: phonePayload.phoneCode,
-        isFromForgotPassword: false
+      isFromForgotPassword: false,
     );
   }
 

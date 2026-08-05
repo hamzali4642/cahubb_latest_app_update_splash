@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:eClassify/app_config.dart';
+import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/data/cubits/auth/user_profile_cubit.dart';
 import 'package:eClassify/data/cubits/category/fetch_category_cubit.dart';
 import 'package:eClassify/data/cubits/chat/blocked_users_list_cubit.dart';
@@ -18,6 +19,7 @@ import 'package:eClassify/data/cubits/news/fetch_news_cubit.dart';
 import 'package:eClassify/data/cubits/slider_cubit.dart';
 import 'package:eClassify/data/cubits/system/fetch_system_settings_cubit.dart';
 import 'package:eClassify/data/model/location/leaf_location.dart';
+import 'package:eClassify/data/model/item/item_list.dart';
 import 'package:eClassify/data/model/system_settings_model.dart';
 import 'package:eClassify/ui/screens/home/mixins/root_location_resolver_mixin.dart';
 import 'package:eClassify/ui/screens/home/slider_widget.dart';
@@ -41,7 +43,6 @@ import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:eClassify/utils/extensions/lib/gap.dart';
 import 'package:eClassify/utils/helper_utils.dart';
 import 'package:eClassify/utils/hive_utils.dart';
-import 'package:eClassify/utils/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -82,16 +83,6 @@ class HomeScreenState extends State<HomeScreen>
       _showStartupAd();
       loadInitialInfo();
       _scheduleSecondaryApiCalls();
-    });
-
-    _scrollController.addListener(() {
-      if (_scrollController.isEndReached()) {
-        if (context.read<FetchHomeAllItemsCubit>().hasMoreData()) {
-          context.read<FetchHomeAllItemsCubit>().fetchMore(
-            location: AppSession.currentLocation,
-          );
-        }
-      }
     });
   }
 
@@ -306,6 +297,7 @@ class HomeScreenState extends State<HomeScreen>
                               },
                             ),
                       ),
+                      const _ListingsHeader(),
                       AllItemsWidget(onTapRetry: loadInitialInfo),
                       const SliverToBoxAdapter(child: LatestNewsSection()),
                       const SliverToBoxAdapter(child: FuelPricesSection()),
@@ -382,34 +374,18 @@ class AllItemsWidget extends StatelessWidget {
     return BlocBuilder<FetchHomeAllItemsCubit, FetchHomeAllItemsState>(
       builder: (context, state) {
         if (state is FetchHomeAllItemsSuccess) {
-          final items = state.items;
-          final showLoader = state.hasMore;
-          final totalCount = items.length + (showLoader ? 1 : 0);
+          final items = state.items.take(4).toList(growable: false);
 
           return SliverStaggeredGrid.countBuilder(
             crossAxisCount: 2,
-            itemCount: totalCount,
+            itemCount: items.length,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             itemBuilder: (context, index) {
-              final isLoader = showLoader && index == totalCount - 1;
-              if (isLoader) {
-                return Center(child: UiUtils.progress());
-              }
-
               final item = items[index];
               return ItemCard(key: ValueKey(item.id!), item: item);
             },
-            staggeredTileBuilder: (index) {
-              final isLoader = showLoader && index == totalCount - 1;
-              if (isLoader) {
-                return items.length.isEven
-                    ? const StaggeredTile.fit(2)
-                    : const StaggeredTile.count(1, 1.5);
-              }
-
-              return const StaggeredTile.count(1, 1.5);
-            },
+            staggeredTileBuilder: (_) => const StaggeredTile.count(1, 1.5),
           );
         }
         if (state is FetchHomeAllItemsFail) {
@@ -417,9 +393,9 @@ class AllItemsWidget extends StatelessWidget {
         }
         return SliverToBoxAdapter(
           child: SizedBox(
-            height: 214,
+            height: 428,
             child: GridView.builder(
-              itemCount: 2,
+              itemCount: 4,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -454,6 +430,47 @@ class AllItemsWidget extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ListingsHeader extends StatelessWidget {
+  const _ListingsHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8, bottom: 6),
+        child: Row(
+          children: [
+            Expanded(
+              child: CustomText(
+                'listings'.translate(context),
+                fontSize: context.font.large,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                foregroundColor: context.color.textDefaultColor,
+              ),
+              onPressed: () {
+                Navigator.of(context).pushNamed(
+                  Routes.itemsList,
+                  arguments: AllItemsMetaData(
+                    title: 'listings'.translate(context),
+                  ),
+                );
+              },
+              child: Text('viewAll'.translate(context)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

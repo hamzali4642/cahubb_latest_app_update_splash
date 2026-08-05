@@ -83,3 +83,10 @@ class SearchMetaData extends ItemMetaData {
 
   final List<ItemModel> searchHistory;
 }
+
+class AllItemsMetaData extends ItemMetaData {
+  AllItemsMetaData({required super.title, super.search, super.sort});
+
+  @override
+  Json get toJson => {'current_page': 'home', ...super.toJson};
+}

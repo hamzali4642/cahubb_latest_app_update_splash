@@ -45,7 +45,7 @@ def hasReleaseSigning =
 android {
     namespace "com.cahubb.pakistan"
     compileSdkVersion flutter.compileSdkVersion
-    //ndkVersion "25.1.8937393"
+    ndkVersion "28.2.13676358"
     //buildToolsVersion "30.0.3"
 
     compileOptions {
@@ -129,4 +129,3 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:19.0.0'
     implementation 'com.google.firebase:firebase-messaging:24.0.3'
 }
-

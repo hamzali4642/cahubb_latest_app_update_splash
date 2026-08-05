@@ -3,6 +3,8 @@ import 'package:eClassify/utils/extensions/extensions.dart';
 import 'package:flutter/material.dart';
 
 class Validator {
+  static const int strongPasswordMinimumLength = 8;
+
   static String emailPattern =
       r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'"
       r'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-'
@@ -123,6 +125,46 @@ class Validator {
       }
     }
 
+    return null;
+  }
+
+  static bool hasMinimumPasswordLength(String password) =>
+      password.trim().length >= strongPasswordMinimumLength;
+
+  static bool hasLowercase(String password) =>
+      RegExp(r'[a-z]').hasMatch(password);
+
+  static bool hasUppercase(String password) =>
+      RegExp(r'[A-Z]').hasMatch(password);
+
+  static bool hasNumber(String password) => RegExp(r'[0-9]').hasMatch(password);
+
+  static bool hasSpecialCharacter(String password) =>
+      RegExp(r'[^A-Za-z0-9\s]').hasMatch(password);
+
+  static String? validateStrongPassword(
+    String? password, {
+    required BuildContext context,
+  }) {
+    final value = password?.trim() ?? '';
+    if (value.isEmpty) {
+      return 'fieldMustNotBeEmpty'.translate(context);
+    }
+    if (!hasMinimumPasswordLength(value)) {
+      return 'passwordMinLengthError'.translate(context);
+    }
+    if (!hasLowercase(value)) {
+      return 'passwordLowercaseError'.translate(context);
+    }
+    if (!hasUppercase(value)) {
+      return 'passwordUppercaseError'.translate(context);
+    }
+    if (!hasNumber(value)) {
+      return 'passwordNumberError'.translate(context);
+    }
+    if (!hasSpecialCharacter(value)) {
+      return 'passwordSpecialCharacterError'.translate(context);
+    }
     return null;
   }
 

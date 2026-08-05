@@ -9,6 +9,7 @@ enum CustomTextFieldValidator {
   phoneNumber,
   email,
   password,
+  strongPassword,
   maxFifty,
   otpSix,
   minAndMaxLen,
@@ -156,6 +157,9 @@ class CustomTextFormField extends StatelessWidget {
         }
         if (validator == CustomTextFieldValidator.password) {
           return Validator.validatePassword(value, context: context);
+        }
+        if (validator == CustomTextFieldValidator.strongPassword) {
+          return Validator.validateStrongPassword(value, context: context);
         }
         return null;
       },

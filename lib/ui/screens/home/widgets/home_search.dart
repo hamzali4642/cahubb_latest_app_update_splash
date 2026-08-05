@@ -312,7 +312,7 @@ class _HomeSearchFieldState extends State<HomeSearchField> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 104,
+            height: 110,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 260),
               switchInCurve: Curves.easeOutCubic,
@@ -452,15 +452,13 @@ class _QuickProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: card.title,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+    return Center(
+      child: Tooltip(
+        message: card.title,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
-          child: Ink(
+          child: Container(
             width: 90,
             height: 104,
             decoration: BoxDecoration(
@@ -479,8 +477,8 @@ class _QuickProductCard extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
                 ),
               ],
             ),
