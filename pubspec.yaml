@@ -101,6 +101,7 @@ flutter:
     - assets/languages/
     - assets/lottie/
     - assets/rive/
+    - assets/videos/
     - assets/map/
 
 

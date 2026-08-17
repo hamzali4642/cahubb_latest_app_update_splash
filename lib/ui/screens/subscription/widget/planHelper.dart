@@ -1,3 +1,4 @@
+import 'package:eClassify/app/routes.dart';
 import 'package:eClassify/data/cubits/subscription/assign_free_package_cubit.dart';
 import 'package:eClassify/data/cubits/subscription/get_payment_intent_cubit.dart';
 import 'package:eClassify/data/model/subscription/subscription_package_model.dart';
@@ -134,12 +135,13 @@ class PlanHelper {
           bloc: mcontext.read<GetPaymentIntentCubit>(),
           listener: (context, state) {
             if (state is GetPaymentIntentInSuccess) {
-              Navigator.pop(context);
               showHideLoaderWithMsg(
                 false,
-                context,
+                mcontext,
                 msg: state.message.toString(),
               );
+              Navigator.of(context).pop();
+              Navigator.of(mcontext).pushNamed(Routes.transactionHistory);
             } else if (state is GetPaymentIntentInProgress) {
               showHideLoaderWithMsg(true, context);
             } else if (state is GetPaymentIntentFailure) {
